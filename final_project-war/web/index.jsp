@@ -27,5 +27,7 @@
         <h1>Xin chào</h1>
         <h1>Xin chào và hẹn gặp lại</h1>
         <h1>See you again</h1>
+        <h1>こんにちは</h1>
+        <h1>さようなら</h1>
     </body>
 </html>
