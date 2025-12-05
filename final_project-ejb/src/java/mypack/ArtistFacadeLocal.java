@@ -1,22 +1,19 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package mypack;
 
 import jakarta.ejb.Local;
 import java.util.List;
 
 /**
- *
- * @author DANG KHOA
+ * Local interface cho ArtistFacade.
  */
 @Local
 public interface ArtistFacadeLocal {
 
+    // ===== CRUD cơ bản =====
+
     void create(Artist artist);
 
-    void edit(Artist artist);
+    Artist edit(Artist artist);
 
     void remove(Artist artist);
 
@@ -24,8 +21,12 @@ public interface ArtistFacadeLocal {
 
     List<Artist> findAll();
 
-    List<Artist> findRange(int[] range);
-
     int count();
-    
+
+    // ===== nghiệp vụ riêng cho Artist =====
+
+    /**
+     * Tìm nghệ sĩ theo tên (LIKE, không phân biệt hoa thường).
+     */
+    List<Artist> searchByName(String keyword);
 }

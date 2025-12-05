@@ -1,10 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack;
 
-import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,43 +7,32 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.NamedQueries;
-import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
-import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
-/**
- *
- * @author DANG KHOA
- */
 @Entity
 @Table(name = "ShowArtist")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "ShowArtist.findAll", query = "SELECT s FROM ShowArtist s"),
-    @NamedQuery(name = "ShowArtist.findByShowArtistID", query = "SELECT s FROM ShowArtist s WHERE s.showArtistID = :showArtistID")})
 public class ShowArtist implements Serializable {
 
-    private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Basic(optional = false)
     @Column(name = "ShowArtistID")
     private Integer showArtistID;
-    @JoinColumn(name = "ArtistID", referencedColumnName = "ArtistID")
+
+    // N bản ghi nối - 1 Artist
     @ManyToOne(optional = false)
-    private Artist artistID;
-    @JoinColumn(name = "ShowID", referencedColumnName = "ShowID")
+    @JoinColumn(name = "ArtistID")
+    private Artist artist;
+
+    // N bản ghi nối - 1 Show
     @ManyToOne(optional = false)
-    private Show showID;
+    @JoinColumn(name = "ShowID")
+    private Show show;
 
     public ShowArtist() {
     }
 
-    public ShowArtist(Integer showArtistID) {
-        this.showArtistID = showArtistID;
-    }
+    // ===== getters & setters =====
 
     public Integer getShowArtistID() {
         return showArtistID;
@@ -58,45 +42,41 @@ public class ShowArtist implements Serializable {
         this.showArtistID = showArtistID;
     }
 
-    public Artist getArtistID() {
-        return artistID;
+    public Artist getArtist() {
+        return artist;
     }
 
-    public void setArtistID(Artist artistID) {
-        this.artistID = artistID;
+    public void setArtist(Artist artist) {
+        this.artist = artist;
     }
 
-    public Show getShowID() {
-        return showID;
+    public Show getShow() {
+        return show;
     }
 
-    public void setShowID(Show showID) {
-        this.showID = showID;
+    public void setShow(Show show) {
+        this.show = show;
+    }
+
+    // ===== equals / hashCode / toString =====
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ShowArtist)) return false;
+        ShowArtist other = (ShowArtist) o;
+        return showArtistID != null && showArtistID.equals(other.showArtistID);
     }
 
     @Override
     public int hashCode() {
-        int hash = 0;
-        hash += (showArtistID != null ? showArtistID.hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof ShowArtist)) {
-            return false;
-        }
-        ShowArtist other = (ShowArtist) object;
-        if ((this.showArtistID == null && other.showArtistID != null) || (this.showArtistID != null && !this.showArtistID.equals(other.showArtistID))) {
-            return false;
-        }
-        return true;
+        return showArtistID != null ? showArtistID.hashCode() : 0;
     }
 
     @Override
     public String toString() {
-        return "mypack.ShowArtist[ showArtistID=" + showArtistID + " ]";
+        return "ShowArtist{" +
+                "showArtistID=" + showArtistID +
+                '}';
     }
-    
 }

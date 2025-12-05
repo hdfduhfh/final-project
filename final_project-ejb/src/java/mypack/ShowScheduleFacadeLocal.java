@@ -1,31 +1,38 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package mypack;
 
 import jakarta.ejb.Local;
+import java.util.Date;
 import java.util.List;
 
 /**
- *
- * @author DANG KHOA
+ * Local interface cho ShowScheduleFacade (quản lý suất diễn).
  */
 @Local
 public interface ShowScheduleFacadeLocal {
 
-    void create(ShowSchedule showSchedule);
+    // ===== CRUD cơ bản =====
 
-    void edit(ShowSchedule showSchedule);
+    void create(ShowSchedule schedule);
 
-    void remove(ShowSchedule showSchedule);
+    ShowSchedule edit(ShowSchedule schedule);
+
+    void remove(ShowSchedule schedule);
 
     ShowSchedule find(Object id);
 
     List<ShowSchedule> findAll();
 
-    List<ShowSchedule> findRange(int[] range);
-
     int count();
-    
+
+    // ===== nghiệp vụ riêng cho lịch diễn =====
+
+    /**
+     * Lấy tất cả lịch diễn của một show.
+     */
+    List<ShowSchedule> findByShow(Show show);
+
+    /**
+     * Lấy các suất diễn trong khoảng thời gian [from, to].
+     */
+    List<ShowSchedule> findByDateRange(Date from, Date to);
 }
