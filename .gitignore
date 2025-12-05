@@ -1,6 +1,8 @@
-/dist/
-/build/
-/final_project-war/dist/
-/final_project-war/build/
-/final_project-ejb/dist/
 /final_project-ejb/build/
+/final_project-war/build/
+/final_project-ejb/nbproject/private/
+/final_project-war/nbproject/private/
+/nbproject/private/
+/build/
+/dist/
+*.class
