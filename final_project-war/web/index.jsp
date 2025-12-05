@@ -25,5 +25,7 @@
         <h1>Xin chào</h1>
         <h1>Đồ án cuối kì 4</h1>
         <h1>Xin chào</h1>
+        <h1>Xin chào và hẹn gặp lại</h1>
+        <h1>See you again</h1>
     </body>
 </html>
