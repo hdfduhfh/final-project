@@ -1,19 +1,22 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ */
 package mypack;
 
 import jakarta.ejb.Local;
 import java.util.List;
 
 /**
- * Local interface cho ShowArtistFacade (bảng nối N-N Show <-> Artist).
+ *
+ * @author DANG KHOA
  */
 @Local
 public interface ShowArtistFacadeLocal {
 
-    // ===== CRUD cơ bản =====
-
     void create(ShowArtist showArtist);
 
-    ShowArtist edit(ShowArtist showArtist);
+    void edit(ShowArtist showArtist);
 
     void remove(ShowArtist showArtist);
 
@@ -21,17 +24,8 @@ public interface ShowArtistFacadeLocal {
 
     List<ShowArtist> findAll();
 
+    List<ShowArtist> findRange(int[] range);
+
     int count();
-
-    // ===== nghiệp vụ riêng cho quan hệ Show - Artist =====
-
-    /**
-     * Lấy danh sách nghệ sĩ tham gia một show.
-     */
-    List<Artist> findArtistsByShow(Show show);
-
-    /**
-     * Lấy danh sách show mà một nghệ sĩ tham gia.
-     */
-    List<Show> findShowsByArtist(Artist artist);
+    
 }

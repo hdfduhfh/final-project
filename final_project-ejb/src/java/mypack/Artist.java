@@ -1,46 +1,77 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package mypack;
 
+import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
+/**
+ *
+ * @author DANG KHOA
+ */
 @Entity
 @Table(name = "Artist")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "Artist.findAll", query = "SELECT a FROM Artist a"),
+    @NamedQuery(name = "Artist.findByArtistID", query = "SELECT a FROM Artist a WHERE a.artistID = :artistID"),
+    @NamedQuery(name = "Artist.findByName", query = "SELECT a FROM Artist a WHERE a.name = :name"),
+    @NamedQuery(name = "Artist.findByRole", query = "SELECT a FROM Artist a WHERE a.role = :role"),
+    @NamedQuery(name = "Artist.findByBio", query = "SELECT a FROM Artist a WHERE a.bio = :bio"),
+    @NamedQuery(name = "Artist.findByArtistImage", query = "SELECT a FROM Artist a WHERE a.artistImage = :artistImage")})
 public class Artist implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Basic(optional = false)
     @Column(name = "ArtistID")
     private Integer artistID;
-
-    @Column(name = "Name", length = 100, nullable = false)
+    @Basic(optional = false)
+    @NotNull
+    @Size(min = 1, max = 100)
+    @Column(name = "Name")
     private String name;
-
-    @Column(name = "Role", length = 50)
+    @Size(max = 50)
+    @Column(name = "Role")
     private String role;
-
-    @Column(name = "Bio", length = 255)
+    @Size(max = 255)
+    @Column(name = "Bio")
     private String bio;
-
-    @Column(name = "ArtistImage", length = 500)
+    @Size(max = 500)
+    @Column(name = "ArtistImage")
     private String artistImage;
-
-    // 1 Artist - N ShowArtist (N-N với Show)
-    @OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ShowArtist> showArtists = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "artistID")
+    private Collection<ShowArtist> showArtistCollection;
 
     public Artist() {
     }
 
-    // ===== getters & setters =====
+    public Artist(Integer artistID) {
+        this.artistID = artistID;
+    }
+
+    public Artist(Integer artistID, String name) {
+        this.artistID = artistID;
+        this.name = name;
+    }
 
     public Integer getArtistID() {
         return artistID;
@@ -82,58 +113,38 @@ public class Artist implements Serializable {
         this.artistImage = artistImage;
     }
 
-    public List<ShowArtist> getShowArtists() {
-        return showArtists;
+    @XmlTransient
+    public Collection<ShowArtist> getShowArtistCollection() {
+        return showArtistCollection;
     }
 
-    public void setShowArtists(List<ShowArtist> showArtists) {
-        this.showArtists = showArtists;
-    }
-
-    // ===== helper =====
-
-    /** Gắn artist này vào một show (tạo ShowArtist). */
-    public void addShow(Show show) {
-        ShowArtist link = new ShowArtist();
-        link.setArtist(this);
-        link.setShow(show);
-        showArtists.add(link);
-        show.getShowArtists().add(link);
-    }
-
-    /** Gỡ artist khỏi một show. */
-    public void removeShow(Show show) {
-        showArtists.removeIf(link -> {
-            if (link.getShow() != null && link.getShow().equals(show)) {
-                show.getShowArtists().remove(link);
-                link.setArtist(null);
-                link.setShow(null);
-                return true;
-            }
-            return false;
-        });
-    }
-
-    // ===== equals / hashCode / toString =====
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Artist)) return false;
-        Artist other = (Artist) o;
-        return artistID != null && artistID.equals(other.artistID);
+    public void setShowArtistCollection(Collection<ShowArtist> showArtistCollection) {
+        this.showArtistCollection = showArtistCollection;
     }
 
     @Override
     public int hashCode() {
-        return artistID != null ? artistID.hashCode() : 0;
+        int hash = 0;
+        hash += (artistID != null ? artistID.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof Artist)) {
+            return false;
+        }
+        Artist other = (Artist) object;
+        if ((this.artistID == null && other.artistID != null) || (this.artistID != null && !this.artistID.equals(other.artistID))) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     public String toString() {
-        return "Artist{" +
-                "artistID=" + artistID +
-                ", name='" + name + '\'' +
-                '}';
+        return "mypack.Artist[ artistID=" + artistID + " ]";
     }
+    
 }

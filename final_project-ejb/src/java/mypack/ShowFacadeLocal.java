@@ -1,21 +1,22 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ */
 package mypack;
 
 import jakarta.ejb.Local;
-import java.util.Date;
 import java.util.List;
 
 /**
- * Local interface cho ShowFacade.
- * Cung cấp các CRUD cơ bản + một số hàm tìm kiếm theo nghiệp vụ.
+ *
+ * @author DANG KHOA
  */
 @Local
 public interface ShowFacadeLocal {
 
-    // ===== CRUD cơ bản (dùng chung với AbstractFacade) =====
-
     void create(Show show);
 
-    Show edit(Show show);
+    void edit(Show show);
 
     void remove(Show show);
 
@@ -23,19 +24,8 @@ public interface ShowFacadeLocal {
 
     List<Show> findAll();
 
+    List<Show> findRange(int[] range);
+
     int count();
-
-    // ===== các hàm nghiệp vụ riêng cho Show =====
-
-    /**
-     * Lấy tất cả show đang ACTIVE (status = 'Active'),
-     * sắp xếp theo CreatedAt mới nhất.
-     */
-    List<Show> findActiveShows();
-
-    /**
-     * Lấy danh sách show có ít nhất một suất diễn
-     * trong khoảng thời gian [from, to].
-     */
-    List<Show> findShowsByDateRange(Date from, Date to);
+    
 }
