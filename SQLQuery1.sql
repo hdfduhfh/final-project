@@ -197,3 +197,23 @@ CREATE TABLE dbo.Recruitment (
         FOREIGN KEY (UserID) REFERENCES dbo.[User](UserID)
 );
 
+-- 1. Tạo Role ADMIN trước
+INSERT INTO Role (RoleName, CreatedAt)
+VALUES ('ADMIN', GETDATE());
+
+-- 2. Tạo admin user với mật khẩu 'admin123' hash SHA2_256
+INSERT INTO [User] (FullName, Email, PasswordHash, RoleID, CreatedAt)
+VALUES (
+    'Admin',
+    'admin',
+    CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', '123'), 2),
+    (SELECT RoleID FROM Role WHERE RoleName='ADMIN'),
+    GETDATE()
+);
+UPDATE [User]
+SET Email = 'admin@example.com'
+WHERE Email = 'admin';
+UPDATE [User]
+SET PasswordHash = CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', 'admin123'), 2)
+WHERE Email = 'admin@example.com';
+
