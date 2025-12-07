@@ -35,6 +35,7 @@ import java.util.Date;
 @Table(name = "User")
 @XmlRootElement
 @NamedQueries({
+    @NamedQuery(name = "User.login",query = "SELECT u FROM User u WHERE u.email = :email AND u.passwordHash = :passwordHash"),
     @NamedQuery(name = "User.findAll", query = "SELECT u FROM User u"),
     @NamedQuery(name = "User.findByUserID", query = "SELECT u FROM User u WHERE u.userID = :userID"),
     @NamedQuery(name = "User.findByFullName", query = "SELECT u FROM User u WHERE u.fullName = :fullName"),
@@ -44,6 +45,7 @@ import java.util.Date;
     @NamedQuery(name = "User.findByCreatedAt", query = "SELECT u FROM User u WHERE u.createdAt = :createdAt"),
     @NamedQuery(name = "User.findByUpdatedAt", query = "SELECT u FROM User u WHERE u.updatedAt = :updatedAt"),
     @NamedQuery(name = "User.findByLastLogin", query = "SELECT u FROM User u WHERE u.lastLogin = :lastLogin")})
+
 public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -253,5 +255,5 @@ public class User implements Serializable {
     public String toString() {
         return "mypack.User[ userID=" + userID + " ]";
     }
-    
+
 }

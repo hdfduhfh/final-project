@@ -26,5 +26,27 @@ public class UserFacade extends AbstractFacade<User> implements UserFacadeLocal 
     public UserFacade() {
         super(User.class);
     }
-    
+
+    // File này thêm vào nếu null sẽ ko tìm thấy user
+    public User login(String email, String password) {
+        try {
+            return em.createQuery(
+                    "SELECT u FROM User u WHERE u.email = :email AND u.passwordHash = :pass", User.class)
+                    .setParameter("email", email)
+                    .setParameter("pass", password)
+                    .getSingleResult();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    // ===== Triển khai existsByEmail =====
+
+    @Override
+    public boolean existsByEmail(String email) {
+        Long count = em.createQuery(
+                "SELECT COUNT(u) FROM User u WHERE u.email = :email", Long.class)
+                .setParameter("email", email)
+                .getSingleResult();
+        return count > 0;
+    }
 }

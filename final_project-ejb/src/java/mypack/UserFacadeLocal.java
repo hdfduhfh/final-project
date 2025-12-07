@@ -14,6 +14,8 @@ import java.util.List;
 @Local
 public interface UserFacadeLocal {
 
+    User login(String email, String passwordHash);
+
     void create(User user);
 
     void edit(User user);
@@ -27,5 +29,7 @@ public interface UserFacadeLocal {
     List<User> findRange(int[] range);
 
     int count();
-    
+
+    boolean existsByEmail(String email);
+
 }

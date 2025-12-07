@@ -15,10 +15,10 @@
     </head>
     <body class="index-page">
         <!-- Include Header -->
-        <%@ include file="/WEB-INF/views/includes/header.jsp" %>
+        <%@ include file="/WEB-INF/views/layout/header.jsp" %>
         <h1>Đồ án cuối kì 4</h1>
         
         <!-- Include Footer -->
-        <%@ include file="/WEB-INF/views/includes/footer.jsp" %>
+        <%@ include file="/WEB-INF/views/layout/footer.jsp" %>
     </body>
 </html>

@@ -1,42 +1,42 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack.controller.user;
 
-import java.io.IOException;
-import jakarta.servlet.ServletException;
+import jakarta.inject.Inject;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.*;
+import jakarta.servlet.*;
+import java.io.IOException;
+import mypack.User;
+import mypack.UserFacadeLocal;
 
-@WebServlet("/login") // Đây là URL khi bấm vào đăng nhập
+@WebServlet("/login")
 public class LoginServlet extends HttpServlet {
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        // Chuyển hướng tới trang login.jsp
-        request.getRequestDispatcher("/WEB-INF/views/user/login.jsp").forward(request, response);
-    }
+
+    @Inject
+    private UserFacadeLocal userFacade;
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Xử lý đăng nhập khi submit form
+
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        // TODO: kiểm tra database
-        if ("admin@example.com".equals(email) && "123456".equals(password)) {
-            // Login thành công
-            request.getSession().setAttribute("user", email);
-            response.sendRedirect(request.getContextPath() + "/home.jsp"); // hoặc trang home thực
+        User user = userFacade.login(email, password);
+
+        if (user == null) {
+            request.setAttribute("error", "Sai thông tin đăng nhập!");
+            request.getRequestDispatcher("index.jsp").forward(request, response);
+            return;
+        }
+
+        HttpSession session = request.getSession();
+        session.setAttribute("user", user);
+
+        // Redirect theo role
+        if (user.getRoleID().getRoleName().equalsIgnoreCase("ADMIN")) {
+            response.sendRedirect("admin/");
         } else {
-            // Login thất bại
-            request.setAttribute("error", "Email hoặc mật khẩu không đúng!");
-            request.getRequestDispatcher("/WEB-INF/views/user/login.jsp").forward(request, response);
+            response.sendRedirect("user/");
         }
     }
 }
-
