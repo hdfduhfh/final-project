@@ -6,7 +6,11 @@ package mypack;
 
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 /**
  *
@@ -30,17 +34,31 @@ public class UserFacade extends AbstractFacade<User> implements UserFacadeLocal 
     // File này thêm vào nếu null sẽ ko tìm thấy user
     public User login(String email, String password) {
         try {
-            return em.createQuery(
-                    "SELECT u FROM User u WHERE u.email = :email AND u.passwordHash = :pass", User.class)
-                    .setParameter("email", email)
-                    .setParameter("pass", password)
-                    .getSingleResult();
+            // Hash mật khẩu nhập vào
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                hexString.append(String.format("%02x", b));
+            }
+            String passwordHash = hexString.toString();
+
+            // Truy vấn DB so sánh email + password hash
+            TypedQuery<User> query = em.createQuery(
+                    "SELECT u FROM User u WHERE u.email = :email AND u.passwordHash = :passwordHash", User.class);
+            query.setParameter("email", email);
+            query.setParameter("passwordHash", passwordHash);
+
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null; // Không tìm thấy user
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
-    // ===== Triển khai existsByEmail =====
 
+    // ===== Triển khai existsByEmail =====
     @Override
     public boolean existsByEmail(String email) {
         Long count = em.createQuery(

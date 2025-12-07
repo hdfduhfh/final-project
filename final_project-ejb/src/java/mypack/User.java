@@ -32,7 +32,7 @@ import java.util.Date;
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "User")
+@Table(name = "[User]")
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "User.login",query = "SELECT u FROM User u WHERE u.email = :email AND u.passwordHash = :passwordHash"),

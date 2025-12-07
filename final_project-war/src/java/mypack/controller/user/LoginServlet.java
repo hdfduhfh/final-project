@@ -1,42 +1,50 @@
 package mypack.controller.user;
 
-import jakarta.inject.Inject;
+import jakarta.ejb.EJB;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import jakarta.servlet.*;
 import java.io.IOException;
+import java.io.PrintWriter;
 import mypack.User;
 import mypack.UserFacadeLocal;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
-    @Inject
+    @EJB
     private UserFacadeLocal userFacade;
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
 
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
         User user = userFacade.login(email, password);
 
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
         if (user == null) {
-            request.setAttribute("error", "Sai thông tin đăng nhập!");
-            request.getRequestDispatcher("index.jsp").forward(request, response);
+            // Sai thông tin
+            out.print("{\"success\":false, \"message\":\"Sai thông tin đăng nhập!\"}");
             return;
         }
 
+        // Lưu session
         HttpSession session = request.getSession();
         session.setAttribute("user", user);
 
-        // Redirect theo role
+        // Trả về JSON role
         if (user.getRoleID().getRoleName().equalsIgnoreCase("ADMIN")) {
-            response.sendRedirect("admin/");
+            out.print("{\"success\":true, \"role\":\"ADMIN\"}");
         } else {
-            response.sendRedirect("user/");
+            out.print("{\"success\":true, \"role\":\"USER\"}");
         }
     }
 }
