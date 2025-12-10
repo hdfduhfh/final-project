@@ -27,5 +27,7 @@ public interface RoleFacadeLocal {
     List<Role> findRange(int[] range);
 
     int count();
-    
+
+    Role findByName(String roleName);
+
 }

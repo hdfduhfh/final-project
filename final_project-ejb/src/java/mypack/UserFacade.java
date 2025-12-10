@@ -9,8 +9,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import mypack.utils.HashUtils;
+
 
 /**
  *
@@ -34,24 +34,18 @@ public class UserFacade extends AbstractFacade<User> implements UserFacadeLocal 
     // File này thêm vào nếu null sẽ ko tìm thấy user
     public User login(String email, String password) {
         try {
-            // Hash mật khẩu nhập vào
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                hexString.append(String.format("%02x", b));
-            }
-            String passwordHash = hexString.toString();
+            String passwordHash = HashUtils.hashPassword(password);
 
-            // Truy vấn DB so sánh email + password hash
             TypedQuery<User> query = em.createQuery(
-                    "SELECT u FROM User u WHERE u.email = :email AND u.passwordHash = :passwordHash", User.class);
+                    "SELECT u FROM User u WHERE u.email = :email AND u.passwordHash = :passwordHash",
+                    User.class
+            );
             query.setParameter("email", email);
             query.setParameter("passwordHash", passwordHash);
 
             return query.getSingleResult();
         } catch (NoResultException e) {
-            return null; // Không tìm thấy user
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
             return null;

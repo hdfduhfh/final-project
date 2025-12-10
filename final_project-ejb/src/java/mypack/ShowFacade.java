@@ -25,6 +25,21 @@ public class ShowFacade extends AbstractFacade<Show> implements ShowFacadeLocal 
         super(Show.class);
     }
     
+    @Override
+    public List<Show> searchByKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return findAll(); // không nhập gì thì trả về tất cả
+        }
+        String kw = "%" + keyword.toLowerCase() + "%";
+        return em.createQuery(
+                "SELECT s FROM Show s " +
+                "WHERE LOWER(s.showName) LIKE :kw " +
+                "   OR LOWER(s.description) LIKE :kw",
+                Show.class)
+                .setParameter("kw", kw)
+                .getResultList();
+    }
+    
     // ===== THÊM CÁC METHOD MỚI =====
     
     @Override

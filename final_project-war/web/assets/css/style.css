@@ -6,4 +6,381 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     Created on : Dec 5, 2025, 2:42:57 PM
     Author     : DANG KHOA
 */
+/* ================================
+   HEADER – FUTURISTIC 2025 STYLE
+   ================================ */
 
+:root {
+    --gold: #f7c843;
+    --gold-hover: #ffdf6b;
+    --dark: #0d0d0d;
+    --light: #ffffff;
+    --glass: rgba(255, 255, 255, 0.15);
+    --glass-dark: rgba(0, 0, 0, 0.35);
+    --blur: blur(12px);
+    --radius: 14px;
+}
+
+/* RESET */
+.site-header {
+    width: 100%;
+    background: var(--glass-dark);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+/* HEADER INNER */
+.header-inner {
+    max-width: 1250px;
+    margin: auto;
+    padding: 12px 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* BRAND */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.brand-logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+}
+
+.brand-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1px;
+}
+
+/* NAVIGATION */
+.nav-list {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+}
+
+.nav-item a {
+    text-decoration: none;
+    color: var(--light);
+    font-weight: 500;
+    font-size: 15px;
+
+    padding: 6px 10px;
+    border-radius: var(--radius);
+    transition: 0.25s;
+}
+
+.nav-item a:hover {
+    color: var(--gold);
+}
+
+/* AUTH BUTTONS */
+.auth {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.btn-gold {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.btn-gold:hover {
+    background: var(--gold-hover);
+}
+
+.btn-outline-gold {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-outline-gold:hover {
+    background: var(--gold);
+    color: #000;
+}
+
+/* MOBILE MENU (HAMBURGER) */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.hamburger span {
+    width: 28px;
+    height: 3px;
+    background: var(--gold);
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+/* =====================
+   RESPONSIVE
+   ===================== */
+@media (max-width: 900px) {
+    .nav {
+        display: none;
+        position: absolute;
+        top: 70px;
+        right: 10px;
+
+        background: var(--glass-dark);
+        padding: 18px;
+        border-radius: var(--radius);
+        backdrop-filter: var(--blur);
+
+        flex-direction: column;
+    }
+
+    .nav-list {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+}
+
+/* ================================
+   MODAL AUTH (LOGIN + REGISTER)
+   ================================ */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+.modal-content {
+    width: 360px;
+    background: var(--glass-dark);
+    backdrop-filter: var(--blur);
+    border-radius: var(--radius);
+    padding: 24px;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    animation: fadeScale 0.3s ease-out;
+}
+
+@keyframes fadeScale {
+    from { opacity: 0; transform: scale(0.9); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-title {
+    text-align: center;
+    color: var(--gold);
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.close {
+    position: absolute;
+    right: 14px;
+    top: 10px;
+    font-size: 26px;
+    cursor: pointer;
+    color: var(--gold);
+}
+
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: var(--light);
+    font-size: 14px;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.field-error {
+    color: #ff6b6b;
+    font-size: 12px;
+}
+
+.field-success {
+    color: #6bff8d;
+    font-size: 13px;
+}
+
+.switch-link {
+    text-align: center;
+    margin-top: 12px;
+    color: #cccccc;
+}
+
+.switch-link a {
+    color: var(--gold);
+}
+/* ============================
+   FOOTER - BOOKINGSTAGE (2025)
+   ============================ */
+
+.site-footer {
+    width: 100%;
+    background: rgba(15, 15, 20, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #e5e5e5;
+    padding: 60px 0 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.4);
+}
+
+.footer-content {
+    max-width: 1300px;
+    margin: auto;
+    padding: 0 25px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 40px;
+}
+
+/* LOGO */
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.footer-logo-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: rgba(255,255,255,0.1);
+    padding: 6px;
+}
+
+.footer-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+/* Sections */
+.footer-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #fff;
+    font-weight: 600;
+    position: relative;
+}
+
+.footer-section h3::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 35px;
+    height: 2px;
+    background: linear-gradient(90deg, #7c3aed, #ec4899);
+    border-radius: 5px;
+}
+
+/* Links */
+.footer-section a {
+    display: block;
+    color: #d6d6d6;
+    text-decoration: none;
+    margin-bottom: 8px;
+    transition: 0.25s ease;
+}
+
+.footer-section a:hover {
+    color: #fff;
+    transform: translateX(4px);
+}
+
+/* Social Icons */
+.social-links a {
+    margin-right: 12px;
+    font-size: 1.4rem;
+    display: inline-block;
+    transition: 0.25s;
+}
+
+.social-links a:hover {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 8px #8b5cf6);
+}
+
+/* Contact */
+.contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: #d9d9d9;
+    text-decoration: none;
+}
+
+.contact-item:hover {
+    color: #fff;
+}
+
+.contact-icon {
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+/* Bottom */
+.footer-bottom {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    font-size: 0.9rem;
+    color: #c8c8c8;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .footer-logo-img {
+        width: 40px;
+        height: 40px;
+    }
+    .footer-brand {
+        font-size: 1.3rem;
+    }
+}

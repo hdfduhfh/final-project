@@ -5,6 +5,7 @@
 package mypack;
 
 import jakarta.ejb.Local;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -27,5 +28,13 @@ public interface ShowScheduleFacadeLocal {
     List<ShowSchedule> findRange(int[] range);
 
     int count();
-    
+
+    // Tìm theo ShowID
+    List<ShowSchedule> findByShowId(Integer showId);
+
+    // Tìm theo khoảng ngày giờ
+    List<ShowSchedule> findByShowTimeRange(Date from, Date to);
+
+    // Tìm theo keyword (tên show hoặc status)
+    List<ShowSchedule> searchByKeyword(String keyword);
 }

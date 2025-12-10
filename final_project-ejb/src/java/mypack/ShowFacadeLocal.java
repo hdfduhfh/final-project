@@ -32,4 +32,7 @@ public interface ShowFacadeLocal {
     Long countByStatus(String status);
 
     List<Show> findLatestShows(int limit);
+
+    List<Show> searchByKeyword(String keyword);
+
 }

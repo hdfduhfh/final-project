@@ -26,5 +26,12 @@ public class RoleFacade extends AbstractFacade<Role> implements RoleFacadeLocal 
     public RoleFacade() {
         super(Role.class);
     }
-    
+
+    @Override
+    public Role findByName(String roleName) {
+        return em.createQuery("SELECT r FROM Role r WHERE r.roleName = :name", Role.class)
+                .setParameter("name", roleName)
+                .getSingleResult();
+    }
+
 }

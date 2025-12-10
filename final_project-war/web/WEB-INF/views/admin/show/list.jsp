@@ -3,194 +3,189 @@
     Created on : Dec 6, 2025, 5:57:11 PM
     Author     : DANG KHOA
 --%>
-
-<%-- 
-    Document   : list (Show Management)
-    Created on : Dec 6, 2025
-    Author     : DANG KHOA
-    Đường dẫn: final_project-war/Web Pages/WEB-INF/views/admin/show/list.jsp
---%>
-<%@ page pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-
-<!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Show - Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin.css">
-
-</head>
-<body>
-    <div class="admin-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-logo">🎭 BookingStage</div>
-            <ul class="sidebar-menu">
-                <li><a href="${pageContext.request.contextPath}/admin/show" class="active">🎪 Quản lý Show</a></li>
-
-            </ul>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Top Bar -->
-            <div class="top-bar">
-                <h1 class="page-title">Quản lý Show</h1>
-                <div class="admin-user">
-                    <span class="admin-name">Admin: ${sessionScope.user.fullName}</span>
-                    <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout">Đăng xuất</a>
-                </div>
-            </div>
-
-            <!-- Thông báo -->
-            <c:if test="${not empty success}">
-                <div class="alert alert-success">
-                    ✓ ${success}
-                </div>
-            </c:if>
-
-            <c:if test="${not empty error}">
-                <div class="alert alert-error">
-                    ⚠️ ${error}
-                </div>
-            </c:if>
-
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">🎪</div>
-                    <div class="stat-value">${totalShows}</div>
-                    <div class="stat-label">Tổng số Show</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-value">${activeShows}</div>
-                    <div class="stat-label">Show đang hoạt động</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">❌</div>
-                    <div class="stat-value">${inactiveShows}</div>
-                    <div class="stat-label">Show đã đóng</div>
-                </div>
-            </div>
-
-            <!-- Action Bar -->
-            <div class="action-bar">
-                <div class="search-box">
-                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Tìm kiếm show...">
-                    <button class="btn btn-primary" onclick="searchShow()">Tìm</button>
-                </div>
-                <a href="${pageContext.request.contextPath}/admin/show/add" class="btn btn-primary">
-                    ➕ Thêm Show mới
-                </a>
-            </div>
-
-            <!-- Table -->
-            <div class="table-container">
-                <c:choose>
-                    <c:when test="${empty shows}">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📭</div>
-                            <h3>Chưa có show nào</h3>
-                            <p>Hãy thêm show đầu tiên của bạn!</p>
-                        </div>
-                    </c:when>
-                    <c:otherwise>
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Hình ảnh</th>
-                                    <th>Tên Show</th>
-                                    <th>Mô tả</th>
-                                    <th>Thời lượng</th>
-                                    <th>Trạng thái</th>
-                                    <th>Ngày tạo</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach var="show" items="${shows}">
-                                    <tr>
-                                        <td>#${show.showID}</td>
-                                        <td>
-                                            <c:choose>
-                                                <c:when test="${not empty show.showImage}">
-                                                    <img src="${pageContext.request.contextPath}/${show.showImage}" 
-                                                         alt="${show.showName}" class="show-image">
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <div class="show-image">🎭</div>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </td>
-                                        <td><strong>${show.showName}</strong></td>
-                                        <td>${show.description}</td>
-                                        <td>${show.durationMinutes} phút</td>
-                                        <td>
-                                            <c:choose>
-                                                <c:when test="${show.status == 'Active'}">
-                                                    <span class="status-badge status-active">Hoạt động</span>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <span class="status-badge status-inactive">Đã đóng</span>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </td>
-                                        <td>
-                                            <fmt:formatDate value="${show.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <a href="${pageContext.request.contextPath}/admin/show/edit?id=${show.showID}" 
-                                                   class="btn btn-warning btn-small">✏️ Sửa</a>
-                                                <button onclick="deleteShow(${show.showID}, '${show.showName}')" 
-                                                        class="btn btn-danger btn-small">🗑️ Xóa</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
-                    </c:otherwise>
-                </c:choose>
-            </div>
-        </main>
-    </div>
-
-    <script>
-        // Tìm kiếm show
-        function searchShow() {
-            const keyword = document.getElementById('searchInput').value;
-            window.location.href = '${pageContext.request.contextPath}/admin/show?search=' + encodeURIComponent(keyword);
-        }
-
-        // Enter để tìm kiếm
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchShow();
+    <head>
+        <title>Quản lý Show</title>
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;
             }
-        });
-
-        // Xóa show
-        function deleteShow(id, name) {
-            if (confirm('Bạn có chắc muốn xóa show "' + name + '"?\nHành động này không thể hoàn tác!')) {
-                window.location.href = '${pageContext.request.contextPath}/admin/show/delete?id=' + id;
+            th, td {
+                border: 1px solid #ddd;
+                padding: 6px 8px;
             }
-        }
+            th {
+                background-color: #f0f0f0;
+            }
+            .btn {
+                padding: 6px 10px;
+                text-decoration: none;
+                border: 1px solid #333;
+                border-radius: 4px;
+                font-size: 13px;
+            }
+            .btn-primary {
+                background-color: #007bff;
+                color: #fff;
+            }
+            .btn-danger {
+                background-color: #dc3545;
+                color: #fff;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Quản lý show</h1>
 
-        // Auto hide alerts sau 5 giây
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                alert.style.transition = 'opacity 0.5s';
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 500);
-            });
-        }, 5000);
-    </script>
-</body>
+        <!-- Thông báo thành công -->
+        <c:if test="${not empty param.success}">
+            <div style="color: green; font-weight: bold; margin-bottom: 10px;">
+                ${param.success}
+            </div>
+        </c:if>
+
+        <!-- Thông báo lỗi -->
+        <c:if test="${not empty error}">
+            <div style="color: red; font-weight: bold; margin-bottom: 10px;">
+                ${error}
+            </div>
+        </c:if>
+
+        <!-- Nút tạo show mới -->
+        <p>
+            <a href="${pageContext.request.contextPath}/admin/show/add" class="btn btn-primary">
+                ➕ Thêm show mới
+            </a>
+        </p>
+
+        <!-- Form tìm kiếm -->
+        <form method="get"
+              action="${pageContext.request.contextPath}/admin/show"
+              style="margin-bottom: 15px;"
+              id="searchForm">
+
+            <div style="position: relative; display: inline-block;">
+                <input type="text"
+                       id="searchInput"
+                       name="search"
+                       placeholder="Nhập tên show cần tìm..."
+                       value="${searchKeyword != null ? searchKeyword : ''}"
+                       style="width: 250px; padding-right: 24px;"/>
+
+                <!-- Nút X để xóa nhanh nội dung ô tìm kiếm -->
+                <span id="clearSearch"
+                      style="position: absolute;
+                      right: 6px;
+                      top: 50%;
+                      transform: translateY(-50%);
+                      cursor: pointer;
+                      font-weight: bold;
+                      color: #888;
+                      display: none;">
+                    &times;
+                </span>
+            </div>
+
+            <!-- Nút submit là icon kính lúp -->
+            <button type="submit"
+                    style="margin-left: 5px;
+                    padding: 4px 10px;
+                    cursor: pointer;">
+                &#128269;
+            </button>
+        </form>
+
+        <script>
+            (function () {
+                const input = document.getElementById('searchInput');
+                const clearBtn = document.getElementById('clearSearch');
+
+                if (!input || !clearBtn)
+                    return;
+
+                function toggleClearButton() {
+                    if (input.value.trim().length > 0) {
+                        clearBtn.style.display = 'inline';
+                    } else {
+                        clearBtn.style.display = 'none';
+                    }
+                }
+
+                // Khi gõ chữ -> hiện / ẩn nút X
+                input.addEventListener('input', toggleClearButton);
+
+                // Khi bấm X -> xóa nội dung và focus lại vào ô search
+                clearBtn.addEventListener('click', function () {
+                    input.value = '';
+                    toggleClearButton();
+                    input.focus();
+                });
+
+                // Gọi lần đầu để xử lý trường hợp đã có searchKeyword sẵn
+                toggleClearButton();
+            })();
+        </script>
+
+
+
+        <!-- Thống kê -->
+        <div style="margin-bottom: 15px;">
+            <strong>Tổng số show:</strong> ${totalShows} |
+            <strong>Đang hoạt động:</strong> ${activeShows} |
+            <strong>Không hoạt động:</strong> ${inactiveShows}
+        </div>
+
+        <!-- Bảng danh sách show -->
+        <table border="1" cellspacing="0" cellpadding="5" style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #f0f0f0;">
+                <th>Tên show</th>
+                <th>Mô tả</th>
+                <th>Thời lượng (phút)</th>
+                <th>Trạng thái</th>
+                <th>Hình ảnh</th>
+                <th>Ngày tạo</th>
+                <th>Hành động</th>
+            </tr>
+
+            <c:forEach var="s" items="${shows}">
+                <tr>
+                    <td>${s.showName}</td>
+                    <td>${s.description}</td>
+                    <td>${s.durationMinutes}</td>
+                    <td>${s.status}</td>
+                    <td>
+                        <c:if test="${not empty s.showImage}">
+                            <img src="${pageContext.request.contextPath}/${s.showImage}" 
+                                 alt="${s.showName}" 
+                                 style="max-width: 100px; max-height: 80px;"/>
+                        </c:if>
+                    </td>
+                    <td>
+                        <fmt:formatDate value="${s.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
+                    </td>
+                    <td>
+                        <a href="${pageContext.request.contextPath}/admin/show/edit?id=${s.showID}">Sửa</a>
+                        |
+                        <a href="${pageContext.request.contextPath}/admin/show/delete?id=${s.showID}"
+                           onclick="return confirm('Bạn có chắc chắn muốn xóa show này?');">
+                            Xóa
+                        </a>
+                    </td>
+                </tr>
+            </c:forEach>
+
+            <c:if test="${empty shows}">
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 10px;">
+                        Không có show nào.
+                    </td>
+                </tr>
+            </c:if>
+        </table>
+
+    </body>
 </html>

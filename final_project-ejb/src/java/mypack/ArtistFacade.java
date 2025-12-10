@@ -7,6 +7,7 @@ package mypack;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.util.List;
 
 /**
  *
@@ -26,5 +27,23 @@ public class ArtistFacade extends AbstractFacade<Artist> implements ArtistFacade
     public ArtistFacade() {
         super(Artist.class);
     }
-    
+
+        @Override
+    public List<Artist> searchByKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return findAll();
+        }
+
+        String kw = "%" + keyword.trim().toLowerCase() + "%";
+
+        return em.createQuery(
+                "SELECT a FROM Artist a " +
+                "WHERE LOWER(a.name) LIKE :kw " +
+                "   OR LOWER(a.role) LIKE :kw " +
+                "   OR LOWER(a.bio)  LIKE :kw " +
+                "ORDER BY a.name ASC",
+                Artist.class)
+                .setParameter("kw", kw)
+                .getResultList();
+    }
 }

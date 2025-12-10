@@ -217,3 +217,25 @@ UPDATE [User]
 SET PasswordHash = CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', 'admin123'), 2)
 WHERE Email = 'admin@example.com';
 
+INSERT INTO Role (RoleName, CreatedAt) VALUES ('USER', GETDATE());
+
+UPDATE [User]
+SET PasswordHash = LOWER(PasswordHash)
+WHERE Email = 'admin@example.com';
+
+ALTER TABLE dbo.Artist
+    ALTER COLUMN Name NVARCHAR(100) NOT NULL;
+
+ALTER TABLE dbo.Artist
+    ALTER COLUMN Role NVARCHAR(50) NULL;
+
+ALTER TABLE dbo.Artist
+    ALTER COLUMN Bio NVARCHAR(255) NULL;
+
+ALTER TABLE dbo.Artist
+    ALTER COLUMN ArtistImage NVARCHAR(500) NULL;
+
+ALTER TABLE dbo.[Show]
+    ALTER COLUMN ShowName NVARCHAR(150)  NOT NULL;
+
+
