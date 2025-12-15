@@ -19,7 +19,7 @@ public class NewsFacade extends AbstractFacade<News> implements NewsFacadeLocal 
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    protected jakarta.persistence.EntityManager getEntityManager() {
         return em;
     }
 

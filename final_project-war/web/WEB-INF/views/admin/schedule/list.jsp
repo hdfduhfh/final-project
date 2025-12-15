@@ -137,8 +137,6 @@
                 <th>Vở diễn</th>
                 <th>Giờ chiếu</th>
                 <th>Trạng thái</th>
-                <th>Tổng ghế</th>
-                <th>Ghế trống</th>
                 <th>Hành động</th>
             </tr>
 

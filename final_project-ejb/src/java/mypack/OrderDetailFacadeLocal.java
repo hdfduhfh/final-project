@@ -12,19 +12,19 @@ import java.util.List;
  * @author DANG KHOA
  */
 @Local
-public interface PaymentFacadeLocal {
+public interface OrderDetailFacadeLocal {
 
-    void create(Payment payment);
+    void create(OrderDetail orderDetail);
 
-    void edit(Payment payment);
+    void edit(OrderDetail orderDetail);
 
-    void remove(Payment payment);
+    void remove(OrderDetail orderDetail);
 
-    Payment find(Object id);
+    OrderDetail find(Object id);
 
-    List<Payment> findAll();
+    List<OrderDetail> findAll();
 
-    List<Payment> findRange(int[] range);
+    List<OrderDetail> findRange(int[] range);
 
     int count();
     

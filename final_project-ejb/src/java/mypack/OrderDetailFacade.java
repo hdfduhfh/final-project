@@ -13,18 +13,18 @@ import jakarta.persistence.PersistenceContext;
  * @author DANG KHOA
  */
 @Stateless
-public class PaymentFacade extends AbstractFacade<Payment> implements PaymentFacadeLocal {
+public class OrderDetailFacade extends AbstractFacade<OrderDetail> implements OrderDetailFacadeLocal {
 
     @PersistenceContext(unitName = "BookingStagePU")
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    protected jakarta.persistence.EntityManager getEntityManager() {
         return em;
     }
 
-    public PaymentFacade() {
-        super(Payment.class);
+    public OrderDetailFacade() {
+        super(OrderDetail.class);
     }
     
 }

@@ -19,7 +19,7 @@ public class FeedbackFacade extends AbstractFacade<Feedback> implements Feedback
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    protected jakarta.persistence.EntityManager getEntityManager() {
         return em;
     }
 

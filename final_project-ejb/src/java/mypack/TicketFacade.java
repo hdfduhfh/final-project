@@ -19,7 +19,7 @@ public class TicketFacade extends AbstractFacade<Ticket> implements TicketFacade
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    protected jakarta.persistence.EntityManager getEntityManager() {
         return em;
     }
 

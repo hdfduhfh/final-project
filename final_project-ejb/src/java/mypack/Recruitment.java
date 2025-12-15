@@ -4,6 +4,8 @@
  */
 package mypack;
 
+import java.io.Serializable;
+import java.util.Date;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,19 +19,13 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import java.io.Serializable;
-import java.util.Date;
 
 /**
  *
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "Recruitment")
-@XmlRootElement
+@Table(name = "Recruitment", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
     @NamedQuery(name = "Recruitment.findAll", query = "SELECT r FROM Recruitment r"),
     @NamedQuery(name = "Recruitment.findByJobID", query = "SELECT r FROM Recruitment r WHERE r.jobID = :jobID"),
@@ -41,19 +37,16 @@ public class Recruitment implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "JobID")
+    @Column(name = "JobID", nullable = false)
     private Integer jobID;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 2147483647)
-    @Column(name = "Description")
+    @Column(name = "Description", nullable = false, length = 2147483647)
     private String description;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "PostedAt")
+    @Column(name = "PostedAt", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date postedAt;
-    @JoinColumn(name = "UserID", referencedColumnName = "UserID")
+    @JoinColumn(name = "UserID", referencedColumnName = "UserID", nullable = false)
     @ManyToOne(optional = false)
     private User userID;
 

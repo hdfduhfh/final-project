@@ -79,27 +79,6 @@
                     </select>
                 </p>
 
-                <!-- Tổng số ghế -->
-                <p>
-                    <label>Tổng số ghế (TotalSeats) (<span style="color:red">*</span>):</label><br/>
-                    <input type="number"
-                           name="totalSeats"
-                           min="1"
-                           style="width: 100px;"
-                           value="${param.totalSeats != null ? param.totalSeats : ''}"
-                    required/>
-            </p>
-
-            <!-- Số ghế trống -->
-            <p>
-                <label>Số ghế trống (AvailableSeats) (<span style="color:red">*</span>):</label><br/>
-                <input type="number"
-                       name="availableSeats"
-                       min="0"
-                       style="width: 100px;"
-                       value="${param.availableSeats != null ? param.availableSeats : ''}"
-                       required/>
-            </p>
 
             <p>
                 <button type="submit">Lưu lịch chiếu</button>

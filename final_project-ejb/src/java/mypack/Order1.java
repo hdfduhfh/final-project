@@ -4,6 +4,10 @@
  */
 package mypack;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Date;
 import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -19,70 +23,75 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlTransient;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Date;
 
 /**
  *
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "Order")
-@XmlRootElement
+@Table(name = "Order", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
     @NamedQuery(name = "Order1.findAll", query = "SELECT o FROM Order1 o"),
     @NamedQuery(name = "Order1.findByOrderID", query = "SELECT o FROM Order1 o WHERE o.orderID = :orderID"),
     @NamedQuery(name = "Order1.findByTotalAmount", query = "SELECT o FROM Order1 o WHERE o.totalAmount = :totalAmount"),
     @NamedQuery(name = "Order1.findByDiscountAmount", query = "SELECT o FROM Order1 o WHERE o.discountAmount = :discountAmount"),
+    @NamedQuery(name = "Order1.findByFinalAmount", query = "SELECT o FROM Order1 o WHERE o.finalAmount = :finalAmount"),
     @NamedQuery(name = "Order1.findByPromotionCode", query = "SELECT o FROM Order1 o WHERE o.promotionCode = :promotionCode"),
+    @NamedQuery(name = "Order1.findByPaymentMethod", query = "SELECT o FROM Order1 o WHERE o.paymentMethod = :paymentMethod"),
+    @NamedQuery(name = "Order1.findByPaymentStatus", query = "SELECT o FROM Order1 o WHERE o.paymentStatus = :paymentStatus"),
+    @NamedQuery(name = "Order1.findByTransactionCode", query = "SELECT o FROM Order1 o WHERE o.transactionCode = :transactionCode"),
+    @NamedQuery(name = "Order1.findByPaidAt", query = "SELECT o FROM Order1 o WHERE o.paidAt = :paidAt"),
     @NamedQuery(name = "Order1.findByStatus", query = "SELECT o FROM Order1 o WHERE o.status = :status"),
-    @NamedQuery(name = "Order1.findByCreatedAt", query = "SELECT o FROM Order1 o WHERE o.createdAt = :createdAt")})
+    @NamedQuery(name = "Order1.findByCreatedAt", query = "SELECT o FROM Order1 o WHERE o.createdAt = :createdAt"),
+    @NamedQuery(name = "Order1.findByUpdatedAt", query = "SELECT o FROM Order1 o WHERE o.updatedAt = :updatedAt")})
 public class Order1 implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "OrderID")
+    @Column(name = "OrderID", nullable = false)
     private Integer orderID;
     // @Max(value=?)  @Min(value=?)//if you know range of your decimal fields consider using these annotations to enforce field validation
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "TotalAmount")
+    @Column(name = "TotalAmount", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "DiscountAmount")
+    @Column(name = "DiscountAmount", nullable = false, precision = 12, scale = 2)
     private BigDecimal discountAmount;
-    @Size(max = 50)
-    @Column(name = "PromotionCode")
-    private String promotionCode;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 20)
-    @Column(name = "Status")
+    @Column(name = "FinalAmount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal finalAmount;
+    @Column(name = "PromotionCode", length = 50)
+    private String promotionCode;
+    @Column(name = "PaymentMethod", length = 30)
+    private String paymentMethod;
+    @Basic(optional = false)
+    @Column(name = "PaymentStatus", nullable = false, length = 20)
+    private String paymentStatus;
+    @Column(name = "TransactionCode", length = 100)
+    private String transactionCode;
+    @Column(name = "PaidAt")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date paidAt;
+    @Basic(optional = false)
+    @Column(name = "Status", nullable = false, length = 20)
     private String status;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "CreatedAt")
+    @Column(name = "CreatedAt", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
+    @Column(name = "UpdatedAt")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date updatedAt;
     @JoinColumn(name = "PromotionID", referencedColumnName = "PromotionID")
     @ManyToOne
     private Promotion promotionID;
-    @JoinColumn(name = "UserID", referencedColumnName = "UserID")
+    @JoinColumn(name = "UserID", referencedColumnName = "UserID", nullable = false)
     @ManyToOne(optional = false)
     private User userID;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "orderID")
-    private Collection<Ticket> ticketCollection;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "orderID")
-    private Collection<Payment> paymentCollection;
+    private Collection<OrderDetail> orderDetailCollection;
 
     public Order1() {
     }
@@ -91,10 +100,12 @@ public class Order1 implements Serializable {
         this.orderID = orderID;
     }
 
-    public Order1(Integer orderID, BigDecimal totalAmount, BigDecimal discountAmount, String status, Date createdAt) {
+    public Order1(Integer orderID, BigDecimal totalAmount, BigDecimal discountAmount, BigDecimal finalAmount, String paymentStatus, String status, Date createdAt) {
         this.orderID = orderID;
         this.totalAmount = totalAmount;
         this.discountAmount = discountAmount;
+        this.finalAmount = finalAmount;
+        this.paymentStatus = paymentStatus;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -123,12 +134,52 @@ public class Order1 implements Serializable {
         this.discountAmount = discountAmount;
     }
 
+    public BigDecimal getFinalAmount() {
+        return finalAmount;
+    }
+
+    public void setFinalAmount(BigDecimal finalAmount) {
+        this.finalAmount = finalAmount;
+    }
+
     public String getPromotionCode() {
         return promotionCode;
     }
 
     public void setPromotionCode(String promotionCode) {
         this.promotionCode = promotionCode;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public String getTransactionCode() {
+        return transactionCode;
+    }
+
+    public void setTransactionCode(String transactionCode) {
+        this.transactionCode = transactionCode;
+    }
+
+    public Date getPaidAt() {
+        return paidAt;
+    }
+
+    public void setPaidAt(Date paidAt) {
+        this.paidAt = paidAt;
     }
 
     public String getStatus() {
@@ -147,6 +198,14 @@ public class Order1 implements Serializable {
         this.createdAt = createdAt;
     }
 
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public Promotion getPromotionID() {
         return promotionID;
     }
@@ -163,22 +222,12 @@ public class Order1 implements Serializable {
         this.userID = userID;
     }
 
-    @XmlTransient
-    public Collection<Ticket> getTicketCollection() {
-        return ticketCollection;
+    public Collection<OrderDetail> getOrderDetailCollection() {
+        return orderDetailCollection;
     }
 
-    public void setTicketCollection(Collection<Ticket> ticketCollection) {
-        this.ticketCollection = ticketCollection;
-    }
-
-    @XmlTransient
-    public Collection<Payment> getPaymentCollection() {
-        return paymentCollection;
-    }
-
-    public void setPaymentCollection(Collection<Payment> paymentCollection) {
-        this.paymentCollection = paymentCollection;
+    public void setOrderDetailCollection(Collection<OrderDetail> orderDetailCollection) {
+        this.orderDetailCollection = orderDetailCollection;
     }
 
     @Override

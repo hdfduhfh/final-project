@@ -24,7 +24,6 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
-
 /**
  *
  * @author DANG KHOA

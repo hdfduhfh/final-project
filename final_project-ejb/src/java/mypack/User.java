@@ -35,7 +35,7 @@ import java.util.Date;
 @Table(name = "[User]")
 @XmlRootElement
 @NamedQueries({
-    @NamedQuery(name = "User.login",query = "SELECT u FROM User u WHERE u.email = :email AND u.passwordHash = :passwordHash"),
+    @NamedQuery(name = "User.login", query = "SELECT u FROM User u WHERE u.email = :email AND u.passwordHash = :passwordHash"),
     @NamedQuery(name = "User.findAll", query = "SELECT u FROM User u"),
     @NamedQuery(name = "User.findByUserID", query = "SELECT u FROM User u WHERE u.userID = :userID"),
     @NamedQuery(name = "User.findByFullName", query = "SELECT u FROM User u WHERE u.fullName = :fullName"),
@@ -45,7 +45,6 @@ import java.util.Date;
     @NamedQuery(name = "User.findByCreatedAt", query = "SELECT u FROM User u WHERE u.createdAt = :createdAt"),
     @NamedQuery(name = "User.findByUpdatedAt", query = "SELECT u FROM User u WHERE u.updatedAt = :updatedAt"),
     @NamedQuery(name = "User.findByLastLogin", query = "SELECT u FROM User u WHERE u.lastLogin = :lastLogin")})
-
 public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -87,13 +86,11 @@ public class User implements Serializable {
     private Date lastLogin;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userID")
     private Collection<Order1> order1Collection;
-    @JoinColumn(name = "RoleID", referencedColumnName = "RoleID")
+    @JoinColumn(name = "RoleID", referencedColumnName = "RoleID", nullable = false)
     @ManyToOne(optional = false)
     private Role roleID;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userID")
     private Collection<Recruitment> recruitmentCollection;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "userID")
-    private Collection<Payment> paymentCollection;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userID")
     private Collection<Feedback> feedbackCollection;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userID")
@@ -178,7 +175,6 @@ public class User implements Serializable {
         this.lastLogin = lastLogin;
     }
 
-    @XmlTransient
     public Collection<Order1> getOrder1Collection() {
         return order1Collection;
     }
@@ -195,7 +191,6 @@ public class User implements Serializable {
         this.roleID = roleID;
     }
 
-    @XmlTransient
     public Collection<Recruitment> getRecruitmentCollection() {
         return recruitmentCollection;
     }
@@ -204,16 +199,6 @@ public class User implements Serializable {
         this.recruitmentCollection = recruitmentCollection;
     }
 
-    @XmlTransient
-    public Collection<Payment> getPaymentCollection() {
-        return paymentCollection;
-    }
-
-    public void setPaymentCollection(Collection<Payment> paymentCollection) {
-        this.paymentCollection = paymentCollection;
-    }
-
-    @XmlTransient
     public Collection<Feedback> getFeedbackCollection() {
         return feedbackCollection;
     }
@@ -222,7 +207,6 @@ public class User implements Serializable {
         this.feedbackCollection = feedbackCollection;
     }
 
-    @XmlTransient
     public Collection<News> getNewsCollection() {
         return newsCollection;
     }

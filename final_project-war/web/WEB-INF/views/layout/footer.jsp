@@ -40,12 +40,13 @@
         <!-- Support -->
         <div class="footer-section">
             <h3>💡 Hỗ trợ khách hàng</h3>
-            <a href="${pageContext.request.contextPath}/guide">Hướng dẫn đặt vé</a>
-            <a href="${pageContext.request.contextPath}/policy">Chính sách đổi/trả vé</a>
-            <a href="${pageContext.request.contextPath}/faq">Câu hỏi thường gặp</a>
-            <a href="${pageContext.request.contextPath}/terms">Điều khoản sử dụng</a>
-            <a href="${pageContext.request.contextPath}/privacy">Chính sách bảo mật</a>
+            <a href="${pageContext.request.contextPath}/pages/guide.jsp">Hướng dẫn đặt vé</a>
+            <a href="${pageContext.request.contextPath}/pages/policy.jsp">Chính sách đổi/trả vé</a>
+            <a href="${pageContext.request.contextPath}/pages/faq.jsp">Câu hỏi thường gặp</a>
+            <a href="${pageContext.request.contextPath}/pages/terms.jsp">Điều khoản sử dụng</a>
+            <a href="${pageContext.request.contextPath}/pages/privacy.jsp">Chính sách bảo mật</a>
         </div>
+
 
         <!-- Contact -->
         <div class="footer-section">

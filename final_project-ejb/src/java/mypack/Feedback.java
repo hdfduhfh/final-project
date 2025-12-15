@@ -4,6 +4,8 @@
  */
 package mypack;
 
+import java.io.Serializable;
+import java.util.Date;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,19 +19,13 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import java.io.Serializable;
-import java.util.Date;
 
 /**
  *
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "Feedback")
-@XmlRootElement
+@Table(name = "Feedback", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
     @NamedQuery(name = "Feedback.findAll", query = "SELECT f FROM Feedback f"),
     @NamedQuery(name = "Feedback.findByFeedbackID", query = "SELECT f FROM Feedback f WHERE f.feedbackID = :feedbackID"),
@@ -44,32 +40,27 @@ public class Feedback implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "FeedbackID")
+    @Column(name = "FeedbackID", nullable = false)
     private Integer feedbackID;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "Rating")
+    @Column(name = "Rating", nullable = false)
     private int rating;
-    @Size(max = 2147483647)
-    @Column(name = "Comment")
+    @Column(name = "Comment", length = 2147483647)
     private String comment;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 20)
-    @Column(name = "Status")
+    @Column(name = "Status", nullable = false, length = 20)
     private String status;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "CreatedAt")
+    @Column(name = "CreatedAt", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
     @Column(name = "UpdatedAt")
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
-    @JoinColumn(name = "ScheduleID", referencedColumnName = "ScheduleID")
+    @JoinColumn(name = "ScheduleID", referencedColumnName = "ScheduleID", nullable = false)
     @ManyToOne(optional = false)
     private ShowSchedule scheduleID;
-    @JoinColumn(name = "UserID", referencedColumnName = "UserID")
+    @JoinColumn(name = "UserID", referencedColumnName = "UserID", nullable = false)
     @ManyToOne(optional = false)
     private User userID;
 

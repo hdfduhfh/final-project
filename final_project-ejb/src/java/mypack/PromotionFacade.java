@@ -19,7 +19,7 @@ public class PromotionFacade extends AbstractFacade<Promotion> implements Promot
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    protected jakarta.persistence.EntityManager getEntityManager() {
         return em;
     }
 

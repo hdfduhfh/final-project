@@ -4,6 +4,9 @@
  */
 package mypack;
 
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Date;
 import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,21 +20,13 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlTransient;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Date;
 
 /**
  *
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "Seat")
-@XmlRootElement
+@Table(name = "Seat", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
     @NamedQuery(name = "Seat.findAll", query = "SELECT s FROM Seat s"),
     @NamedQuery(name = "Seat.findBySeatID", query = "SELECT s FROM Seat s WHERE s.seatID = :seatID"),
@@ -47,38 +42,29 @@ public class Seat implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "SeatID")
+    @Column(name = "SeatID", nullable = false)
     private Integer seatID;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 10)
-    @Column(name = "SeatNumber")
+    @Column(name = "SeatNumber", nullable = false, length = 10)
     private String seatNumber;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 20)
-    @Column(name = "SeatType")
+    @Column(name = "SeatType", nullable = false, length = 20)
     private String seatType;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 5)
-    @Column(name = "RowLabel")
+    @Column(name = "RowLabel", nullable = false, length = 5)
     private String rowLabel;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "ColumnNumber")
+    @Column(name = "ColumnNumber", nullable = false)
     private int columnNumber;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "IsActive")
+    @Column(name = "IsActive", nullable = false)
     private boolean isActive;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "CreatedAt")
+    @Column(name = "CreatedAt", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "seatID")
-    private Collection<Ticket> ticketCollection;
+    private Collection<OrderDetail> orderDetailCollection;
 
     public Seat() {
     }
@@ -153,13 +139,12 @@ public class Seat implements Serializable {
         this.createdAt = createdAt;
     }
 
-    @XmlTransient
-    public Collection<Ticket> getTicketCollection() {
-        return ticketCollection;
+    public Collection<OrderDetail> getOrderDetailCollection() {
+        return orderDetailCollection;
     }
 
-    public void setTicketCollection(Collection<Ticket> ticketCollection) {
-        this.ticketCollection = ticketCollection;
+    public void setOrderDetailCollection(Collection<OrderDetail> orderDetailCollection) {
+        this.orderDetailCollection = orderDetailCollection;
     }
 
     @Override

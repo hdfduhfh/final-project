@@ -4,6 +4,10 @@
  */
 package mypack;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Date;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,22 +20,13 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlTransient;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Date;
 
 /**
  *
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "Promotion")
-@XmlRootElement
+@Table(name = "Promotion", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
     @NamedQuery(name = "Promotion.findAll", query = "SELECT p FROM Promotion p"),
     @NamedQuery(name = "Promotion.findByPromotionID", query = "SELECT p FROM Promotion p WHERE p.promotionID = :promotionID"),
@@ -52,46 +47,35 @@ public class Promotion implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "PromotionID")
+    @Column(name = "PromotionID", nullable = false)
     private Integer promotionID;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 100)
-    @Column(name = "Name")
+    @Column(name = "Name", nullable = false, length = 100)
     private String name;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 50)
-    @Column(name = "Code")
+    @Column(name = "Code", nullable = false, length = 50)
     private String code;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 20)
-    @Column(name = "DiscountType")
+    @Column(name = "DiscountType", nullable = false, length = 20)
     private String discountType;
     // @Max(value=?)  @Min(value=?)//if you know range of your decimal fields consider using these annotations to enforce field validation
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "DiscountValue")
+    @Column(name = "DiscountValue", nullable = false, precision = 12, scale = 2)
     private BigDecimal discountValue;
-    @Column(name = "MinOrderAmount")
+    @Column(name = "MinOrderAmount", precision = 12, scale = 2)
     private BigDecimal minOrderAmount;
-    @Column(name = "MaxDiscount")
+    @Column(name = "MaxDiscount", precision = 12, scale = 2)
     private BigDecimal maxDiscount;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "StartDate")
+    @Column(name = "StartDate", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date startDate;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "EndDate")
+    @Column(name = "EndDate", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date endDate;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 20)
-    @Column(name = "Status")
+    @Column(name = "Status", nullable = false, length = 20)
     private String status;
     @Column(name = "MaxUsage")
     private Integer maxUsage;
@@ -214,7 +198,6 @@ public class Promotion implements Serializable {
         this.maxUsagePerUser = maxUsagePerUser;
     }
 
-    @XmlTransient
     public Collection<Order1> getOrder1Collection() {
         return order1Collection;
     }

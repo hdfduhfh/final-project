@@ -19,7 +19,7 @@ public class Order1Facade extends AbstractFacade<Order1> implements Order1Facade
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    protected jakarta.persistence.EntityManager getEntityManager() {
         return em;
     }
 

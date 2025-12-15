@@ -19,7 +19,7 @@ public class ShowArtistFacade extends AbstractFacade<ShowArtist> implements Show
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    protected jakarta.persistence.EntityManager getEntityManager() {
         return em;
     }
 

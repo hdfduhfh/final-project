@@ -19,7 +19,7 @@ public class SeatFacade extends AbstractFacade<Seat> implements SeatFacadeLocal 
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    protected jakarta.persistence.EntityManager getEntityManager() {
         return em;
     }
 

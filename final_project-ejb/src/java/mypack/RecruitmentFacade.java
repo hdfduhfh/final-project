@@ -19,7 +19,7 @@ public class RecruitmentFacade extends AbstractFacade<Recruitment> implements Re
     private EntityManager em;
 
     @Override
-    protected EntityManager getEntityManager() {
+    protected jakarta.persistence.EntityManager getEntityManager() {
         return em;
     }
 

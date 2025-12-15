@@ -58,8 +58,6 @@ CREATE TABLE dbo.ShowSchedule (
     ShowID          INT          NOT NULL,
     ShowTime        DATETIME     NOT NULL,
     Status          VARCHAR(20)  NOT NULL,
-    TotalSeats      INT          NOT NULL,
-    AvailableSeats  INT          NOT NULL,
     CreatedAt       DATETIME     NOT NULL DEFAULT(GETDATE()),
 
     CONSTRAINT FK_ShowSchedule_Show
@@ -97,17 +95,60 @@ CREATE TABLE dbo.ShowArtist (
     CONSTRAINT FK_ShowArtist_Artist
         FOREIGN KEY (ArtistID) REFERENCES dbo.Artist(ArtistID)
 );
+sql-- ============================================
+-- BƯỚC 1: XÓA CÁC BẢNG CŨ
+-- ============================================
 
---Bảng order
+-- Xóa ràng buộc trước
+IF OBJECT_ID('dbo.FK_Ticket_Payment', 'F') IS NOT NULL
+    ALTER TABLE dbo.Ticket DROP CONSTRAINT FK_Ticket_Payment;
+IF OBJECT_ID('dbo.FK_Ticket_Seat', 'F') IS NOT NULL
+    ALTER TABLE dbo.Ticket DROP CONSTRAINT FK_Ticket_Seat;
+IF OBJECT_ID('dbo.FK_Ticket_Schedule', 'F') IS NOT NULL
+    ALTER TABLE dbo.Ticket DROP CONSTRAINT FK_Ticket_Schedule;
+IF OBJECT_ID('dbo.FK_Ticket_Order', 'F') IS NOT NULL
+    ALTER TABLE dbo.Ticket DROP CONSTRAINT FK_Ticket_Order;
+IF OBJECT_ID('dbo.FK_Payment_Order', 'F') IS NOT NULL
+    ALTER TABLE dbo.Payment DROP CONSTRAINT FK_Payment_Order;
+IF OBJECT_ID('dbo.FK_Payment_User', 'F') IS NOT NULL
+    ALTER TABLE dbo.Payment DROP CONSTRAINT FK_Payment_User;
+IF OBJECT_ID('dbo.FK_Order_Promotion', 'F') IS NOT NULL
+    ALTER TABLE dbo.[Order] DROP CONSTRAINT FK_Order_Promotion;
+IF OBJECT_ID('dbo.FK_Order_User', 'F') IS NOT NULL
+    ALTER TABLE dbo.[Order] DROP CONSTRAINT FK_Order_User;
+
+-- Xóa các bảng
+DROP TABLE IF EXISTS dbo.Ticket;
+DROP TABLE IF EXISTS dbo.Payment;
+DROP TABLE IF EXISTS dbo.[Order];
+
+-- ============================================
+-- BƯỚC 2: TẠO LẠI CÁC BẢNG MỚI
+-- ============================================
+
+-- Bảng Order (Đơn hàng + Thanh toán)
 CREATE TABLE dbo.[Order] (
-    OrderID        INT IDENTITY(1,1) PRIMARY KEY,
-    UserID         INT           NOT NULL,
-    PromotionID    INT           NULL,   -- nullable nếu không dùng mã KM
-    TotalAmount    DECIMAL(12,2) NOT NULL,
-    DiscountAmount DECIMAL(12,2) NOT NULL DEFAULT(0),
-    PromotionCode  VARCHAR(50)   NULL,
-    Status         VARCHAR(20)   NOT NULL,
-    CreatedAt      DATETIME      NOT NULL DEFAULT(GETDATE()),
+    OrderID         INT IDENTITY(1,1) PRIMARY KEY,
+    UserID          INT           NOT NULL,
+    PromotionID     INT           NULL,
+    
+    -- Thông tin giá tiền
+    TotalAmount     DECIMAL(12,2) NOT NULL,
+    DiscountAmount  DECIMAL(12,2) NOT NULL DEFAULT(0),
+    FinalAmount     DECIMAL(12,2) NOT NULL, -- TotalAmount - DiscountAmount
+    PromotionCode   VARCHAR(50)   NULL,
+    
+    -- Thông tin thanh toán (gộp luôn vào Order)
+    PaymentMethod      VARCHAR(30)   NULL,     -- 'Cash', 'Card', 'MoMo', 'ZaloPay', 'VNPay'
+    PaymentStatus      VARCHAR(20)   NOT NULL, -- 'Pending', 'Success', 'Failed', 'Refunded'
+    TransactionCode    VARCHAR(100)  NULL,     -- Mã giao dịch từ cổng thanh toán
+    PaidAt             DATETIME      NULL,     -- Thời điểm thanh toán thành công
+    
+    -- Trạng thái đơn hàng
+    Status          VARCHAR(20)   NOT NULL,    -- 'Pending', 'Confirmed', 'Cancelled', 'Completed'
+    
+    CreatedAt       DATETIME      NOT NULL DEFAULT(GETDATE()),
+    UpdatedAt       DATETIME      NULL,
 
     CONSTRAINT FK_Order_User
         FOREIGN KEY (UserID) REFERENCES dbo.[User](UserID),
@@ -115,45 +156,37 @@ CREATE TABLE dbo.[Order] (
         FOREIGN KEY (PromotionID) REFERENCES dbo.Promotion(PromotionID)
 );
 
---Bảng thanh toán
-CREATE TABLE dbo.Payment (
-    PaymentID       INT IDENTITY(1,1) PRIMARY KEY,
-    UserID          INT           NOT NULL,
-    OrderID         INT           NOT NULL,
-    Amount          DECIMAL(12,2) NOT NULL,
-    Method          VARCHAR(30)   NOT NULL,
-    Status          VARCHAR(20)   NOT NULL,
-    TransactionCode VARCHAR(100)  NULL,
-    PaidAt          DATETIME      NULL,
-    CreatedAt       DATETIME      NOT NULL DEFAULT(GETDATE()),
-    UpdatedAt       DATETIME      NULL,
+-- Bảng OrderDetail (Chi tiết đơn hàng - từng vé)
+CREATE TABLE dbo.OrderDetail (
+    OrderDetailID INT IDENTITY(1,1) PRIMARY KEY,
+    OrderID       INT           NOT NULL,
+    ScheduleID    INT           NOT NULL,
+    SeatID        INT           NOT NULL,
+    Price         DECIMAL(12,2) NOT NULL, -- Giá tại thời điểm đặt
+    Quantity      INT           NOT NULL DEFAULT(1),
+    CreatedAt     DATETIME      NOT NULL DEFAULT(GETDATE()),
 
-    CONSTRAINT FK_Payment_User
-        FOREIGN KEY (UserID) REFERENCES dbo.[User](UserID),
-    CONSTRAINT FK_Payment_Order
-        FOREIGN KEY (OrderID) REFERENCES dbo.[Order](OrderID)
+    CONSTRAINT FK_OrderDetail_Order
+        FOREIGN KEY (OrderID) REFERENCES dbo.[Order](OrderID),
+    CONSTRAINT FK_OrderDetail_Schedule
+        FOREIGN KEY (ScheduleID) REFERENCES dbo.ShowSchedule(ScheduleID),
+    CONSTRAINT FK_OrderDetail_Seat
+        FOREIGN KEY (SeatID) REFERENCES dbo.Seat(SeatID)
 );
 
---Bảng vé 
+-- Bảng Ticket (Vé thực tế - sinh sau khi thanh toán thành công)
 CREATE TABLE dbo.Ticket (
-    TicketID    INT IDENTITY(1,1) PRIMARY KEY,
-    OrderID     INT           NOT NULL,
-    ScheduleID  INT           NOT NULL,
-    SeatID      INT           NOT NULL,
-    Price       DECIMAL(12,2) NOT NULL,
-    PaymentID   INT           NULL,           -- optional, nullable if unpaid
-    Status      VARCHAR(20)   NOT NULL,
-    CreatedAt   DATETIME      NOT NULL DEFAULT(GETDATE()),
-    UpdatedAt   DATETIME      NULL,
+    TicketID      INT IDENTITY(1,1) PRIMARY KEY,
+    OrderDetailID INT           NOT NULL,
+    QRCode        VARCHAR(100)  NULL,      -- Mã QR để check-in
+    Status        VARCHAR(20)   NOT NULL,  -- 'Valid', 'Used', 'Cancelled', 'Expired'
+    IssuedAt      DATETIME      NOT NULL DEFAULT(GETDATE()), -- Thời điểm phát hành vé
+    CheckInAt     DATETIME      NULL,      -- Thời điểm quét vé
+    CreatedAt     DATETIME      NOT NULL DEFAULT(GETDATE()),
+    UpdatedAt     DATETIME      NULL,
 
-    CONSTRAINT FK_Ticket_Order
-        FOREIGN KEY (OrderID) REFERENCES dbo.[Order](OrderID),
-    CONSTRAINT FK_Ticket_Schedule
-        FOREIGN KEY (ScheduleID) REFERENCES dbo.ShowSchedule(ScheduleID),
-    CONSTRAINT FK_Ticket_Seat
-        FOREIGN KEY (SeatID) REFERENCES dbo.Seat(SeatID),
-    CONSTRAINT FK_Ticket_Payment
-        FOREIGN KEY (PaymentID) REFERENCES dbo.Payment(PaymentID)
+    CONSTRAINT FK_Ticket_OrderDetail
+        FOREIGN KEY (OrderDetailID) REFERENCES dbo.OrderDetail(OrderDetailID)
 );
 
 --Bảng feedback 
@@ -237,5 +270,4 @@ ALTER TABLE dbo.Artist
 
 ALTER TABLE dbo.[Show]
     ALTER COLUMN ShowName NVARCHAR(150)  NOT NULL;
-
 

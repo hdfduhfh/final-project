@@ -4,6 +4,8 @@
  */
 package mypack;
 
+import java.io.Serializable;
+import java.util.Collection;
 import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,20 +17,13 @@ import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlTransient;
-import java.io.Serializable;
-import java.util.Collection;
 
 /**
  *
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "Artist")
-@XmlRootElement
+@Table(name = "Artist", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
     @NamedQuery(name = "Artist.findAll", query = "SELECT a FROM Artist a"),
     @NamedQuery(name = "Artist.findByArtistID", query = "SELECT a FROM Artist a WHERE a.artistID = :artistID"),
@@ -42,21 +37,16 @@ public class Artist implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "ArtistID")
+    @Column(name = "ArtistID", nullable = false)
     private Integer artistID;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 100)
-    @Column(name = "Name")
+    @Column(name = "Name", nullable = false, length = 100)
     private String name;
-    @Size(max = 50)
-    @Column(name = "Role")
+    @Column(name = "Role", length = 50)
     private String role;
-    @Size(max = 255)
-    @Column(name = "Bio")
+    @Column(name = "Bio", length = 255)
     private String bio;
-    @Size(max = 500)
-    @Column(name = "ArtistImage")
+    @Column(name = "ArtistImage", length = 500)
     private String artistImage;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "artistID")
     private Collection<ShowArtist> showArtistCollection;
@@ -113,7 +103,6 @@ public class Artist implements Serializable {
         this.artistImage = artistImage;
     }
 
-    @XmlTransient
     public Collection<ShowArtist> getShowArtistCollection() {
         return showArtistCollection;
     }

@@ -4,6 +4,9 @@
  */
 package mypack;
 
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Date;
 import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,21 +20,13 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlTransient;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Date;
 
 /**
  *
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "Show")
-@XmlRootElement
+@Table(name = "Show", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
     @NamedQuery(name = "Show.findAll", query = "SELECT s FROM Show s"),
     @NamedQuery(name = "Show.findByShowID", query = "SELECT s FROM Show s WHERE s.showID = :showID"),
@@ -47,31 +42,23 @@ public class Show implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "ShowID")
+    @Column(name = "ShowID", nullable = false)
     private Integer showID;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 150)
-    @Column(name = "ShowName")
+    @Column(name = "ShowName", nullable = false, length = 150)
     private String showName;
-    @Size(max = 255)
-    @Column(name = "Description")
+    @Column(name = "Description", length = 255)
     private String description;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "DurationMinutes")
+    @Column(name = "DurationMinutes", nullable = false)
     private int durationMinutes;
     @Basic(optional = false)
-    @NotNull
-    @Size(min = 1, max = 20)
-    @Column(name = "Status")
+    @Column(name = "Status", nullable = false, length = 20)
     private String status;
-    @Size(max = 500)
-    @Column(name = "ShowImage")
+    @Column(name = "ShowImage", length = 500)
     private String showImage;
     @Basic(optional = false)
-    @NotNull
-    @Column(name = "CreatedAt")
+    @Column(name = "CreatedAt", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "showID")
@@ -150,7 +137,6 @@ public class Show implements Serializable {
         this.createdAt = createdAt;
     }
 
-    @XmlTransient
     public Collection<ShowArtist> getShowArtistCollection() {
         return showArtistCollection;
     }
@@ -159,7 +145,6 @@ public class Show implements Serializable {
         this.showArtistCollection = showArtistCollection;
     }
 
-    @XmlTransient
     public Collection<ShowSchedule> getShowScheduleCollection() {
         return showScheduleCollection;
     }

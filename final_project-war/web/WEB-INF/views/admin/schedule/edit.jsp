@@ -3,134 +3,105 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <html>
-    <head>
-        <title>Sửa Lịch chiếu</title>
-    </head>
-    <body>
-        <h1>Sửa Lịch chiếu</h1>
+<head>
+    <title>Sửa Lịch chiếu</title>
 
-        <!-- Thông báo tổng -->
-        <c:if test="${not empty globalMessage}">
-            <div style="color: red; font-weight: bold; margin-bottom: 5px;">
-                ${globalMessage}
-            </div>
-        </c:if>
+    <script>
+        function validateShowForm() {
+            let showID = document.querySelector("select[name='showID']").value.trim();
+            let showTime = document.querySelector("input[name='showTime']").value.trim();
+            let status = document.querySelector("select[name='status']").value.trim();
 
-        <!-- Thông báo lỗi server-side (từ servlet) -->
-        <c:if test="${not empty error}">
-            <div style="color: red; font-weight: bold; margin-bottom: 10px;">
-                ${error}
-            </div>
-        </c:if>
+            let error = "";
 
-        <!-- Thông báo lỗi client-side -->
-        <div id="clientError" style="color: red; font-weight: bold; margin-bottom: 10px;"></div>
+            if (showID === "")
+                error += "- Chưa chọn vở diễn<br/>";
+            if (showTime === "")
+                error += "- Chưa chọn giờ chiếu<br/>";
+            if (status === "")
+                error += "- Chưa chọn trạng thái<br/>";
 
-        <form method="post"
-              action="${pageContext.request.contextPath}/admin/schedule/add"
-              onsubmit="return validateShowForm();" novalidate>
+            if (error !== "") {
+                document.getElementById("clientError").innerHTML = error;
+                return false;
+            }
 
-            <c:if test="${schedule == null}">
-                <div style="color: red; font-weight: bold;">
-                    Không tìm thấy lịch chiếu.
-                </div>
-            </c:if>
+            return true;
+        }
+    </script>
+</head>
 
-            <c:if test="${schedule != null}">
+<body>
+<h1>Sửa Lịch chiếu</h1>
 
-                <!-- Format showTime cho input datetime-local -->
-                <fmt:formatDate value="${schedule.showTime}"
-                                pattern="yyyy-MM-dd'T'HH:mm"
-                                var="showTimeValue" />
+<!-- thông báo -->
+<c:if test="${not empty globalMessage}">
+    <div style="color: red; font-weight: bold">${globalMessage}</div>
+</c:if>
 
-                <form method="post"
-                      action="${pageContext.request.contextPath}/admin/schedule/edit">
+<c:if test="${not empty error}">
+    <div style="color: red; font-weight: bold">${error}</div>
+</c:if>
 
-                    <!-- ID lịch chiếu (ẩn) -->
-                    <input type="hidden" name="scheduleID" value="${schedule.scheduleID}"/>
+<div id="clientError" style="color: red; font-weight: bold;"></div>
 
-                    <!-- Chọn vở diễn -->
-                    <p>
-                        <label>Vở diễn (<span style="color:red">*</span>):</label><br/>
-                        <select name="showID" style="width: 300px;">
-                            <option value="">-- Chọn vở diễn --</option>
+<c:if test="${schedule == null}">
+    <div style="color: red; font-weight: bold;">Không tìm thấy lịch chiếu.</div>
+</c:if>
 
-                            <c:forEach var="s" items="${shows}">
-                                <option value="${s.showID}"
-                                        <c:if test="${param.showID == s.showID}">selected</c:if>>
-                                    ${s.showName}
-                                </option>
-                            </c:forEach>
-                        </select>
-                    </p>
+<c:if test="${schedule != null}">
 
-                    <!-- Giờ chiếu -->
-                    <p>
-                        <label>Giờ chiếu (<span style="color:red">*</span>):</label><br/>
-                        <input type="datetime-local"
-                               name="showTime"
-                               value="${showTimeValue}"
-                               style="width: 220px;"
-                               required/>
-                    </p>
+    <fmt:formatDate value="${schedule.showTime}" pattern="yyyy-MM-dd'T'HH:mm" var="showTimeValue"/>
 
-                    <!-- Trạng thái -->
-                    <p>
-                        <label>Trạng thái(<span style="color:red">*</span>):</label><br/>
-                        <select name="status" style="width: 220px;">
-                            <option value="">Chọn trạng thái</option>
+    <form method="post"
+          action="${pageContext.request.contextPath}/admin/schedule/edit"
+          onsubmit="return validateShowForm();">
 
-                            <option value="Active"
-                                    <c:if test="${empty param.status || param.status eq 'Active'}">selected</c:if>>
-                                        Đang chiếu
-                                    </option>
+        <input type="hidden" name="scheduleID" value="${schedule.scheduleID}"/>
 
-                                    <option value="Inactive"
-                                    <c:if test="${param.status eq 'Inactive'}">selected</c:if>>
-                                        Sắp chiếu
-                                    </option>
+        <p>
+            <label>Vở diễn (<span style="color:red">*</span>):</label><br/>
+            <select name="showID" style="width: 300px;">
+                <option value="">-- Chọn vở diễn --</option>
 
-                                    <option value="Cancelled"
-                                    <c:if test="${param.status eq 'Cancelled'}">selected</c:if>>
-                                        Hủy
-                                    </option>
-                            </select>
-                        </p>
-                        <!-- Tổng số ghế -->
-                        <p>
-                            <label>Tổng số ghế (TotalSeats) (<span style="color:red">*</span>):</label><br/>
-                            <input type="number"
-                                   name="totalSeats"
-                                   min="1"
-                                   style="width: 100px;"
-                                   value="${schedule.totalSeats}"
-                            required/>
-                    </p>
+                <c:forEach var="s" items="${shows}">
+                    <option value="${s.showID}"
+                            <c:if test="${schedule.show.showID == s.showID}">selected</c:if>>
+                        ${s.showName}
+                    </option>
+                </c:forEach>
+            </select>
+        </p>
 
-                    <!-- Số ghế trống -->
-                    <p>
-                        <label>Số ghế trống (AvailableSeats) (<span style="color:red">*</span>):</label><br/>
-                        <input type="number"
-                               name="availableSeats"
-                               min="0"
-                               style="width: 100px;"
-                               value="${schedule.availableSeats}"
-                               required/>
-                    </p>
+        <p>
+            <label>Giờ chiếu (<span style="color:red">*</span>):</label><br/>
+            <input type="datetime-local" name="showTime"
+                   value="${showTimeValue}" style="width: 220px;"/>
+        </p>
 
-                    <!-- Thông tin thêm (nếu muốn) -->
-                    <p>
-                        <strong>Ngày tạo (CreatedAt):</strong>
-                        <fmt:formatDate value="${schedule.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
-                    </p>
+        <p>
+            <label>Trạng thái (<span style="color:red">*</span>):</label><br/>
+            <select name="status" style="width: 220px;">
+                <option value="">Chọn trạng thái</option>
+                <option value="Active" <c:if test="${schedule.status eq 'Active'}">selected</c:if>>Đang chiếu</option>
+                <option value="Inactive" <c:if test="${schedule.status eq 'Inactive'}">selected</c:if>>Sắp chiếu</option>
+                <option value="Cancelled" <c:if test="${schedule.status eq 'Cancelled'}">selected</c:if>>Hủy</option>
+            </select>
+        </p>
 
-                    <p>
-                        <button type="submit">Cập nhật lịch chiếu</button>
-                        <a href="${pageContext.request.contextPath}/admin/schedule">Quay lại danh sách</a>
-                    </p>
+        <p>
+            <strong>Ngày tạo:</strong>
+            <fmt:formatDate value="${schedule.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
+        </p>
 
-                </form>
-            </c:if>
+        <p>
+            <button type="submit">Cập nhật lịch chiếu</button>
+            <a href="${pageContext.request.contextPath}/admin/schedule">Quay lại danh sách</a>
+        </p>
 
-    </body>
+    </form>
+</c:if>
+
+</body>
 </html>
+

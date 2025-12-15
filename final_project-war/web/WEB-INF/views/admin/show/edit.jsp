@@ -1,117 +1,85 @@
-<%-- 
-    Document   : edit
-    Created on : Dec 10, 2025, 10:13:45 AM
-    Author     : DANG KHOA
---%>
-
 <%@ page pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <html>
-    <head>
-        <title>Sửa show</title>
-    </head>
-    <body>
-        <h1>Sửa show</h1>
+<head>
+    <title>Chỉnh sửa show</title>
+</head>
+<body>
+<h1>Chỉnh sửa show</h1>
 
-        <!-- Thông báo tổng -->
-        <c:if test="${not empty globalMessage}">
-            <div style="color: red; font-weight: bold; margin-bottom: 5px;">
-                ${globalMessage}
-            </div>
-        </c:if>
+<c:if test="${not empty globalMessage}">
+    <div style="color: blue; font-weight: bold">${globalMessage}</div>
+</c:if>
+<c:if test="${not empty error}">
+    <div style="color: red; font-weight: bold">${error}</div>
+</c:if>
 
-        <!-- Thông báo lỗi server-side (từ servlet) -->
-        <c:if test="${not empty error}">
-            <div style="color: red; font-weight: bold; margin-bottom: 10px;">
-                ${error}
-            </div>
-        </c:if>
+<form method="post" action="${pageContext.request.contextPath}/admin/show/edit"
+      enctype="multipart/form-data" onsubmit="return validateForm();">
 
-        <!-- Thông báo lỗi client-side -->
-        <div id="clientError" style="color: red; font-weight: bold; margin-bottom: 10px;"></div>
+    <input type="hidden" name="showID" value="${show.showID}" />
 
-        <form method="post"
-              action="${pageContext.request.contextPath}/admin/show/edit"
-              enctype="multipart/form-data"
-              onsubmit="return validateShowForm();" novalidate>
-            <p>
-                <label>Tên vở diễn (<span style="color:red">*</span>):</label><br/>
-                <input type="text" name="showName" style="width: 300px;"
-                       value="${param.showName != null ? param.showName : ''}" required/>
-            </p>
+    <p>
+        <label>Tên vở diễn (*)</label><br/>
+        <input type="text" name="showName" value="${show.showName}" required />
+    </p>
 
-            <p>
-                <label>Mô tả(<span style="color:red">*</span>):</label><br/>
-                <textarea name="description" rows="4" cols="50"
-                          style="width: 400px; height: 100px;" required>${param.description != null ? param.description : ''}</textarea>
-            </p>
+    <p>
+        <label>Mô tả (*)</label><br/>
+        <textarea name="description" rows="4" cols="50" required>${show.description}</textarea>
+    </p>
 
-            <p>
-                <label>Thời lượng (phút)(<span style="color:red">*</span>):</label><br/>
-                <input type="number" name="durationMinutes" min="1" style="width: 100px;"
-                       value="${param.durationMinutes != null ? param.durationMinutes : ''}" required/>
-            </p>
+    <p>
+        <label>Thời lượng (phút) (*)</label><br/>
+        <input type="number" name="durationMinutes" min="1" value="${show.durationMinutes}" required />
+    </p>
 
-            <!-- TRẠNG THÁI: dropdown -->
-            <p>
-                <label>Trạng thái(<span style="color:red">*</span>):</label><br/>
-                <select name="status" style="width: 220px;">
-                    <option value="">Chọn trạng thái</option>
+    <p>
+        <label>Trạng thái (*)</label><br/>
+        <select name="status" required>
+            <option value="">Chọn trạng thái</option>
+            <option value="Active" <c:if test="${show.status=='Active'}">selected</c:if>>Active</option>
+            <option value="Inactive" <c:if test="${show.status=='Inactive'}">selected</c:if>>Inactive</option>
+            <option value="Cancelled" <c:if test="${show.status=='Cancelled'}">selected</c:if>>Cancelled</option>
+        </select>
+    </p>
 
-                    <option value="Active"
-                            <c:if test="${empty param.status || param.status eq 'Active'}">selected</c:if>>
-                                Đang hoạt động (Active)
-                            </option>
+    <p>
+        <label>Nghệ sĩ tham gia (*)</label><br/>
+        <select name="artistIDs" multiple size="5">
+            <c:forEach var="a" items="${artists}">
+                <option value="${a.artistID}" <c:if test="${selectedArtistIDs.contains(a.artistID)}">selected</c:if>>
+                    ${a.name}
+                </option>
+            </c:forEach>
+        </select><br/>
+        <small>(Giữ Ctrl để chọn nhiều nghệ sĩ)</small>
+    </p>
 
-                            <option value="Inactive"
-                            <c:if test="${param.status eq 'Inactive'}">selected</c:if>>
-                                Tạm dừng (Inactive)
-                            </option>
+    <p>
+        <label>Hình ảnh (*)</label><br/>
+        <select name="showImageDropdown">
+            <option value="">Hoặc chọn từ thư mục</option>
+            <c:forEach var="img" items="${imageFiles}">
+                <option value="${img}" <c:if test="${img==show.showImage}">selected</c:if>>${img}</option>
+            </c:forEach>
+        </select>
+        <input type="hidden" name="showImage" value="${show.showImage}" />
+    </p>
 
-                            <option value="Cancelled"
-                            <c:if test="${param.status eq 'Cancelled'}">selected</c:if>>
-                                Hủy (Cancelled)
-                            </option>
-                    </select>
-                </p>
+    <button type="submit">Cập nhật</button>
+    <a href="${pageContext.request.contextPath}/admin/show">Hủy</a>
+</form>
 
-                <!-- NGHỆ SĨ THAM GIA: dropdown -->
-                <p>
-                    <label>Nghệ sĩ tham gia vở diễn(<span style="color:red">*</span>):</label><br/>
-                    <select name="artistID" style="width: 300px;">
-                        <option value="">Chọn nghệ sĩ</option>
+<script>
+function validateForm() {
+    const name = document.querySelector('input[name="showName"]').value.trim();
+    if (!name) { alert('Tên vở diễn không được để trống'); return false; }
+    return true;
+}
+</script>
 
-                    <c:forEach var="a" items="${artists}">
-                        <option value="${a.artistID}"
-                                <c:if test="${param.artistID == a.artistID}">selected</c:if>>
-                            ${a.name}
-                            <c:if test="${not empty a.role}">
-                                - ${a.role}
-                            </c:if>
-                        </option>
-                    </c:forEach>
-                </select>
-            </p>
-
-            <p>
-                <label>Chọn hình từ thư mục(<span style="color:red">*</span>):</label><br/>
-                <select name="showImageDropdown" style="width: 300px;">
-                    <option value="">Chọn hình ảnh từ thư mục</option>
-
-                    <c:forEach var="img" items="${imageFiles}">
-                        <option value="${img}"
-                                <c:if test="${param.showImageDropdown eq img}">selected</c:if>>
-                            ${img}
-                        </option>
-                    </c:forEach>
-                </select>
-                <br/>
-            </p>
-            <button type="submit">Cập nhật</button>
-            <a href="${pageContext.request.contextPath}/admin/show?action=list">Hủy</a>
-        </form>
-
-    </body>
+</body>
 </html>
-

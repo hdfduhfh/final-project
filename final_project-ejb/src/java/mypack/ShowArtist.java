@@ -4,6 +4,7 @@
  */
 package mypack;
 
+import java.io.Serializable;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,16 +16,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import java.io.Serializable;
 
 /**
  *
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "ShowArtist")
-@XmlRootElement
+@Table(name = "ShowArtist", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
     @NamedQuery(name = "ShowArtist.findAll", query = "SELECT s FROM ShowArtist s"),
     @NamedQuery(name = "ShowArtist.findByShowArtistID", query = "SELECT s FROM ShowArtist s WHERE s.showArtistID = :showArtistID")})
@@ -34,12 +32,12 @@ public class ShowArtist implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "ShowArtistID")
+    @Column(name = "ShowArtistID", nullable = false)
     private Integer showArtistID;
-    @JoinColumn(name = "ArtistID", referencedColumnName = "ArtistID")
+    @JoinColumn(name = "ArtistID", referencedColumnName = "ArtistID", nullable = false)
     @ManyToOne(optional = false)
     private Artist artistID;
-    @JoinColumn(name = "ShowID", referencedColumnName = "ShowID")
+    @JoinColumn(name = "ShowID", referencedColumnName = "ShowID", nullable = false)
     @ManyToOne(optional = false)
     private Show showID;
 
