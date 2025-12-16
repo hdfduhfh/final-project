@@ -1,16 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package mypack;
 
 import jakarta.ejb.Local;
 import java.util.List;
 
-/**
- *
- * @author DANG KHOA
- */
 @Local
 public interface ShowFacadeLocal {
 
@@ -20,6 +12,8 @@ public interface ShowFacadeLocal {
 
     void remove(Show show);
 
+    void deleteHard(Integer showId);
+
     Show find(Object id);
 
     List<Show> findAll();
@@ -27,5 +21,20 @@ public interface ShowFacadeLocal {
     List<Show> findRange(int[] range);
 
     int count();
-    
+
+    List<Show> searchByName(String keyword);
+
+    // ===== THÊM CÁC METHOD MỚI =====
+    List<Show> findByShowName(String showName);
+
+    List<Show> findByStatus(String status);
+
+    List<Show> findActiveShows();
+
+    Long countAllShows();
+
+    Long countByStatus(String status);
+
+    List<Show> findLatestShows(int limit);
+
 }

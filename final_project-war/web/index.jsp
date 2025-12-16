@@ -44,49 +44,76 @@
         </section>
 
         <!-- Featured Shows -->
-        <section class="section">
-            <div class="section-header">
-                <h2>🌟 Chương trình nổi bật</h2>
-                <p>Những show đang được yêu thích nhất</p>
-            </div>
-            <div class="grid">
-                <div class="card">
-                    <img src="${pageContext.request.contextPath}/assets/images/show/bong-dan-ong10113.jpeg" 
-                         alt="Show 1"
-                         onerror="this.src='https://via.placeholder.com/400x220/667eea/ffffff?text=Show+1'">
-                    <div class="content">
-                        <div class="tag">🎭 Kịch</div>
-                        <h4>Dạ Cổ Hoài Lang</h4>
-                        <div style="color:#ccc;font-size:14px;margin-top:6px;">📅 25/12/2024 • 🕐 19:30</div>
-                        <div class="price">300.000đ - 800.000đ</div>
-                    </div>
+        <section class="section" style="max-width: 100%; padding: 0;"> <div class="luxury-stage-section">
+                <div class="gold-dust"></div>
+
+                <div class="luxury-header">
+                    <h2 class="luxury-title">Tác Phẩm Kinh Điển</h2>
+                    <div class="luxury-divider"></div>
+                    <p style="color: #888; margin-top: 15px; font-style: italic;">Tuyển tập những vở diễn đặc sắc nhất mùa này</p>
                 </div>
-                <div class="card">
-                    <img src="${pageContext.request.contextPath}/assets/images/show/chuyen-cu-minh-bo-qua10111.jpg" 
-                         alt="Show 2"
-                         onerror="this.src='https://via.placeholder.com/400x220/764ba2/ffffff?text=Show+2'">
-                    <div class="content">
-                        <div class="tag">🎵 Hòa nhạc</div>
-                        <h4>Giao Hưởng Việt Nam</h4>
-                        <div style="color:#ccc;font-size:14px;margin-top:6px;">📅 30/12/2024 • 🕐 20:00</div>
-                        <div class="price">500.000đ - 1.500.000đ</div>
-                    </div>
-                </div>
-                <div class="card">
-                    <img src="${pageContext.request.contextPath}/assets/images/show/anh-trai-say-ai32102.jpg" 
-                         alt="Show 3"
-                         onerror="this.src='https://via.placeholder.com/400x220/4facfe/ffffff?text=Show+3'">
-                    <div class="content">
-                        <div class="tag">💃 Múa</div>
-                        <h4>Văn Hóa Dân Tộc</h4>
-                        <div style="color:#ccc;font-size:14px;margin-top:6px;">📅 05/01/2025 • 🕐 19:00</div>
-                        <div class="price">200.000đ - 600.000đ</div>
-                    </div>
+
+                <div class="luxury-grid">
+                    <c:choose>
+                        <%-- TRƯỜNG HỢP CÓ DỮ LIỆU TỪ DB --%>
+                        <c:when test="${not empty featuredShows}">
+                            <c:forEach var="show" items="${featuredShows}">
+                                <a href="${pageContext.request.contextPath}/shows/detail/${show.showID}" class="luxury-card">
+                                    <div class="badge-corner">HOT</div>
+
+                                    <img src="${pageContext.request.contextPath}/${show.showImage}" 
+                                         alt="${show.showName}" class="luxury-poster"
+                                         onerror="this.src='https://via.placeholder.com/300x450?text=BookingStage'" />
+
+                                    <div class="luxury-info">
+                                        <h3 class="show-name">${show.showName}</h3>
+                                        <span class="btn-luxury-gold">Xem Chi Tiết</span>
+                                    </div>
+                                </a>
+                            </c:forEach>
+                        </c:when>
+
+                        <%-- TRƯỜNG HỢP DEMO (KHÔNG CÓ DỮ LIỆU) --%>
+                        <c:otherwise>
+                            <a href="${pageContext.request.contextPath}/shows/detail/1" class="luxury-card">
+                                <div class="badge-corner">BÁN CHẠY</div>
+                                <img src="${pageContext.request.contextPath}/assets/images/show/NGHIEP_QUAT.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Nghiệp+Quật'" />
+                                <div class="luxury-info">
+                                    <h3 class="show-name">Nghiệp Quật</h3>
+                                    <span class="btn-luxury-gold">Đặt vé ngay</span>
+                                </div>
+                            </a>
+
+                            <a href="${pageContext.request.contextPath}/shows/detail/2" class="luxury-card">
+                                <div class="badge-corner">MỚI</div>
+                                <img src="${pageContext.request.contextPath}/assets/images/show/ANH_TRAI_SAY_AI.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Anh+Trai'" />
+                                <div class="luxury-info">
+                                    <h3 class="show-name">Anh Trai Say Hi</h3>
+                                    <span class="btn-luxury-gold">Đặt vé ngay</span>
+                                </div>
+                            </a>
+
+                            <a href="${pageContext.request.contextPath}/shows/detail/3" class="luxury-card">
+                                <img src="${pageContext.request.contextPath}/assets/images/show/ESCAPE_ROOM_CAN_NHA_MA_QUAI.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Nhà+Ma'" />
+                                <div class="luxury-info">
+                                    <h3 class="show-name">Căn Nhà Ma Quái</h3>
+                                    <span class="btn-luxury-gold">Đặt vé ngay</span>
+                                </div>
+                            </a>
+
+                            <a href="${pageContext.request.contextPath}/shows/detail/4" class="luxury-card">
+                                <img src="${pageContext.request.contextPath}/assets/images/show/DAI_NAO_THANH_BOMBAY.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Đại+Náo'" />
+                                <div class="luxury-info">
+                                    <h3 class="show-name">Đại Náo Bombay</h3>
+                                    <span class="btn-luxury-gold">Đặt vé ngay</span>
+                                </div>
+                            </a>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </div>
 
-            <!-- Stats Section -->
-            <div class="stats">
+            <div class="stats" style="margin-top: 60px; max-width: 1100px; margin-left: auto; margin-right: auto;">
                 <div class="stat">
                     <h3>500+</h3>
                     <p>Chương trình/năm</p>

@@ -2,18 +2,44 @@ function openLoginModal() {
     document.getElementById("authModal").style.display = "flex";
     document.getElementById("loginForm").style.display = "block";
     document.getElementById("registerForm").style.display = "none";
+
+    // Reset form + lỗi + success
+    const form = document.getElementById("loginFormElement");
+    form.reset();
+    document.getElementById('loginEmailError').textContent = '';
+    document.getElementById('loginPasswordError').textContent = '';
 }
 
 function openRegisterModal() {
     document.getElementById("authModal").style.display = "flex";
     document.getElementById("loginForm").style.display = "none";
     document.getElementById("registerForm").style.display = "block";
+
+    const form = document.getElementById("registerFormElement");
+    form.reset();
+    document.getElementById('registerFullNameError').textContent = '';
+    document.getElementById('registerEmailError').textContent = '';
+    document.getElementById('registerPasswordError').textContent = '';
+    document.getElementById('registerSuccessMessage').textContent = '';
 }
 function closeAuthModal() {
     document.getElementById("authModal").style.display = "none";
     // reset form login và register
     document.getElementById("loginFormElement").reset();
     document.getElementById("registerFormElement").reset();
+}
+function openForgotPasswordModal() {
+    document.getElementById('forgotPasswordModal').style.display = 'block';
+
+    const form = document.getElementById("forgotPasswordForm");
+    form.reset();
+    document.getElementById('forgotEmailError').textContent = '';
+    document.getElementById('forgotNewPasswordError').textContent = '';
+    document.getElementById('forgotConfirmPasswordError').textContent = '';
+    document.getElementById('forgotSuccessMessage').textContent = '';
+}
+function closeForgotPasswordModal() {
+    document.getElementById('forgotPasswordModal').style.display = 'none';
 }
 
 // Login AJAX
@@ -115,6 +141,62 @@ document.getElementById('registerFormElement').addEventListener('submit', functi
                     document.getElementById('registerFullNameError').textContent = '';
                     document.getElementById('registerEmailError').textContent = '';
                     document.getElementById('registerPasswordError').textContent = '';
+                }
+            })
+            .catch(err => console.error(err));
+});
+// Forgot pass
+document.getElementById('forgotPasswordForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    // reset lỗi
+    document.getElementById('forgotEmailError').textContent = '';
+    document.getElementById('forgotNewPasswordError').textContent = '';
+    document.getElementById('forgotConfirmPasswordError').textContent = '';
+    document.getElementById('forgotSuccessMessage').textContent = '';
+
+    const email = this.email.value.trim();
+    const newPassword = this.newPassword.value.trim();
+    const confirmPassword = this.confirmPassword.value.trim();
+    let valid = true;
+
+    // Kiểm tra local trước
+    if (!email) {
+        document.getElementById('forgotEmailError').textContent = 'Vui lòng nhập email!';
+        valid = false;
+    }
+    if (!newPassword) {
+        document.getElementById('forgotNewPasswordError').textContent = 'Vui lòng nhập mật khẩu mới!';
+        valid = false;
+    }
+    if (!confirmPassword) {
+        document.getElementById('forgotConfirmPasswordError').textContent = 'Vui lòng nhập lại mật khẩu!';
+        valid = false;
+    }
+
+    if (!valid)
+        return;
+
+    // gửi AJAX
+    fetch(ctx + "/reset-password", {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `email=${encodeURIComponent(email)}&newPassword=${encodeURIComponent(newPassword)}&confirmPassword=${encodeURIComponent(confirmPassword)}`
+    })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    // kiểm tra message từ server
+                    if (data.message.includes("Email")) {
+                        document.getElementById('forgotEmailError').textContent = data.message;
+                    } else if (data.message.includes("khớp")) {
+                        document.getElementById('forgotConfirmPasswordError').textContent = data.message;
+                    } else {
+                        alert(data.message); // các lỗi khác
+                    }
+                } else {
+                    document.getElementById('forgotSuccessMessage').textContent = data.message;
+                    this.reset();
                 }
             })
             .catch(err => console.error(err));

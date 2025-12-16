@@ -270,4 +270,3 @@ ALTER TABLE dbo.Artist
 
 ALTER TABLE dbo.[Show]
     ALTER COLUMN ShowName NVARCHAR(150)  NOT NULL;
-

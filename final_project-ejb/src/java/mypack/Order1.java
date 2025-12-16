@@ -29,7 +29,7 @@ import jakarta.persistence.TemporalType;
  * @author DANG KHOA
  */
 @Entity
-@Table(name = "Order", catalog = "BookingStageDB", schema = "dbo")
+@Table(name = "[Order]", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
     @NamedQuery(name = "Order1.findAll", query = "SELECT o FROM Order1 o"),
     @NamedQuery(name = "Order1.findByOrderID", query = "SELECT o FROM Order1 o WHERE o.orderID = :orderID"),

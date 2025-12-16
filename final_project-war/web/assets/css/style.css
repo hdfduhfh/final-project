@@ -168,10 +168,10 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    
+
     text-transform: none !important;
     font-family: 'Playfair Display', serif !important;
-    
+
     /* Hiệu ứng */
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
     position: relative;
@@ -629,12 +629,12 @@ body {
 .hero-inner {
     text-align: center;
     /* Tăng chiều rộng tối đa lên 1200px (hoặc 100% nếu muốn rộng hết cỡ) */
-    max-width: 1200px; 
+    max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
-    
+
     /* Đảm bảo không bị dính sát lề trên màn hình nhỏ */
-    padding: 0 20px; 
+    padding: 0 20px;
 }
 .hero {
     min-height: 80vh; /* Tăng chiều cao lên */
@@ -651,16 +651,16 @@ body {
 /* --- CHỈNH RIÊNG CHO CÁC NÚT TRONG PHẦN HERO --- */
 
 /* đặt vé ngay và xem lịch diễn*/
-.hero .btn-gold, 
+.hero .btn-gold,
 .hero .btn-outline {
     padding: 16px 45px; /* Nút to dày */
     font-size: 18px;    /* Chữ to */
     margin: 0 10px;     /* Cách nhau ra */
     font-weight: 700;
-    text-transform: uppercase !important; 
+    text-transform: uppercase !important;
     letter-spacing: 1px; /* Giãn chữ ra cho thoáng giống nút bên cạnh */
     text-decoration: none !important;
-    
+
 }
 
 /* 3. Đảm bảo nút Viền cũng hiển thị đúng */
@@ -704,54 +704,6 @@ body {
     color:#ffd700;
     margin-bottom:10px;
 }
-.grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-    gap:20px;
-}
-.card {
-    border-radius: 20px;
-    overflow: hidden;
-    background: rgba(20, 20, 20, 0.6); /* Tối hơn để sang hơn */
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 215, 0, 0.1); /* Viền vàng cực mảnh */
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.card:hover {
-    transform: translateY(-10px);
-    border-color: rgba(255, 215, 0, 0.5);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
-}
-
-.card img {
-    width: 100%;
-    height: 250px; /* Cao hơn chút */
-    object-fit: cover;
-    transition: transform 0.6s ease;
-}
-
-.card:hover img {
-    transform: scale(1.1); /* Zoom ảnh khi hover */
-}
-
-.card .content h4 {
-    font-family: 'Playfair Display', serif;
-    color: #fff;
-    font-size: 22px;
-}
-.tag {
-    font-weight:bold;
-    color:#ffd700;
-    font-size:14px;
-}
-.price {
-    font-weight:bold;
-    color:#ffae00;
-    margin-top:8px;
-    font-size:16px;
-}
-
 .stats {
     /* Quan trọng: Phải có 2 dòng này để chia cột nằm ngang */
     display: grid;
@@ -830,7 +782,7 @@ body {
     align-items: center;
     font-size: 28px;
     cursor: pointer;
-    
+
     /* Bóng đổ vàng rực rỡ */
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
     z-index: 999;
@@ -851,19 +803,19 @@ body {
     right: 25px;
     width: 380px;
     height: 520px;
-    
+
     /* --- NỀN KÍNH MỜ TỐI (GLASSMORPHISM) --- */
     background: rgba(20, 20, 20, 0.95); /* Đen trong suốt 95% */
     backdrop-filter: blur(15px); /* Làm mờ nền phía sau */
     -webkit-backdrop-filter: blur(15px);
-    
+
     /* Viền vàng mảnh sang trọng */
     border: 1px solid rgba(255, 215, 0, 0.3);
     border-radius: 20px;
-    
+
     /* Bóng đổ sâu */
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-    
+
     display: none;
     flex-direction: column;
     overflow: hidden;
@@ -872,8 +824,14 @@ body {
 }
 
 @keyframes slideInUp {
-    from { opacity: 0; transform: translateY(30px) scale(0.9); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* CHAT HEADER */
@@ -902,7 +860,7 @@ body {
     background: #000;
     border: 1px solid #ffd700;
     color: #ffd700; /* Icon bên trong màu vàng */
-    
+
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -934,7 +892,7 @@ body {
     padding: 20px;
     overflow-y: auto;
     background: transparent; /* Để lộ nền kính mờ */
-    
+
     /* Scrollbar mảnh đẹp */
     scrollbar-width: thin;
     scrollbar-color: #444 transparent;
@@ -1008,12 +966,12 @@ body {
 .chat-input input {
     flex: 1;
     padding: 12px 16px;
-    
+
     /* Input nền tối */
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #fff; /* Chữ nhập vào màu trắng */
-    
+
     border-radius: 24px;
     outline: none;
     font-size: 14px;
@@ -1067,7 +1025,7 @@ body {
     display: flex;
     white-space: nowrap;
     /* Tên animation là scrollText, chạy trong 20s */
-    animation: scrollText 20s linear infinite; 
+    animation: scrollText 20s linear infinite;
 }
 
 .ticker-item {
@@ -1119,9 +1077,307 @@ body {
 }
 
 /* 4. Áp dụng cho 2 nút bấm (Hiện ra chậm hơn 0.6s) */
-.hero .btn-gold, 
+.hero .btn-gold,
 .hero .btn-outline,
 .hero .btn-outline-gold {
     animation: fadeInUp 1s ease-out 0.6s forwards; /* Delay 0.6s */
     opacity: 0;
-}   
+}
+.user-greeting,
+.user-greeting:visited {
+    color: #d4af37;      /* gold */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.user-greeting:hover {
+    color: #f1d77a;
+}
+
+/* Wrapper bao quanh input password để làm điểm tựa */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+    /* Nếu input cũ của bạn có margin-bottom, hãy chuyển nó vào đây hoặc giữ nguyên ở input */
+    display: flex;
+    align-items: center;
+}
+
+/* Đảm bảo input bên trong chiếm hết chiều rộng */
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px; /* Chừa chỗ cho icon để chữ không bị che */
+    box-sizing: border-box; /* Quan trọng để padding không làm phình size */
+}
+
+/* Icon con mắt */
+.toggle-icon {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    user-select: none; /* Không cho bôi đen icon */
+    z-index: 2; /* Nổi lên trên input */
+    font-size: 1.2rem;
+    line-height: 1;
+    top: 17%;                /* Đẩy icon xuống 50% chiều cao của thẻ cha */
+}
+/* --- 1. Style cho dòng liên kết "Quên mật khẩu?" --- */
+.forgot-password {
+    text-align: right;       /* Căn phải cho thuận mắt */
+    margin-top: 10px;        /* Cách nút đăng nhập ở trên */
+    margin-bottom: 20px;     /* Cách phần "Chưa có tài khoản" ở dưới */
+}
+
+.forgot-password a {
+    color: #aaa;             /* Màu xám nhẹ, không quá nổi bật */
+    font-size: 0.9rem;       /* Chữ nhỏ hơn một chút cho tinh tế */
+    text-decoration: none;   /* Bỏ gạch chân mặc định */
+    transition: all 0.3s ease;
+}
+
+.forgot-password a:hover {
+    color: #d4af37;          /* Rê chuột vào chuyển màu Vàng Gold */
+    text-decoration: underline; /* Thêm gạch chân khi hover */
+}
+
+/* --- 2. Style cho Form trong Modal Quên Mật Khẩu --- */
+/* Đảm bảo ô input trong modal này đẹp giống các modal khác */
+#forgotPasswordForm input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 5px;      /* Khoảng cách với thông báo lỗi */
+    background: rgba(255, 255, 255, 0.05); /* Nền kính mờ */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;      /* Bo góc mềm mại */
+    color: #fff;             /* Chữ màu trắng */
+    outline: none;
+    font-size: 1rem;
+    box-sizing: border-box;  /* Để padding không làm vỡ khung */
+    transition: border-color 0.3s;
+}
+
+#forgotPasswordForm input:focus {
+    border-color: #d4af37;   /* Viền sáng màu vàng khi bấm vào */
+}
+
+/* Khoảng cách cho nút gửi */
+#forgotPasswordForm button {
+    margin-top: 15px;        /* Cách ô input/lỗi ra một chút */
+}
+
+/* Căn chỉnh lại dòng thông báo lỗi cho gọn */
+#forgotEmailError {
+    display: block;
+    min-height: 20px;        /* Giữ chỗ để layout không bị giật khi hiện lỗi */
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    color: #ff4444;          /* Màu đỏ báo lỗi */
+    text-align: left;
+}
+/* Style riêng cho modal Quên mật khẩu để căn giữa */
+#forgotPasswordModal .modal-content {
+    margin: 10% auto; /* Cách trên 10%, tự động căn giữa ngang */
+    width: 90%;       /* Chiều rộng trên mobile */
+    max-width: 400px; /* Giới hạn chiều rộng (cho nhỏ gọn giống form login) */
+    position: relative;
+    padding: 30px;    /* Khoảng cách nội dung bên trong */
+    border-radius: 15px; /* Bo góc */
+}
+
+/* Đảm bảo tiêu đề được căn giữa đẹp */
+#forgotPasswordModal .modal-title {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #fff;
+}
+/* Thông báo lỗi */
+.field-error {
+    color: #e74c3c;  /* đỏ nổi bật */
+    font-weight: bold;
+    font-size: 0.9rem;
+    display: block;
+    margin-top: 4px;
+}
+
+/* Thông báo thành công */
+.field-success {
+    color: #28a745;  /* xanh lá */
+    font-weight: bold;
+    font-size: 0.9rem;
+    display: block;
+    margin-top: 4px;
+}
+
+
+
+/* 1. NỀN SÂN KHẤU LUXURY */
+.luxury-stage-section {
+    position: relative;
+    padding: 80px 20px 100px 20px;
+    background-color: #050505;
+    /* Tạo hiệu ứng đèn sân khấu chiếu từ trên cao xuống */
+    background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.15) 0%, rgba(5, 5, 5, 1) 70%);
+    overflow: hidden;
+}
+
+/* Các hạt bụi vàng bay bay (trang trí) */
+.gold-dust {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-image: url('https://www.transparenttextures.com/patterns/stardust.png'); /* Pattern nhẹ */
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* 2. HEADER */
+.luxury-header {
+    text-align: center;
+    margin-bottom: 60px;
+    position: relative;
+    z-index: 2;
+}
+
+.luxury-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+    -webkit-background-clip: text;
+    color: transparent; /* Chữ mạ vàng */
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
+}
+
+.luxury-divider {
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #d4af37, transparent);
+    margin: 0 auto;
+}
+
+/* 3. LƯỚI CARD */
+.luxury-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    max-width: 1300px;
+    margin: 0 auto;
+    perspective: 1000px; /* Tạo chiều sâu 3D */
+}
+
+/* 4. CARD CAO CẤP */
+/* Sửa lại class này một chút để thẻ a hoạt động như cái hộp */
+.luxury-card {
+    display: block !important; /* Bắt buộc để thẻ a nhận kích thước */
+    text-decoration: none !important; /* Bỏ gạch chân link */
+    color: inherit; /* Giữ nguyên màu chữ gốc */
+
+    /* Các thuộc tính cũ giữ nguyên */
+    width: 280px;
+    height: 420px;
+    position: relative;
+    border-radius: 4px;
+    transition: 0.4s ease;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    background: #000;
+    overflow: hidden;
+}
+
+/* Hiệu ứng khi Hover: Nổi lên và sáng rực */
+.luxury-card:hover {
+    transform: translateY(-15px) scale(1.02);
+    border-color: #d4af37;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 25px rgba(212, 175, 55, 0.2); /* Glow vàng */
+}
+
+.luxury-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.4s;
+    opacity: 0.85; /* Hơi tối đi 1 chút để làm nền */
+}
+
+.luxury-card:hover .luxury-poster {
+    opacity: 1; /* Sáng lại khi hover */
+    transform: scale(1.1); /* Zoom ảnh nhẹ bên trong */
+}
+
+/* LỚP PHỦ THÔNG TIN BÊN DƯỚI */
+.luxury-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 80px 20px 20px 20px;
+    background: linear-gradient(to top, #000 10%, rgba(0,0,0,0.8) 50%, transparent 100%);
+    transform: translateY(40px); /* Ẩn bớt nút đi */
+    transition: 0.4s;
+    text-align: center;
+}
+
+.luxury-card:hover .luxury-info {
+    transform: translateY(0);
+}
+
+.show-name {
+    color: #fff;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    text-shadow: 0 2px 5px rgba(0,0,0,1);
+}
+
+/* NÚT LUXURY BUTTON (Thay cho nút xanh lá) */
+.btn-luxury-gold {
+    display: inline-block;
+    padding: 8px 25px;
+    border: 1px solid #d4af37;
+    color: #d4af37;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: 0.3s;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+}
+
+.btn-luxury-gold:hover {
+    background: #d4af37;
+    color: #000;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+    font-weight: bold;
+}
+
+/* Gắn nhãn "Nổi bật" hoặc "Mới" góc trên */
+.badge-corner {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(45deg, #d4af37, #f1c40f);
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 4px 10px;
+    text-transform: uppercase;
+    z-index: 10;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+@media (max-width: 768px) {
+    .luxury-card {
+        width: 100%;
+        max-width: 300px;
+        height: 450px;
+    }
+}
+.luxury-card * {
+    pointer-events: none;
+}

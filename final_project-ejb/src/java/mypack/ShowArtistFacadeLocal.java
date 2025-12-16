@@ -16,8 +16,6 @@ public interface ShowArtistFacadeLocal {
 
     void create(ShowArtist showArtist);
 
-    void edit(ShowArtist showArtist);
-
     void remove(ShowArtist showArtist);
 
     ShowArtist find(Object id);
@@ -27,5 +25,14 @@ public interface ShowArtistFacadeLocal {
     List<ShowArtist> findRange(int[] range);
 
     int count();
-    
+
+    void removeByShow(Show show);
+
+    List<ShowArtist> findByShowId(Integer showId);
+
+    void removeByArtist(Artist artist);
+
+    void removeByShowAndArtist(Integer showId, Integer artistId);
+
+    long countActorsByShow(Integer showId);
 }

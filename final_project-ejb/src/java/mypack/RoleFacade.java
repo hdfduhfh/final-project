@@ -7,6 +7,7 @@ package mypack;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.util.List;
 
 /**
  *
@@ -28,10 +29,15 @@ public class RoleFacade extends AbstractFacade<Role> implements RoleFacadeLocal 
     }
 
     @Override
-    public Role findByName(String roleName) {
-        return em.createQuery("SELECT r FROM Role r WHERE r.roleName = :name", Role.class)
-                .setParameter("name", roleName)
-                .getSingleResult();
+    public Role findByName(String name) {
+        List<Role> list = em.createQuery(
+                "SELECT r FROM Role r WHERE r.roleName = :name",
+                Role.class
+        )
+                .setParameter("name", name.trim())
+                .getResultList();
+
+        return list.isEmpty() ? null : list.get(0);
     }
 
 }

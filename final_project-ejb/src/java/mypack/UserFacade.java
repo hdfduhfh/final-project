@@ -3,13 +3,15 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package mypack;
+
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
+import java.util.List;
 import mypack.utils.HashUtils;
-
 
 /**
  *
@@ -60,4 +62,23 @@ public class UserFacade extends AbstractFacade<User> implements UserFacadeLocal 
                 .getSingleResult();
         return count > 0;
     }
+
+    @Override
+    public User findByEmail(String email) {
+        try {
+            Query q = em.createNamedQuery("User.findByEmail", User.class); // Hoặc câu lệnh SQL của ní
+            q.setParameter("email", email);
+
+            List<User> results = q.getResultList();
+
+            if (!results.isEmpty()) {
+                // Nếu có nhiều người trùng email, lấy người đầu tiên tìm thấy
+                return results.get(0);
+            }
+            return null; // Không tìm thấy ai
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }
