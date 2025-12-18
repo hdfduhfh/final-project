@@ -36,6 +36,52 @@ public class ArtistManagementServlet extends HttpServlet {
     private static final Pattern NO_SPECIAL_PATTERN
             = Pattern.compile("^[\\p{L}\\d\\s]+$");
 
+    // ✅ helper: trim + lowercase an toàn
+    private String safeLower(String s) {
+        return (s == null) ? "" : s.trim().toLowerCase();
+    }
+
+    // ✅ NEW: helper encode UTF-8 cho URL
+    private String urlEncodeUtf8(String s) {
+        try {
+            return URLEncoder.encode(s, "UTF-8");
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    // ✅ helper: check trùng name (không phân biệt hoa/thường) và trùng poster
+    // excludeId: dùng cho edit (để không tự trùng chính nó). Khi add thì truyền null.
+    private String checkDuplicateArtist(String inputName, String inputImage, Integer excludeId) {
+        String nameLower = safeLower(inputName);
+        String imgLower = safeLower(inputImage);
+
+        List<Artist> all = (artistFacade != null) ? artistFacade.findAll() : null;
+        if (all == null) {
+            return null;
+        }
+
+        for (Artist a : all) {
+            if (a == null) {
+                continue;
+            }
+            if (excludeId != null && a.getArtistID() != null && a.getArtistID().equals(excludeId)) {
+                continue; // bỏ qua chính nó khi edit
+            }
+
+            // trùng tên (case-insensitive)
+            if (!nameLower.isEmpty() && safeLower(a.getName()).equals(nameLower)) {
+                return "Tên nghệ sĩ bạn vừa nhập không được trùng với tên nghệ sĩ bạn đã tạo";
+            }
+
+            // trùng poster (case-insensitive)
+            if (!imgLower.isEmpty() && safeLower(a.getArtistImage()).equals(imgLower)) {
+                return "Poster nghệ sĩ bạn chọn không được chọn trùng với poster nghệ sĩ bạn đã tạo";
+            }
+        }
+        return null;
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -94,19 +140,52 @@ public class ArtistManagementServlet extends HttpServlet {
 
         try {
             String searchKeyword = request.getParameter("search");
+
+            // ========= PAGINATION CONFIG =========
+            final int pageSize = 6; // ✅ 6 artists / page
+            int page = 1;
+
+            try {
+                String pageStr = request.getParameter("page");
+                if (pageStr != null && !pageStr.trim().isEmpty()) {
+                    page = Integer.parseInt(pageStr.trim());
+                }
+            } catch (Exception ignored) {}
+
+            if (page < 1) page = 1;
+
             List<Artist> artists;
+            int totalArtists = artistFacade.count(); // tổng toàn bộ
+            int totalPages = (int) Math.ceil(totalArtists / (double) pageSize);
 
+            if (totalPages < 1) totalPages = 1;
+            if (page > totalPages) page = totalPages;
+
+            int start = (page - 1) * pageSize;
+
+            // ========= SEARCH =========
             if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+                // Nếu đang search -> hiện toàn bộ kết quả search (chưa phân trang)
                 artists = artistFacade.searchByKeyword(searchKeyword.trim());
-            } else {
-                artists = artistFacade.findAll();
-            }
 
-            int totalArtists = artistFacade.count();
+                // Khi search, totalArtists nên là số kết quả search để UI đúng
+                totalArtists = (artists != null) ? artists.size() : 0;
+                totalPages = 1; // tạm thời 1 trang
+                page = 1;
+
+            } else {
+                // ✅ Không search -> phân trang DB
+                artists = artistFacade.findRange(start, pageSize);
+            }
 
             request.setAttribute("artists", artists);
             request.setAttribute("searchKeyword", searchKeyword);
             request.setAttribute("totalArtists", totalArtists);
+
+            // ✅ data phân trang
+            request.setAttribute("currentPage", page);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("pageSize", pageSize);
 
             request.getRequestDispatcher("/WEB-INF/views/admin/artist/list.jsp")
                     .forward(request, response);
@@ -123,7 +202,7 @@ public class ArtistManagementServlet extends HttpServlet {
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Nạp danh sách file ảnh cho dropdown hình nghệ sĩ (nếu dùng)
+        // Nạp danh sách file ảnh cho dropdown hình nghệ sĩ
         List<String> imageFiles = loadImageFiles(request);
         request.setAttribute("imageFiles", imageFiles);
 
@@ -152,7 +231,6 @@ public class ArtistManagementServlet extends HttpServlet {
     private void createArtist(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // request.setCharacterEncoding("UTF-8"); // đã set ở doPost
         String name = request.getParameter("name");
         String role = request.getParameter("role");
         String bio = request.getParameter("bio");
@@ -211,9 +289,7 @@ public class ArtistManagementServlet extends HttpServlet {
                     forwardAddError(request, response, "Vai trò của nghệ sĩ không được chứa số thập phân");
                     return;
                 }
-            } catch (NumberFormatException ex) {
-                // không phải chuỗi số thuần
-            }
+            } catch (NumberFormatException ex) {}
 
             if (!NO_SPECIAL_PATTERN.matcher(trimmedRole).matches()) {
                 forwardAddError(request, response, "Vai trò nghệ sĩ không được chứa kí tự đặc biệt");
@@ -238,25 +314,30 @@ public class ArtistManagementServlet extends HttpServlet {
                     forwardAddError(request, response, "Tiểu sử của nghệ sĩ không được chứa số thập phân");
                     return;
                 }
-            } catch (NumberFormatException ex) {
-                // không phải chuỗi số thuần
-            }
+            } catch (NumberFormatException ex) {}
 
             if (!NO_SPECIAL_PATTERN.matcher(trimmedBio).matches()) {
                 forwardAddError(request, response, "Tiểu sử của nghệ sĩ không được chứa kí tự đặc biệt");
                 return;
             }
 
-            /* ===== 4. HÌNH ẢNH NGHỆ SĨ (dropdown) ===== */
+            /* ===== 4. HÌNH ẢNH NGHỆ SĨ ===== */
             if (trimmedImage.isEmpty()) {
                 forwardAddError(request, response, "Hình ảnh cho nghệ sĩ chưa được chọn");
                 return;
             }
 
             String lowerImg = trimmedImage.toLowerCase();
-            if (!(lowerImg.endsWith(".jpg") || lowerImg.endsWith(".png"))) {
+            if (!(lowerImg.endsWith(".jpg") || lowerImg.endsWith(".png") || lowerImg.endsWith(".jpeg"))) {
                 forwardAddError(request, response,
                         "File bạn vừa tải lên không đúng định dạng, vui lòng tải lên lại file có định dạng jpg và png");
+                return;
+            }
+
+            // ✅ RÀNG BUỘC KHÔNG ĐƯỢC TRÙNG TÊN & POSTER
+            String dupErr = checkDuplicateArtist(trimmedName, trimmedImage, null);
+            if (dupErr != null) {
+                forwardAddError(request, response, dupErr);
                 return;
             }
 
@@ -269,8 +350,10 @@ public class ArtistManagementServlet extends HttpServlet {
 
             artistFacade.create(artist);
 
-            String message = URLEncoder.encode("Thêm nghệ sĩ thành công!", "UTF-8");
-            response.sendRedirect(request.getContextPath() + "/admin/artist?success=" + message);
+            String message = urlEncodeUtf8("Thêm nghệ sĩ thành công!");
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?success=" + message
+                    + "&v=" + System.currentTimeMillis());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -285,7 +368,8 @@ public class ArtistManagementServlet extends HttpServlet {
         String idStr = request.getParameter("id");
 
         if (idStr == null) {
-            response.sendRedirect(request.getContextPath() + "/admin/artist?error=Thiếu ID nghệ sĩ");
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?error=" + urlEncodeUtf8("Thiếu ID nghệ sĩ"));
             return;
         }
 
@@ -294,14 +378,13 @@ public class ArtistManagementServlet extends HttpServlet {
             Artist artist = artistFacade.find(id);
 
             if (artist == null) {
-                response.sendRedirect(request.getContextPath() + "/admin/artist?error=Không tìm thấy nghệ sĩ");
+                response.sendRedirect(request.getContextPath()
+                        + "/admin/artist?error=" + urlEncodeUtf8("Không tìm thấy nghệ sĩ"));
                 return;
             }
 
-            // Gửi object artist sang edit.jsp để HIỂN THỊ ĐẦY ĐỦ THÔNG TIN đã tạo
             request.setAttribute("artist", artist);
 
-            // Nếu edit.jsp cũng dùng dropdown hình, có thể nạp imageFiles:
             List<String> imageFiles = loadImageFiles(request);
             request.setAttribute("imageFiles", imageFiles);
 
@@ -309,10 +392,12 @@ public class ArtistManagementServlet extends HttpServlet {
                     .forward(request, response);
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/admin/artist?error=ID không hợp lệ");
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?error=" + urlEncodeUtf8("ID không hợp lệ"));
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/admin/artist?error=Lỗi khi tải form sửa: " + e.getMessage());
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?error=" + urlEncodeUtf8("Lỗi khi tải form sửa: " + e.getMessage()));
         }
     }
 
@@ -320,7 +405,6 @@ public class ArtistManagementServlet extends HttpServlet {
     private void updateArtist(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // request.setCharacterEncoding("UTF-8"); // đã set ở doPost
         String idStr = request.getParameter("artistID");
 
         try {
@@ -328,7 +412,8 @@ public class ArtistManagementServlet extends HttpServlet {
             Artist artist = artistFacade.find(id);
 
             if (artist == null) {
-                response.sendRedirect(request.getContextPath() + "/admin/artist?error=Không tìm thấy nghệ sĩ");
+                response.sendRedirect(request.getContextPath()
+                        + "/admin/artist?error=" + urlEncodeUtf8("Không tìm thấy nghệ sĩ"));
                 return;
             }
 
@@ -342,14 +427,12 @@ public class ArtistManagementServlet extends HttpServlet {
             String trimmedBio = (bio != null) ? bio.trim() : "";
             String trimmedImage = (artistImage != null) ? artistImage.trim() : "";
 
-            /* ===== 1. TÊN NGHỆ SĨ ===== */
+            /* ===== VALIDATION (giữ nguyên logic của bạn) ===== */
             if (trimmedName.isEmpty()) {
                 request.setAttribute("error", "Tên nghệ sĩ không được để trống");
                 request.setAttribute("artist", artist);
-                // nếu edit.jsp dùng dropdown hình:
                 request.setAttribute("imageFiles", loadImageFiles(request));
-                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                 return;
             }
 
@@ -360,8 +443,7 @@ public class ArtistManagementServlet extends HttpServlet {
                     request.setAttribute("error", "Tên nghệ sĩ không được chứa số âm");
                     request.setAttribute("artist", artist);
                     request.setAttribute("imageFiles", loadImageFiles(request));
-                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                            .forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                     return;
                 }
 
@@ -369,30 +451,24 @@ public class ArtistManagementServlet extends HttpServlet {
                     request.setAttribute("error", "Tên nghệ sĩ không được chứa số thập phân");
                     request.setAttribute("artist", artist);
                     request.setAttribute("imageFiles", loadImageFiles(request));
-                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                            .forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                     return;
                 }
-            } catch (NumberFormatException ex) {
-                // không phải chuỗi số thuần
-            }
+            } catch (NumberFormatException ex) {}
 
             if (!NO_SPECIAL_PATTERN.matcher(trimmedName).matches()) {
                 request.setAttribute("error", "Tên nghệ sĩ không được chứa kí tự đặc biệt");
                 request.setAttribute("artist", artist);
                 request.setAttribute("imageFiles", loadImageFiles(request));
-                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                 return;
             }
 
-            /* ===== 2. VAI TRÒ NGHỆ SĨ ===== */
             if (trimmedRole.isEmpty()) {
                 request.setAttribute("error", "Vai trò nghệ sĩ không được để trống");
                 request.setAttribute("artist", artist);
                 request.setAttribute("imageFiles", loadImageFiles(request));
-                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                 return;
             }
 
@@ -403,8 +479,7 @@ public class ArtistManagementServlet extends HttpServlet {
                     request.setAttribute("error", "Vai trò của nghệ sĩ không được chứa số âm");
                     request.setAttribute("artist", artist);
                     request.setAttribute("imageFiles", loadImageFiles(request));
-                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                            .forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                     return;
                 }
 
@@ -412,30 +487,24 @@ public class ArtistManagementServlet extends HttpServlet {
                     request.setAttribute("error", "Vai trò của nghệ sĩ không được chứa số thập phân");
                     request.setAttribute("artist", artist);
                     request.setAttribute("imageFiles", loadImageFiles(request));
-                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                            .forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                     return;
                 }
-            } catch (NumberFormatException ex) {
-                // không phải chuỗi số thuần
-            }
+            } catch (NumberFormatException ex) {}
 
             if (!NO_SPECIAL_PATTERN.matcher(trimmedRole).matches()) {
                 request.setAttribute("error", "Vai trò nghệ sĩ không được chứa kí tự đặc biệt");
                 request.setAttribute("artist", artist);
                 request.setAttribute("imageFiles", loadImageFiles(request));
-                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                 return;
             }
 
-            /* ===== 3. TIỂU SỬ NGHỆ SĨ ===== */
             if (trimmedBio.isEmpty()) {
                 request.setAttribute("error", "Tiểu sử của nghệ sĩ không được để trống");
                 request.setAttribute("artist", artist);
                 request.setAttribute("imageFiles", loadImageFiles(request));
-                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                 return;
             }
 
@@ -446,8 +515,7 @@ public class ArtistManagementServlet extends HttpServlet {
                     request.setAttribute("error", "Tiểu sử của nghệ sĩ không được chứa số âm");
                     request.setAttribute("artist", artist);
                     request.setAttribute("imageFiles", loadImageFiles(request));
-                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                            .forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                     return;
                 }
 
@@ -455,44 +523,47 @@ public class ArtistManagementServlet extends HttpServlet {
                     request.setAttribute("error", "Tiểu sử của nghệ sĩ không được chứa số thập phân");
                     request.setAttribute("artist", artist);
                     request.setAttribute("imageFiles", loadImageFiles(request));
-                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                            .forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                     return;
                 }
-            } catch (NumberFormatException ex) {
-                // không phải chuỗi số thuần
-            }
+            } catch (NumberFormatException ex) {}
 
             if (!NO_SPECIAL_PATTERN.matcher(trimmedBio).matches()) {
                 request.setAttribute("error", "Tiểu sử của nghệ sĩ không được chứa kí tự đặc biệt");
                 request.setAttribute("artist", artist);
                 request.setAttribute("imageFiles", loadImageFiles(request));
-                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                 return;
             }
 
-            /* ===== 4. HÌNH ẢNH NGHỆ SĨ ===== */
             if (trimmedImage.isEmpty()) {
                 request.setAttribute("error", "Hình ảnh cho nghệ sĩ chưa được chọn");
                 request.setAttribute("artist", artist);
                 request.setAttribute("imageFiles", loadImageFiles(request));
-                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                 return;
             }
 
             String lowerImg = trimmedImage.toLowerCase();
-            if (!(lowerImg.endsWith(".jpg") || lowerImg.endsWith(".png"))) {
+            if (!(lowerImg.endsWith(".jpg") || lowerImg.endsWith(".png") || lowerImg.endsWith(".jpeg"))) {
                 request.setAttribute("error", "File bạn vừa tải lên không đúng định dạng, vui lòng tải lên lại file có định dạng jpg và png");
                 request.setAttribute("artist", artist);
                 request.setAttribute("imageFiles", loadImageFiles(request));
-                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
                 return;
             }
 
-            /* ===== 5. CẬP NHẬT NGHỆ SĨ ===== */
+            // ✅ RÀNG BUỘC KHÔNG ĐƯỢC TRÙNG TÊN & POSTER (trừ chính nó)
+            String dupErr = checkDuplicateArtist(trimmedName, trimmedImage, artist.getArtistID());
+            if (dupErr != null) {
+                request.setAttribute("error", dupErr);
+                request.setAttribute("artist", artist);
+                request.setAttribute("imageFiles", loadImageFiles(request));
+                request.getRequestDispatcher("/WEB-INF/views/admin/artist/edit.jsp").forward(request, response);
+                return;
+            }
+
+            /* ===== UPDATE ===== */
             artist.setName(trimmedName);
             artist.setRole(trimmedRole);
             artist.setBio(trimmedBio);
@@ -500,13 +571,19 @@ public class ArtistManagementServlet extends HttpServlet {
 
             artistFacade.edit(artist);
 
-            response.sendRedirect(request.getContextPath() + "/admin/artist?success=Cập nhật nghệ sĩ thành công!");
+            // ✅ FIX UTF-8 redirect message
+            String msg = urlEncodeUtf8("Cập nhật nghệ sĩ thành công!");
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?success=" + msg
+                    + "&v=" + System.currentTimeMillis());
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/admin/artist?error=ID không hợp lệ");
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?error=" + urlEncodeUtf8("ID không hợp lệ"));
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/admin/artist?error=Lỗi khi cập nhật: " + e.getMessage());
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?error=" + urlEncodeUtf8("Lỗi khi cập nhật: " + e.getMessage()));
         }
     }
 
@@ -517,7 +594,8 @@ public class ArtistManagementServlet extends HttpServlet {
         String idStr = request.getParameter("id");
 
         if (idStr == null) {
-            response.sendRedirect(request.getContextPath() + "/admin/artist?error=Thiếu ID nghệ sĩ");
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?error=" + urlEncodeUtf8("Thiếu ID nghệ sĩ"));
             return;
         }
 
@@ -526,26 +604,30 @@ public class ArtistManagementServlet extends HttpServlet {
             Artist artist = artistFacade.find(id);
 
             if (artist == null) {
-                response.sendRedirect(request.getContextPath() + "/admin/artist?error=Không tìm thấy nghệ sĩ");
+                response.sendRedirect(request.getContextPath()
+                        + "/admin/artist?error=" + urlEncodeUtf8("Không tìm thấy nghệ sĩ"));
                 return;
             }
 
             artistFacade.remove(artist);
-            response.sendRedirect(request.getContextPath() + "/admin/artist?success=Xóa nghệ sĩ thành công!");
+
+            // ✅ FIX UTF-8 redirect message
+            String msg = urlEncodeUtf8("Xóa nghệ sĩ thành công!");
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?success=" + msg
+                    + "&v=" + System.currentTimeMillis());
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/admin/artist?error=ID không hợp lệ");
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?error=" + urlEncodeUtf8("ID không hợp lệ"));
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/admin/artist?error=Lỗi khi xóa: " + e.getMessage());
+            response.sendRedirect(request.getContextPath()
+                    + "/admin/artist?error=" + urlEncodeUtf8("Lỗi khi xóa: " + e.getMessage()));
         }
     }
 
     /* ===================== HELPER: LOAD IMAGE FILES ===================== */
-    /**
-     * Load danh sách file ảnh trong /uploads/artists cho dropdown. Trả về list
-     * dạng "uploads/artists/ten_file.jpg"
-     */
     private List<String> loadImageFiles(HttpServletRequest request) {
         List<String> imageFiles = new ArrayList<>();
 

@@ -95,37 +95,6 @@ CREATE TABLE dbo.ShowArtist (
     CONSTRAINT FK_ShowArtist_Artist
         FOREIGN KEY (ArtistID) REFERENCES dbo.Artist(ArtistID)
 );
-sql-- ============================================
--- BƯỚC 1: XÓA CÁC BẢNG CŨ
--- ============================================
-
--- Xóa ràng buộc trước
-IF OBJECT_ID('dbo.FK_Ticket_Payment', 'F') IS NOT NULL
-    ALTER TABLE dbo.Ticket DROP CONSTRAINT FK_Ticket_Payment;
-IF OBJECT_ID('dbo.FK_Ticket_Seat', 'F') IS NOT NULL
-    ALTER TABLE dbo.Ticket DROP CONSTRAINT FK_Ticket_Seat;
-IF OBJECT_ID('dbo.FK_Ticket_Schedule', 'F') IS NOT NULL
-    ALTER TABLE dbo.Ticket DROP CONSTRAINT FK_Ticket_Schedule;
-IF OBJECT_ID('dbo.FK_Ticket_Order', 'F') IS NOT NULL
-    ALTER TABLE dbo.Ticket DROP CONSTRAINT FK_Ticket_Order;
-IF OBJECT_ID('dbo.FK_Payment_Order', 'F') IS NOT NULL
-    ALTER TABLE dbo.Payment DROP CONSTRAINT FK_Payment_Order;
-IF OBJECT_ID('dbo.FK_Payment_User', 'F') IS NOT NULL
-    ALTER TABLE dbo.Payment DROP CONSTRAINT FK_Payment_User;
-IF OBJECT_ID('dbo.FK_Order_Promotion', 'F') IS NOT NULL
-    ALTER TABLE dbo.[Order] DROP CONSTRAINT FK_Order_Promotion;
-IF OBJECT_ID('dbo.FK_Order_User', 'F') IS NOT NULL
-    ALTER TABLE dbo.[Order] DROP CONSTRAINT FK_Order_User;
-
--- Xóa các bảng
-DROP TABLE IF EXISTS dbo.Ticket;
-DROP TABLE IF EXISTS dbo.Payment;
-DROP TABLE IF EXISTS dbo.[Order];
-
--- ============================================
--- BƯỚC 2: TẠO LẠI CÁC BẢNG MỚI
--- ============================================
-
 -- Bảng Order (Đơn hàng + Thanh toán)
 CREATE TABLE dbo.[Order] (
     OrderID         INT IDENTITY(1,1) PRIMARY KEY,
@@ -270,3 +239,6 @@ ALTER TABLE dbo.Artist
 
 ALTER TABLE dbo.[Show]
     ALTER COLUMN ShowName NVARCHAR(150)  NOT NULL;
+
+ALTER TABLE dbo.[Show]
+ALTER COLUMN Description NVARCHAR(MAX);

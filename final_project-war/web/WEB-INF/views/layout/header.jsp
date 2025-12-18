@@ -10,7 +10,7 @@
 <header class="site-header">
     <div class="header-inner">
         <a href="${pageContext.request.contextPath}/" class="brand">
-            <img src="${pageContext.request.contextPath}/assets/images/logo.png"
+            <img src="${pageContext.request.contextPath}/assets/images/logo.jpg"
                  alt="BookingStage Logo"
                  class="brand-logo"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
@@ -22,7 +22,13 @@
             <ul class="nav-list">
                 <li class="nav-item"><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
                 <li class="nav-item"><a href="${pageContext.request.contextPath}/shows">Chương trình</a></li>
-                <li class="nav-item"><a href="${pageContext.request.contextPath}/schedule">Lịch diễn</a></li>
+                <li class="nav-item">
+                    <a href="${pageContext.request.contextPath}/showSchedule">
+                        Lịch diễn
+                    </a>
+                </li>
+
+
                 <li class="nav-item"><a href="${pageContext.request.contextPath}/news">Tin tức</a></li>
                 <li class="nav-item"><a href="${pageContext.request.contextPath}/recruitment">Tuyển dụng</a></li>
             </ul>

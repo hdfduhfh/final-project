@@ -282,6 +282,9 @@
                     <a href="<%=contextPath%>/admin/artist" class="list-group-item list-group-item-action">
                         <i class="fas fa-fw fa-microphone-alt me-2"></i> Nghệ sĩ (Artists)
                     </a>
+                        <a href="<%=contextPath%>/admin/schedule" class="list-group-item list-group-item-action">
+                        <i class="fas fa-fw fa-theater-masks me-2"></i> Lịch diễn
+                    </a>
                     <a href="#" class="list-group-item list-group-item-action">
                         <i class="fas fa-fw fa-chair me-2"></i> Sơ đồ ghế (Seats)
                     </a>

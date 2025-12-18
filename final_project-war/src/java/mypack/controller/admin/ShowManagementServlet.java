@@ -45,6 +45,10 @@ public class ShowManagementServlet extends HttpServlet {
     private static final Pattern NO_SPECIAL_PATTERN
             = Pattern.compile("^[\\p{L}\\d\\s]+$");
 
+    // ✅ NEW: cho mô tả có dấu . , và xuống dòng (không coi là "số thập phân" nữa)
+    private static final Pattern DESCRIPTION_PATTERN
+            = Pattern.compile("^[\\p{L}\\d\\s\\.,\\r\\n]+$");
+
     /* =====================================================
        UTF-8
     ===================================================== */
@@ -195,6 +199,21 @@ public class ShowManagementServlet extends HttpServlet {
         return null;
     }
 
+    // ✅ NEW: validate mô tả KHÔNG check thập phân nữa, cho phép . , và xuống dòng
+    private String validateDescription(String val, String emptyMsg, String negativeMsg, String specialMsg) {
+        String t = val == null ? "" : val.trim();
+        if (t.isEmpty()) {
+            return emptyMsg;
+        }
+        if (hasNegative(t)) {
+            return negativeMsg;
+        }
+        if (!DESCRIPTION_PATTERN.matcher(t).matches()) {
+            return specialMsg;
+        }
+        return null;
+    }
+
     // ✅ NEW: 60 <= x <= 180
     private String validateDuration(String s) {
         String t = s == null ? "" : s.trim();
@@ -233,13 +252,12 @@ public class ShowManagementServlet extends HttpServlet {
     /* =====================================================
        ✅ NEW: CHECK DUPLICATE NAME / POSTER
        - name: case-insensitive + trim + collapse spaces
-       - poster: trim (bạn có thể đổi thành case-insensitive nếu muốn)
+       - poster: trim
     ===================================================== */
     private String normalizeName(String s) {
         if (s == null) {
             return "";
         }
-        // trim + gộp nhiều khoảng trắng thành 1 + lowercase
         return s.trim().replaceAll("\\s+", " ").toLowerCase();
     }
 
@@ -247,7 +265,7 @@ public class ShowManagementServlet extends HttpServlet {
         if (s == null) {
             return "";
         }
-        return s.trim(); // poster thường là path cố định -> so sánh y chang
+        return s.trim();
     }
 
     private boolean isDuplicateShowName(Integer excludeShowId, String inputName) {
@@ -332,6 +350,14 @@ public class ShowManagementServlet extends HttpServlet {
         }
     }
 
+    private String urlEncodeUtf8(String s) {
+        try {
+            return java.net.URLEncoder.encode(s, "UTF-8");
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -355,14 +381,12 @@ public class ShowManagementServlet extends HttpServlet {
     private void showList(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // ✅ chống cache để không bị “phải clean build mới thấy”
+        // ✅ chống cache
         resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
 
-        // =========================
-        // ✅ SEARCH (không phân biệt hoa/thường)
-        // =========================
+        // ✅ SEARCH
         String keyword = req.getParameter("keyword");
         if (keyword == null || keyword.trim().isEmpty()) {
             keyword = req.getParameter("search");
@@ -378,9 +402,7 @@ public class ShowManagementServlet extends HttpServlet {
             allShows = showFacade.findAll();
         }
 
-        // =========================
         // ✅ PAGINATION (4 show / 1 page)
-        // =========================
         final int pageSize = 4;
 
         int page = 1;
@@ -412,21 +434,15 @@ public class ShowManagementServlet extends HttpServlet {
             pageShows = allShows.subList(fromIndex, toIndex);
         }
 
-        // dùng pageShows để hiển thị
         req.setAttribute("shows", pageShows);
-
-        // giữ keyword để show lại trong input search
         req.setAttribute("searchKeyword", keyword);
 
-        // info phân trang cho JSP
         req.setAttribute("currentPage", page);
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("pageSize", pageSize);
         req.setAttribute("totalItems", totalItems);
 
-        // =========================
-        // ✅ build popup detail data từ ShowArtist (không phụ thuộc LAZY)
-        // =========================
+        // ✅ build popup detail data từ ShowArtist
         Map<Integer, String> directorMap = new HashMap<>();
         Map<Integer, String> actorMap = new HashMap<>();
 
@@ -470,9 +486,19 @@ public class ShowManagementServlet extends HttpServlet {
         req.setAttribute("directorMap", directorMap);
         req.setAttribute("actorMap", actorMap);
 
+        // ✅ THỐNG KÊ THEO STATUS
+        long statTotal = showFacade.count();
+        long statOngoing = showFacade.countByStatus("Ongoing");
+        long statUpcoming = showFacade.countByStatus("Upcoming");
+        long statCancelled = showFacade.countByStatus("Cancelled");
+
+        req.setAttribute("statTotal", statTotal);
+        req.setAttribute("statOngoing", statOngoing);
+        req.setAttribute("statUpcoming", statUpcoming);
+        req.setAttribute("statCancelled", statCancelled);
+
         req.getRequestDispatcher("/WEB-INF/views/admin/show/list.jsp").forward(req, resp);
     }
-
 
     /* =====================================================
        ADD FORM
@@ -575,18 +601,17 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // ✅ NEW: không cho trùng tên (không phân biệt hoa/thường)
+        // không cho trùng tên
         if (isDuplicateShowName(null, showName)) {
             forwardAddError(req, resp, "Tên của show bạn vừa nhập không được trùng với show bạn đã tạo");
             return;
         }
 
-        // MÔ TẢ
-        err = validateText(
+        // ✅ MÔ TẢ: bỏ ràng buộc số thập phân (cho phép . ,)
+        err = validateDescription(
                 description,
                 "Mô tả vở diễn không được để trống",
                 "Mô tả vở diễn không được chứa số âm",
-                "Mô tả vở diễn không được chứa số thập phân",
                 "Mô tả vở diễn không được chứa kí tự đặc biệt"
         );
         if (err != null) {
@@ -635,7 +660,7 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // ✅ NEW: không cho trùng poster
+        // không cho trùng poster
         if (isDuplicatePoster(null, showImage)) {
             forwardAddError(req, resp, "Poster phim bạn chọn không được trùng với poster phim đã tạo");
             return;
@@ -673,8 +698,8 @@ public class ShowManagementServlet extends HttpServlet {
             }
         }
 
-        resp.sendRedirect(req.getContextPath()
-                + "/admin/show?success=Thêm show thành công!&v=" + System.currentTimeMillis());
+        String msg = java.net.URLEncoder.encode("Đã tạo show thành công", "UTF-8");
+        resp.sendRedirect(req.getContextPath() + "/admin/show?success=" + msg + "&v=" + System.currentTimeMillis());
     }
 
     /* =====================================================
@@ -699,12 +724,6 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        if (allBlank(showName, description, durationStr, status, directorIdStr, showImage)
-                && (artistIds == null || artistIds.length == 0)) {
-            forwardEditError(req, resp, show, "Thông tin cho vở diễn không được để trống");
-            return;
-        }
-
         // TÊN
         String err = validateText(
                 showName,
@@ -718,18 +737,17 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // ✅ NEW: không cho trùng tên (loại trừ chính show đang sửa)
+        // không cho trùng tên (loại trừ chính show đang sửa)
         if (isDuplicateShowName(show.getShowID(), showName)) {
             forwardEditError(req, resp, show, "Tên của show bạn vừa nhập không được trùng với show bạn đã tạo");
             return;
         }
 
-        // MÔ TẢ
-        err = validateText(
+        // ✅ MÔ TẢ: bỏ ràng buộc số thập phân (cho phép . ,)
+        err = validateDescription(
                 description,
                 "Mô tả vở diễn không được để trống",
                 "Mô tả vở diễn không được chứa số âm",
-                "Mô tả vở diễn không được chứa số thập phân",
                 "Mô tả vở diễn không được chứa kí tự đặc biệt"
         );
         if (err != null) {
@@ -773,7 +791,7 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // ✅ NEW: không cho trùng poster (loại trừ chính show đang sửa)
+        // không cho trùng poster (loại trừ chính show đang sửa)
         if (isDuplicatePoster(show.getShowID(), showImage)) {
             forwardEditError(req, resp, show, "Poster phim bạn chọn không được trùng với poster phim đã tạo");
             return;
@@ -813,7 +831,8 @@ public class ShowManagementServlet extends HttpServlet {
         }
 
         resp.sendRedirect(req.getContextPath()
-                + "/admin/show?success=Cập nhật show thành công!&v=" + System.currentTimeMillis());
+                + "/admin/show?success=" + urlEncodeUtf8("Cập nhật show thành công!")
+                + "&v=" + System.currentTimeMillis());
     }
 
     /* =====================================================
@@ -821,8 +840,13 @@ public class ShowManagementServlet extends HttpServlet {
     ===================================================== */
     private void forwardAddError(HttpServletRequest req, HttpServletResponse resp, String msg)
             throws ServletException, IOException {
-        req.setAttribute("globalMessage", "Thông tin cho vở diễn không được để trống");
         req.setAttribute("error", msg);
+
+        // ✅ GIỮ LẠI TRẠNG THÁI USER ĐÃ CHỌN
+        String status = req.getParameter("status");
+        if (status != null && !status.trim().isEmpty()) {
+            req.setAttribute("statusValue", status.trim());
+        }
 
         prepareAddFormData(req);
         req.getRequestDispatcher("/WEB-INF/views/admin/show/add.jsp").forward(req, resp);
@@ -883,8 +907,13 @@ public class ShowManagementServlet extends HttpServlet {
     ===================================================== */
     private void deleteShow(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
+
         Integer id = Integer.parseInt(req.getParameter("id"));
         showFacade.deleteHard(id);
-        resp.sendRedirect(req.getContextPath() + "/admin/show?v=" + System.currentTimeMillis());
+
+        String msg = urlEncodeUtf8("Xóa show thành công");
+        resp.sendRedirect(req.getContextPath()
+                + "/admin/show?success=" + msg
+                + "&v=" + System.currentTimeMillis());
     }
 }

@@ -361,35 +361,30 @@ input[type="email"]:focus {
 .switch-link a {
     color: var(--gold);
 }
-/* ============================
-   FOOTER - BOOKINGSTAGE (LUXURY GOLD)
-   ============================ */
+/* =========================================================
+   FOOTER - BOOKINGSTAGE (LUXURY NEON EDITION)
+   ========================================================= */
 
+/* 1. KHUNG CHÍNH */
 .site-footer {
     width: 100%;
-
-    background: rgba(10, 10, 12, 0.85);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    background: #0a0a0c; /* Đen tuyền sang trọng */
     color: #bbbbbb;
-    padding: 70px 0 30px;
-
-    border-top: 1px solid rgba(255, 215, 0, 0.15);
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
-    position: relative;
-    z-index: 10;
+    padding: 70px 0 0; /* Padding bottom để 0 vì footer-bottom đã có padding */
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+    font-size: 0.95rem;
 }
 
 .footer-content {
     max-width: 1300px;
     margin: auto;
-    padding: 0 25px;
+    padding: 0 25px 50px; /* Padding dưới để cách footer-bottom ra */
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 50px;
+    gap: 40px;
 }
 
-/* LOGO */
+/* 2. LOGO & THƯƠNG HIỆU */
 .footer-logo {
     display: flex;
     align-items: center;
@@ -403,139 +398,198 @@ input[type="email"]:focus {
     border-radius: 12px;
     object-fit: contain;
     background: rgba(255, 255, 255, 0.05);
-    padding: 8px;
-    border: 1px solid rgba(255, 215, 0, 0.2);
 }
 
 .footer-brand {
     font-family: 'Playfair Display', serif;
     font-size: 24px;
     font-weight: 700;
-    background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+    background: linear-gradient(to right, #d4af37, #edc967, #d4af37);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    letter-spacing: 0.5px;
 }
 
-/* Sections */
-.footer-section h3 {
+/* 3. TIÊU ĐỀ (HEADINGS) */
+.footer-section h3.footer-heading {
     font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    margin-bottom: 20px;
-    color: #ffd700; /* Tiêu đề màu vàng kim */
+    font-size: 1.25rem;
+    margin-bottom: 25px;
+    color: #d4af37;
     font-weight: 700;
     position: relative;
     display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
-.footer-section h3::after {
+
+.footer-section h3.footer-heading::after {
     content: "";
     position: absolute;
-    bottom: -6px;
+    bottom: -8px;
     left: 0;
     width: 40px;
     height: 2px;
-    /* Gradient Vàng sang trọng */
-    background: linear-gradient(90deg, #ffd700, #b38728);
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); /* Phát sáng nhẹ */
+    background: #d4af37;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
 }
 
-/* Links */
-.footer-section a {
+/* 4. MENU LINKS (TRƯỢT MƯỢT + KHÔNG MŨI TÊN) */
+ul.footer-links {
+    padding-left: 0;
+    margin: 0;
+}
+
+ul.footer-links li {
+    margin-bottom: 0;
+}
+
+.footer-links a {
     display: block;
     color: #bbbbbb;
     text-decoration: none;
-    margin-bottom: 12px;
+    padding: 8px 0;
     transition: all 0.3s ease;
-    font-size: 0.95rem;
+    position: relative;
 }
 
-/* Hover vào link: Chuyển màu vàng + dịch sang phải */
-.footer-section a:hover {
-    color: #ffd700;
-    transform: translateX(6px);
-    text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+/* Ẩn mũi tên nếu lỡ có icon i trong thẻ a */
+.footer-links a i {
+    display: none !important;
 }
 
-/* Social Icons */
-.social-links {
-    margin-top: 15px;
+.footer-links a:hover {
+    color: #d4af37;
+    transform: translateX(10px); /* Hiệu ứng trượt sang phải */
+    text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
 }
 
-.social-links a {
-    margin-right: 15px;
-    font-size: 1.2rem;
-    display: inline-flex;
+/* 5. SOCIAL ICONS (NEON GLOW - KHÔNG BỊ VÀNG KHÈ) */
+.social-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.social-link {
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05); /* Nền tròn mờ */
-    color: #fff;
+    border: 1px solid #d4af37;
+    color: #d4af37;
     text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Hiệu ứng nảy */
+    background: transparent; /* Mặc định trong suốt */
 }
 
-.social-links a:hover {
-    background: linear-gradient(135deg, #ffd700, #b38728);
-    color: #000; /* Icon chuyển đen cho nổi */
-    transform: translateY(-5px); /* Nảy lên */
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3); /* Bóng vàng */
+/* Force hiển thị icon bên trong social link */
+.social-link i {
+    display: block !important;
+    font-size: 16px;
 }
 
-/* Contact */
+/* Khi di chuột vào icon */
+.social-link:hover {
+    background-color: transparent !important; /* QUAN TRỌNG: Giữ trong suốt */
+    color: #fff !important; /* Icon chuyển sang trắng */
+    border-color: #d4af37;
+
+    /* Tạo hào quang phát sáng (Neon) */
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.8),
+        inset 0 0 10px rgba(212, 175, 55, 0.2);
+
+    transform: translateY(-5px); /* Bay lên nhẹ */
+    text-shadow: 0 0 8px #d4af37; /* Chữ cũng phát sáng */
+}
+
+/* 6. CONTACT LIST (Sắp xếp icon và chữ thẳng hàng) */
 .contact-item {
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: flex-start; /* Canh lề trên để icon ngang hàng dòng đầu */
+    gap: 15px;
     margin-bottom: 15px;
     color: #bbbbbb;
     text-decoration: none;
-    font-size: 0.95rem;
-    line-height: 1.6;
+    transition: 0.3s;
 }
 
 .contact-item:hover {
     color: #fff;
 }
 
-/* Icon liên hệ màu vàng */
 .contact-icon {
-    color: #ffd700;
+    width: 25px; /* Cố định chiều rộng icon để chữ thẳng hàng */
+    color: #d4af37;
     font-size: 1.1rem;
-    margin-top: 4px;
-    min-width: 20px; /* Cố định chiều rộng để text thẳng hàng */
+    text-align: center;
+    margin-top: 3px; /* Đẩy xuống xíu cho cân với chữ */
 }
 
-/* Bottom */
+.contact-icon i {
+    display: block !important;
+}
+
+/* 7. FOOTER BOTTOM */
 .footer-bottom {
     text-align: center;
-    margin-top: 60px;
-    padding-top: 25px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 25px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0,0,0,0.3); /* Nền tối hơn chút */
+    color: #666;
     font-size: 0.9rem;
-    color: #888;
 }
 
 .footer-bottom span {
-    color: #ffd700; /* Trái tim hoặc tên thương hiệu ở dòng cuối màu vàng */
-    font-weight: 600;
+    color: #888;
 }
 
-/* Responsive */
-@media (max-width: 600px) {
+/* RESPONSIVE */
+@media (max-width: 768px) {
     .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
         gap: 30px;
     }
-    .footer-brand {
-        font-size: 1.5rem;
+    .footer-logo, .social-icons, .contact-item {
+        justify-content: center;
     }
     .footer-section h3::after {
-        width: 100%; /* Trên mobile gạch chân dài hết cho đẹp */
-        background: linear-gradient(90deg, #ffd700, transparent);
+        left: 50%;
+        transform: translateX(-50%);
     }
+}
+/* 1. Xóa dấu chấm tròn mặc định (nếu chưa xóa sạch) */
+.footer-links li {
+    list-style: none;
+    padding-left: 0;
+}
+
+/* 2. Thêm mũi tên vàng (›) vào trước mỗi dòng */
+.footer-links a::before {
+    content: "\203A";  /* Mã unicode của dấu mũi tên nhỏ */
+    color: #d4af37;    /* Màu vàng kim loại */
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-right: 8px; /* Khoảng cách với chữ */
+    display: inline-block;
+    transition: transform 0.3s ease;
+    line-height: 0;    /* Căn giữa theo chiều dọc */
+    position: relative;
+    top: 1px;
+}
+
+/* 3. Hiệu ứng: Khi di chuột vào thì mũi tên sáng lên và dịch chuyển */
+.footer-links a:hover::before {
+    color: #fff;       /* Mũi tên chuyển trắng */
+    transform: translateX(3px); /* Nhích nhẹ sang phải */
+    text-shadow: 0 0 5px #d4af37;
+}
+
+/* 4. Điều chỉnh lại Text hover một chút cho đồng bộ */
+.footer-links a:hover {
+    transform: translateX(5px); /* Cả dòng trượt nhẹ */
 }
 /* css index*/
 body {
@@ -555,10 +609,66 @@ body {
     /* -------------------------------- */
 }
 #bg3d {
-    position:fixed;
-    inset:0;
-    z-index:0;
-    pointer-events:none;
+    position: fixed; /* Ghim chặt nền lại */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -1; /* Nằm dưới cùng */
+    pointer-events: none; /* Không che mất nút bấm */
+}
+/* Tạo khung cho từng item trải nghiệm để dễ hover */
+.exp-item {
+    transition: all 0.4s ease; /* Chuyển động mượt */
+    border: 1px solid transparent;
+    border-radius: 15px;
+    cursor: default;
+}
+
+/* Hiệu ứng khi di chuột vào */
+.exp-item:hover {
+    transform: translateY(-10px); /* Bay lên nhẹ 10px */
+    background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, rgba(0,0,0,0) 100%); /* Nền vàng mờ dọc xuống */
+    border-color: rgba(212, 175, 55, 0.3); /* Hiện viền vàng mờ */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Đổ bóng sâu hơn */
+}
+
+/* Làm cái icon nó phát sáng khi hover */
+.exp-item:hover .exp-icon {
+    text-shadow: 0 0 20px #d4af37, 0 0 40px #d4af37; /* Phát sáng neon vàng */
+    transform: scale(1.1); /* Phóng to nhẹ icon */
+    transition: all 0.3s ease;
+}
+/* Xóa hết cái cũ, chèn đoạn này vào */
+
+@keyframes goldPulse {
+    from {
+        box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7);
+    }
+    to {
+        box-shadow: 0 0 0 20px rgba(212, 175, 55, 0);
+    }
+}
+
+.btn-grand-finale {
+    background: linear-gradient(45deg, #d4af37, #f8d669);
+    color: #000;
+    font-weight: bold;
+    padding: 15px 40px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+
+    /* Chỉnh lại kiểu chạy animation cho mượt với from-to */
+    animation: goldPulse 1.5s infinite;
+}
+
+/* Thêm hiệu ứng khi di chuột vào cho nó "xịn" hơn */
+.btn-grand-finale:hover {
+    transform: scale(1.05); /* Phóng to nhẹ khi chạm vào */
+    background: linear-gradient(45deg, #f8d669, #d4af37); /* Đổi màu nền nhẹ */
+    cursor: pointer;
 }
 
 /* Thêm class này hoặc sửa trực tiếp .hero-title */
@@ -704,64 +814,61 @@ body {
     color:#ffd700;
     margin-bottom:10px;
 }
+/* ==================================================
+   NÂNG CẤP KHU VỰC STATS (THỐNG KÊ)
+   ================================================== */
 .stats {
-    /* Quan trọng: Phải có 2 dòng này để chia cột nằm ngang */
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
+    justify-content: space-around; /* Chia đều khoảng cách */
+    align-items: center;
+    padding: 50px 0;
+    margin: 80px 0 0 0 !important; /* Đẩy cách xa phần trên ra */
+    width: 100%;
+    max-width: 100% !important; /* Full màn hình */
 
-    gap: 40px;
-    margin-top: 50px;
-    text-align: center; /* Căn giữa toàn bộ khu vực */
+    /* Hiệu ứng nền kính sang trọng */
+    background: linear-gradient(90deg,
+        rgba(0,0,0,0) 0%,
+        rgba(212, 175, 55, 0.05) 50%,
+        rgba(0,0,0,0) 100%);
+
+    /* Đường viền trên dưới mờ ảo */
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    position: relative;
 }
 
 .stat {
-    background: transparent;
-    border: none;
-    /* Vạch ngăn cách mờ bên phải */
-    border-right: 1px solid rgba(255, 215, 0, 0.2);
-    padding: 10px;
-
-    /* Quan trọng: Căn giữa nội dung bên trong từng cột */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    text-align: center;
+    position: relative;
+    flex: 1; /* Chia đều cột */
 }
 
-/* Xóa vạch ngăn cách ở phần tử cuối cùng để đẹp hơn */
-.stat:last-child {
-    border-right: none;
+/* Thêm gạch dọc ngăn cách giữa các số liệu */
+.stat:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, #d4af37, transparent);
+    opacity: 0.3;
 }
 
 .stat h3 {
-    font-size: 48px;
-    font-weight: 700;
-    /* Gradient vàng cho số */
-    background: linear-gradient(to bottom, #ffd700, #aa771c);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    font-size: 2.5rem;
+    font-family: 'Playfair Display', serif;
+    color: #d4af37;
     margin-bottom: 5px;
-    filter: drop-shadow(0 0 10px rgba(255,215,0,0.3));
-    margin-top: 0;
-    filter: drop-shadow(0 4px 4px rgba(0,0,0,0.9));
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); /* Phát sáng nhẹ */
 }
 
 .stat p {
-    color: #aaa;
-    font-size: 14px;
-    letter-spacing: 1px;
+    color: #888;
+    font-size: 0.9rem;
     text-transform: uppercase;
-    margin: 0;
-}
-
-.stat-box { /* Class của cái hộp thống kê */
-    border: 1px solid rgba(255, 215, 0, 0.3); /* Viền vàng mờ */
-    transition: 0.3s;
-}
-.stat-box:hover {
-    border-color: #ffd700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); /* Phát sáng nhẹ */
-    transform: translateY(-5px); /* Nổi lên chút */
+    letter-spacing: 1px;
 }
 /* =========================================
    CHAT WIDGET - LUXURY DARK MODE STYLE
@@ -1270,114 +1377,142 @@ body {
     perspective: 1000px; /* Tạo chiều sâu 3D */
 }
 
-/* 4. CARD CAO CẤP */
-/* Sửa lại class này một chút để thẻ a hoạt động như cái hộp */
-.luxury-card {
-    display: block !important; /* Bắt buộc để thẻ a nhận kích thước */
-    text-decoration: none !important; /* Bỏ gạch chân link */
-    color: inherit; /* Giữ nguyên màu chữ gốc */
+/* ========================================= */
+/* 4. CARD CAO CẤP (LUXURY PRO VERSION) */
+/* ========================================= */
 
-    /* Các thuộc tính cũ giữ nguyên */
+.luxury-card {
+    display: block !important;
+    text-decoration: none !important;
+    color: inherit;
+    
+    /* Kích thước & Vị trí */
     width: 280px;
     height: 420px;
     position: relative;
-    border-radius: 4px;
-    transition: 0.4s ease;
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    border-radius: 8px; /* Bo góc mềm mại hơn chút */
     background: #000;
     overflow: hidden;
+    
+    /* TRẠNG THÁI MẶC ĐỊNH: Tinh tế, bí ẩn */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Viền xám mờ (sang hơn vàng mờ) */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.7); /* Bóng đen sâu */
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* Chuyển động mượt như lụa */
 }
 
-/* Hiệu ứng khi Hover: Nổi lên và sáng rực */
+/* HIỆU ỨNG HOVER: Bùng nổ thị giác */
 .luxury-card:hover {
-    transform: translateY(-15px) scale(1.02);
-    border-color: #d4af37;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 25px rgba(212, 175, 55, 0.2); /* Glow vàng */
+    transform: translateY(-10px); /* Bay lên nhẹ nhàng */
+    border-color: #d4af37; /* Đổi viền sang VÀNG KIM */
+    
+    /* Glow vàng viền trong + Bóng đổ sâu bên ngoài */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.9), 
+                0 0 20px rgba(212, 175, 55, 0.3) inset; 
 }
 
+/* POSTER ẢNH */
 .luxury-poster {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: 0.4s;
-    opacity: 0.85; /* Hơi tối đi 1 chút để làm nền */
+    transition: all 0.6s ease;
+    
+    /* Mặc định: Giữ nguyên màu, chỉ tối đi 1 xíu để tôn chữ */
+    filter: brightness(0.9);
 }
 
 .luxury-card:hover .luxury-poster {
-    opacity: 1; /* Sáng lại khi hover */
-    transform: scale(1.1); /* Zoom ảnh nhẹ bên trong */
+    transform: scale(1.08); /* Phóng to ảnh chậm rãi */
+    filter: brightness(1.1); /* Sáng bừng lên */
 }
 
-/* LỚP PHỦ THÔNG TIN BÊN DƯỚI */
+/* THÔNG TIN BÊN DƯỚI */
 .luxury-info {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 80px 20px 20px 20px;
-    background: linear-gradient(to top, #000 10%, rgba(0,0,0,0.8) 50%, transparent 100%);
-    transform: translateY(40px); /* Ẩn bớt nút đi */
-    transition: 0.4s;
+    padding: 60px 20px 25px 20px;
+    
+    /* Gradient đen mờ dần lên trên để chữ dễ đọc */
+    background: linear-gradient(to top, rgba(0,0,0,1) 10%, rgba(0,0,0,0.8) 60%, transparent 100%);
+    
+    transform: translateY(20px); /* Chỉ ẩn nhẹ nút bấm */
+    transition: transform 0.4s ease;
     text-align: center;
+    z-index: 2;
 }
 
 .luxury-card:hover .luxury-info {
-    transform: translateY(0);
+    transform: translateY(0); /* Trồi lên khi hover */
 }
 
 .show-name {
     color: #fff;
     font-family: 'Playfair Display', serif;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 700;
     margin-bottom: 15px;
-    text-shadow: 0 2px 5px rgba(0,0,0,1);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    letter-spacing: 0.5px;
 }
 
-/* NÚT LUXURY BUTTON (Thay cho nút xanh lá) */
+/* NÚT BẤM (GIỮ NGUYÊN STYLE CŨ VÌ ĐẸP RỒI) */
 .btn-luxury-gold {
     display: inline-block;
-    padding: 8px 25px;
+    padding: 10px 30px;
     border: 1px solid #d4af37;
     color: #d4af37;
     text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 1px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
     text-decoration: none;
     transition: 0.3s;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(5px);
+    background: rgba(0,0,0,0.8);
+    opacity: 0; /* Mặc định ẩn nút */
+    transform: translateY(10px);
 }
 
-.btn-luxury-gold:hover {
+/* Khi hover vào Card thì nút mới hiện ra */
+.luxury-card:hover .btn-luxury-gold {
+    opacity: 1;
     background: #d4af37;
     color: #000;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
-    font-weight: bold;
+    transform: translateY(0);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
 }
 
-/* Gắn nhãn "Nổi bật" hoặc "Mới" góc trên */
+/* BADGE GÓC TRÊN */
 .badge-corner {
     position: absolute;
     top: 15px;
     right: 15px;
-    background: linear-gradient(45deg, #d4af37, #f1c40f);
+    background: #d4af37;
     color: #000;
-    font-size: 0.7rem;
-    font-weight: bold;
-    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 5px 12px;
     text-transform: uppercase;
+    letter-spacing: 1px;
     z-index: 10;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
+/* MOBILE */
 @media (max-width: 768px) {
     .luxury-card {
         width: 100%;
-        max-width: 300px;
+        max-width: 320px;
         height: 450px;
     }
-}
-.luxury-card * {
-    pointer-events: none;
+    
+    /* Mobile thì luôn hiện nút, không cần hover */
+    .luxury-info {
+        transform: translateY(0);
+    }
+    .btn-luxury-gold {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

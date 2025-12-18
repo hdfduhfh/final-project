@@ -8,26 +8,16 @@
     /* --- 1. VŨ TRỤ ĐIỆN ẢNH (CINEMATIC SETUP) --- */
     body {
         background-color: #050505;
-        /* Nếu ní có ảnh nền ở body, dòng này sẽ giúp ảnh đứng yên tạo hiệu ứng chiều sâu */
+        background-image:
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)),
+            url('${pageContext.request.contextPath}/assets/images/background-show.png');
         background-attachment: fixed;
-        background-position: center;
+        background-position: center center;
         background-size: cover;
         color: #e0e0e0;
         font-family: 'Segoe UI', sans-serif;
-        overflow-x: hidden; /* Chặn thanh cuộn ngang */
-    }
-
-    /* Hiệu ứng sương mù nền (Tùy chọn, tạo độ sâu) */
-    body::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at 50% 50%, rgba(241, 196, 15, 0.05), transparent 70%);
-        pointer-events: none;
-        z-index: -1;
+        overflow-x: hidden;
+        min-height: 100vh;
     }
 
     .container-custom {
@@ -37,291 +27,311 @@
         position: relative;
     }
 
-    /* --- 2. TYPOGRAPHY QUYỀN LỰC --- */
+    /* Thử ép tụi nó tách nhau ra */
+    header, .header-area, nav {
+        display: flex !important; /* Dàn hàng ngang */
+        justify-content: space-between !important; /* Đẩy 2 đầu xa nhau ra */
+        align-items: center !important; /* Căn giữa theo chiều dọc */
+        padding: 0 40px !important; /* Thêm khoảng cách 2 bên lề cho thoáng */
+    }
+
+    /* Nếu menu dùng thẻ ul li */
+    header ul, nav ul {
+        display: flex !important;
+        gap: 30px !important; /* Khoảng cách giữa các chữ trong menu */
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* --- 2. TYPOGRAPHY --- */
     h1 {
         font-family: 'Playfair Display', serif;
-        font-size: 3rem;
+        font-size: 3.5rem;
         text-align: center;
         text-transform: uppercase;
-        letter-spacing: 5px;
+        letter-spacing: 3px;
+        margin-top: 100px; /* Đẩy xuống tránh header che */
         margin-bottom: 50px;
-        position: relative;
         color: #fff;
-        text-shadow: 0 0 20px rgba(241, 196, 15, 0.5); /* Chữ tỏa sáng */
+        background: linear-gradient(to right, #cfc09f, #ffecb3, #c4a747);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 10px 30px rgba(0,0,0,0.5);
         animation: fadeInDown 1s ease-out;
     }
 
-    /* Đường gạch chân nghệ thuật dưới tiêu đề */
-    h1::after {
-        content: "";
-        display: block;
-        width: 100px;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, #d4af37, transparent);
-        margin: 20px auto 0;
-    }
-
-    /* --- 3. THANH TÌM KIẾM "TƯƠNG LAI" --- */
+    /* --- 3. THANH TÌM KIẾM --- */
     .search-wrapper {
         display: flex;
         justify-content: center;
-        margin-bottom: 80px;
-        animation: fadeInUp 1s ease-out 0.3s backwards; /* Xuất hiện trễ hơn tiêu đề chút */
+        margin-bottom: 60px;
+        animation: fadeInUp 1s ease-out 0.2s backwards;
     }
 
     .search-box {
         position: relative;
         width: 100%;
-        max-width: 600px;
+        max-width: 650px;
     }
 
     .search-box input {
         width: 100%;
-        padding: 18px 70px 18px 30px;
+        padding: 18px 80px 18px 30px;
         border-radius: 50px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(20, 20, 20, 0.6); /* Nền kính tối */
-        backdrop-filter: blur(15px); /* Làm mờ hậu cảnh */
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         color: #fff;
         font-size: 1.1rem;
+        font-family: 'Playfair Display', serif;
         outline: none;
-        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        transition: all 0.4s ease;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
     }
 
     .search-box input:focus {
         border-color: #d4af37;
-        background: rgba(0, 0, 0, 0.8);
-        box-shadow: 0 0 25px rgba(212, 175, 55, 0.3), inset 0 0 10px rgba(212, 175, 55, 0.1);
-        transform: scale(1.02);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.5), 0 0 15px rgba(212, 175, 55, 0.2);
     }
 
     .search-box button {
         position: absolute;
         right: 8px;
         top: 8px;
-        height: 46px;
-        padding: 0 35px;
+        height: 42px;
+        padding: 0 30px;
         border-radius: 40px;
         border: none;
-        background: linear-gradient(135deg, #d4af37, #b8860b);
+        background: linear-gradient(135deg, #d4af37, #C5A028);
         color: #000;
-        font-weight: 800;
-        letter-spacing: 1px;
+        font-weight: 700;
         cursor: pointer;
         transition: 0.3s;
-        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
     }
 
     .search-box button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.6);
+        box-shadow: 0 5px 20px rgba(212, 175, 55, 0.5);
     }
 
-    /* --- 4. GRID & ANIMATION --- */
+    /* --- 4. GRID SYSTEM & CARD (Đã tối ưu kích thước) --- */
     .show-list {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 40px;
+        /* 👇 SỬA: Giảm từ 260px xuống 220px để card nhỏ gọn, xếp được nhiều hơn */
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 25px; /* Giảm gap xíu cho đỡ loãng */
     }
 
     .show-item {
-        /* GLASSMORPHISM - Kính đen mờ */
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-
-        border-radius: 20px;
-        overflow: hidden;
         display: flex;
         flex-direction: column;
-        transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        height: 100%;
+        background: #0a0a0a;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
         position: relative;
-
-        /* Animation setup: Ban đầu ẩn đi */
+        transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         opacity: 0;
         animation: fadeInUp 0.8s ease-out forwards;
     }
 
-    /* Hiệu ứng so le (Stagger): Mỗi card hiện trễ nhau 0.1s */
-    .show-item:nth-child(1) {
-        animation-delay: 0.1s;
-    }
-    .show-item:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-    .show-item:nth-child(3) {
-        animation-delay: 0.3s;
-    }
-    .show-item:nth-child(4) {
-        animation-delay: 0.4s;
-    }
-    .show-item:nth-child(5) {
-        animation-delay: 0.5s;
-    }
-    .show-item:nth-child(6) {
-        animation-delay: 0.6s;
-    }
-    /* ... Nếu nhiều hơn nó sẽ chạy theo delay mặc định */
-
-    /* Hover vào Card */
     .show-item:hover {
-        transform: translateY(-15px) scale(1.02);
-        border-color: rgba(212, 175, 55, 0.6);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.15); /* Glow vàng tỏa ra */
-        background: rgba(255, 255, 255, 0.07);
+        transform: translateY(-8px);
+        border-color: #d4af37;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.8), 0 0 15px rgba(212, 175, 55, 0.15) inset;
     }
 
-    /* Ảnh Poster */
     .poster-wrapper {
         position: relative;
         width: 100%;
-        height: 240px; /* Cao hơn chút cho đẹp */
+        padding-top: 140%; /* Tỉ lệ 5:7 */
         overflow: hidden;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
     .poster-wrapper img {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: transform 0.8s ease;
-        filter: brightness(0.85); /* Tối nhẹ để chữ nổi bật */
+        transition: transform 0.6s ease;
+        filter: saturate(0.9) brightness(0.9);
     }
 
     .show-item:hover .poster-wrapper img {
-        transform: scale(1.15);
-        filter: brightness(1.1); /* Sáng lên khi hover */
+        transform: scale(1.08);
+        filter: saturate(1.1) brightness(1.1);
     }
 
-    /* --- 5. NỘI DUNG CARD --- */
     .card-details {
-        padding: 25px;
+        padding: 15px; /* 👇 SỬA: Giảm padding từ 20px xuống 15px cho cân đối với card nhỏ */
         flex: 1;
         display: flex;
         flex-direction: column;
+        background: linear-gradient(to bottom, #1a1a1a, #050505); /* 👇 SỬA: Nền sáng hơn xíu ở trên để đỡ bị tối om */
     }
 
     .show-title {
         font-family: 'Playfair Display', serif;
-        font-size: 1.5rem;
+        font-size: 1.1rem; /* 👇 SỬA: Giảm font size xíu cho vừa vặn */
         font-weight: 700;
         margin: 0 0 8px 0;
         color: #fff;
         line-height: 1.3;
-        text-transform: capitalize; /* Tự động viết hoa chữ cái đầu */
-
-        /* Giới hạn 2 dòng */
+        min-height: 2.8rem;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        transition: color 0.3s;
     }
 
     .show-item:hover .show-title {
-        color: #f1c40f; /* Tên phim hóa vàng khi hover */
-        text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+        color: #d4af37;
     }
 
-    /* Metadata Row */
     .meta-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding-bottom: 15px;
-        margin-bottom: 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        font-size: 0.85rem;
+        margin-bottom: 12px;
+        font-size: 0.8rem;
+        padding-bottom: 10px; /* Thêm gạch chân mờ để tách biệt */
+        border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
-    /* Đèn tín hiệu Neon */
-    .status-neon {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 1px;
+    .badge-luxury {
         padding: 4px 10px;
-        border-radius: 20px;
-        background: rgba(0,0,0,0.3); /* Nền nhỏ cho badge */
+        border-radius: 3px;
+        font-weight: 700;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        border: 1px solid;
     }
 
-    .dot-light {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        animation: pulse 2s infinite; /* Chấm nhấp nháy */
+    .status-active {
+        border-color: #d4af37;
+        color: #d4af37;
+        box-shadow: 0 0 8px rgba(212, 175, 55, 0.1);
+    }
+    .status-inactive {
+        border-color: #555;
+        color: #777;
     }
 
-    .st-active {
-        color: #2ecc71;
-        border: 1px solid rgba(46, 204, 113, 0.3);
-    }
-    .st-active .dot-light {
-        background: #2ecc71;
-        box-shadow: 0 0 8px #2ecc71;
-    }
-
-    .st-inactive {
-        color: #e74c3c;
-        border: 1px solid rgba(231, 76, 60, 0.3);
-    }
-    .st-inactive .dot-light {
-        background: #e74c3c;
-        box-shadow: 0 0 8px #e74c3c;
-    }
-
-    .duration-tag {
-        color: #aaa;
+    .duration-info {
+        color: #e0e0e0; /* Đổi màu xám tối #888 thành trắng xám sáng sủa */
+        font-size: 0.85rem;
+        font-weight: 600; /* In đậm lên */
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.1); /* Thêm nền mờ nhẹ */
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .duration-info i {
+        color: #d4af37; /* Icon đồng hồ màu Vàng Gold */
     }
 
     .desc-text {
-        font-size: 0.95rem;
-        color: #bbb;
-        line-height: 1.6;
+        font-size: 0.85rem;
+        color: #aaa;
+        line-height: 1.5;
+        margin-bottom: 20px;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        margin-bottom: 25px;
     }
 
-    /* Nút bấm vô hình (Ghost Button) */
-    .btn-ghost {
+    .btn-action-wrapper {
         margin-top: auto;
-        align-self: flex-end;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-detail {
         text-decoration: none;
-        color: #d4af37;
-        font-size: 0.9rem;
+        color: #d4af37; /* Đổi mặc định thành màu vàng luôn cho dễ thấy */
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 1px;
+        transition: all 0.3s ease;
+        border: 1px solid #d4af37; /* Thêm viền */
+        padding: 6px 15px;
+        border-radius: 20px;
+    }
+
+    .btn-detail:hover {
+        background: #d4af37;
+        color: #000;
+    }
+    .show-item:hover .btn-detail {
+        color: #d4af37;
+    }
+
+    /* --- 5. PHÂN TRANG (PAGINATION) --- */
+    .pagination-wrapper {
+        margin-top: 60px;
         display: flex;
+        justify-content: center;
         align-items: center;
-        gap: 8px;
-        transition: 0.3s;
-        padding: 8px 15px;
-        border: 1px solid transparent;
-        border-radius: 30px;
+        gap: 10px;
+        animation: fadeInUp 1s ease-out 0.5s backwards;
     }
 
-    .btn-ghost:hover {
-        background: rgba(212, 175, 55, 0.1);
+    .page-link {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%; /* Hình tròn */
+        color: #fff;
+        text-decoration: none;
+        font-family: 'Playfair Display', serif;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255,255,255,0.02);
+    }
+
+    .page-link:hover {
         border-color: #d4af37;
-        padding-right: 20px; /* Hiệu ứng kéo dài nút */
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        color: #d4af37;
+        background: rgba(212, 175, 55, 0.1);
+        transform: translateY(-3px);
     }
 
-    /* --- KEYFRAMES ANIMATION --- */
+    .page-link.active {
+        background: linear-gradient(135deg, #d4af37, #C5A028);
+        color: #000;
+        border-color: transparent;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .page-link.disabled {
+        opacity: 0.3;
+        pointer-events: none;
+        border-color: rgba(255,255,255,0.1);
+    }
+
+    /* Keyframes */
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(40px);
+            transform: translateY(30px);
         }
         to {
             opacity: 1;
@@ -331,81 +341,104 @@
     @keyframes fadeInDown {
         from {
             opacity: 0;
-            transform: translateY(-40px);
+            transform: translateY(-30px);
         }
         to {
             opacity: 1;
             transform: translateY(0);
         }
     }
-
 </style>
 
 <div class="container-custom">
-    <h1>Danh sách chương trình</h1>
+    <h1>Danh Sách Chương Trình</h1>
 
     <div class="search-wrapper">
         <form method="get" action="${pageContext.request.contextPath}/shows" class="search-box">
-            <input type="text" name="keyword" placeholder="Tìm tác phẩm bạn yêu thích..." value="${searchKeyword}" />
+            <input type="text" name="keyword" placeholder="Tìm tác phẩm kinh điển..." value="${param.keyword}" autocomplete="off"/>
             <button type="submit">TÌM</button>
         </form>
     </div>
 
     <c:choose>
         <c:when test="${empty shows}">
-            <div style="text-align: center; color: #666; padding: 50px;">
+            <div style="text-align: center; color: #666; padding: 80px 0;">
+                <i class="fa fa-film" style="font-size: 3rem; margin-bottom: 20px; color: #333;"></i>
                 <p style="font-size: 1.2rem;">Không tìm thấy chương trình nào phù hợp.</p>
             </div>
         </c:when>
         <c:otherwise>
             <div class="show-list">
-                <c:forEach var="show" items="${shows}">
-                    <div class="show-item">
+                <c:forEach var="show" items="${shows}" varStatus="status">
+                    <div class="show-item" style="animation-delay: ${status.index * 0.1}s;">
                         <div class="poster-wrapper">
                             <c:choose>
                                 <c:when test="${not empty show.showImage}">
                                     <img src="${pageContext.request.contextPath}/${show.showImage}" alt="${show.showName}" />
                                 </c:when>
                                 <c:otherwise>
-                                    <img src="https://via.placeholder.com/500x350/111/444?text=No+Preview" alt="No Image" />
+                                    <img src="https://via.placeholder.com/500x700/111/444?text=Poster" alt="No Image" />
                                 </c:otherwise>
                             </c:choose>
                         </div>
 
                         <div class="card-details">
                             <h2 class="show-title">${show.showName}</h2>
-
                             <div class="meta-row">
                                 <c:choose>
-                                    <c:when test="${show.status == 'Active'}">
-                                        <div class="status-neon st-active">
-                                            <span class="dot-light"></span> Đang diễn ra
-                                        </div>
+                                    <c:when test="${show.status == 'Ongoing'}">
+                                        <div class="badge-luxury status-active">Đang diễn ra</div>
                                     </c:when>
+
+                                    <c:when test="${show.status == 'Upcoming'}">
+                                        <div class="badge-luxury status-upcoming">Sắp chiếu</div>
+                                    </c:when>
+
+                                    <c:when test="${show.status == 'Cancelled'}">
+                                        <div class="badge-luxury status-cancelled">Đã hủy</div>
+                                    </c:when>
+
                                     <c:otherwise>
-                                        <div class="status-neon st-inactive">
-                                            <span class="dot-light"></span> Ngưng hoạt động
-                                        </div>
+                                        <div class="badge-luxury status-inactive">Không xác định</div>
                                     </c:otherwise>
                                 </c:choose>
 
-                                <div class="duration-tag">
-                                    <span>⏳</span> ${show.durationMinutes} phút
-                                </div>
+                                <div class="duration-info"><i class="fa fa-clock-o"></i> ${show.durationMinutes}p</div>
                             </div>
-
-                            <p class="desc-text">
-                                ${show.description}
-                            </p>
-
-                            <a href="${pageContext.request.contextPath}/shows/detail/${show.showID}" class="btn-ghost">
-                                Xem chi tiết <i class="fa fa-arrow-right" aria-hidden="true">→</i>
-                            </a>
-
+                            <p class="desc-text">${show.description}</p>
+                            <div class="btn-action-wrapper">
+                                <a href="${pageContext.request.contextPath}/shows/detail/${show.showID}" class="btn-detail">
+                                    Xem chi tiết <i class="fa fa-long-arrow-right"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </c:forEach>
             </div>
+
+            <c:if test="${totalPages > 1}">
+                <div class="pagination-wrapper">
+
+                    <a href="?page=${currentPage - 1}&keyword=${param.keyword}" 
+                       class="page-link ${currentPage <= 1 ? 'disabled' : ''}">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <c:forEach begin="1" end="${totalPages}" var="i">
+                        <a href="?page=${i}&keyword=${param.keyword}" 
+                           class="page-link ${currentPage == i ? 'active' : ''}">
+                            ${i}
+                        </a>
+                    </c:forEach>
+
+                    <a href="?page=${currentPage + 1}&keyword=${param.keyword}" 
+                       class="page-link ${currentPage >= totalPages ? 'disabled' : ''}">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+
+                </div>
+            </c:if>
+
         </c:otherwise>
     </c:choose>
 </div>

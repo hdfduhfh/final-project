@@ -2,7 +2,6 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
  */
-
 package mypack;
 
 import jakarta.ejb.Local;
@@ -29,6 +28,7 @@ public interface ArtistFacadeLocal {
 
     int count();
 
-     List<Artist> searchByKeyword(String keyword);
-}
+    List<Artist> searchByKeyword(String keyword);
 
+    List<Artist> findRange(int start, int size);
+}

@@ -7,6 +7,7 @@ package mypack;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 /**
@@ -45,5 +46,15 @@ public class ArtistFacade extends AbstractFacade<Artist> implements ArtistFacade
                 Artist.class)
                 .setParameter("kw", kw)
                 .getResultList();
+    }
+    
+        @Override
+    public List<Artist> findRange(int start, int size) {
+        TypedQuery<Artist> q = em.createQuery(
+            "SELECT a FROM Artist a ORDER BY a.artistID DESC", Artist.class
+        );
+        q.setFirstResult(start);
+        q.setMaxResults(size);
+        return q.getResultList();
     }
 }

@@ -1,91 +1,352 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<html>
+<!DOCTYPE html>
+<html lang="vi">
     <head>
+        <meta charset="UTF-8">
         <title>Thêm Lịch chiếu</title>
+
+        <!-- Bootstrap 5 -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Font Awesome 6 -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+        <style>
+            :root{
+                --bg:#0b1220;
+                --panel:#0f1b33;
+                --muted:#8ea0c4;
+                --line:rgba(255,255,255,.08);
+            }
+
+            body{
+                background:
+                    radial-gradient(1200px 700px at 20% -10%, rgba(79,70,229,.28), transparent 55%),
+                    radial-gradient(900px 500px at 80% 0%, rgba(6,182,212,.22), transparent 60%),
+                    linear-gradient(180deg, var(--bg), #070b14);
+                min-height:100vh;
+                color:#e6ecff;
+                font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+            }
+
+            /* Layout */
+            .admin-wrap{
+                display:flex;
+                min-height:100vh;
+            }
+            .sidebar{
+                width: 270px;
+                background: rgba(15,27,51,.86);
+                border-right: 1px solid var(--line);
+                backdrop-filter: blur(10px);
+                padding: 18px 14px;
+                position: sticky;
+                top:0;
+                height:100vh;
+            }
+            .brand{
+                display:flex;
+                align-items:center;
+                gap:10px;
+                padding:10px 12px;
+                border-radius:14px;
+                background: rgba(255,255,255,.06);
+                border: 1px solid var(--line);
+            }
+            .brand .logo{
+                width: 38px;
+                height: 38px;
+                border-radius: 12px;
+                display:grid;
+                place-items:center;
+                background: linear-gradient(135deg, rgba(79,70,229,.9), rgba(6,182,212,.9));
+                box-shadow: 0 14px 35px rgba(0,0,0,.35);
+            }
+            .brand .title{
+                line-height: 1.1;
+                font-weight: 800;
+                letter-spacing: .2px;
+            }
+            .brand small{
+                color: var(--muted);
+                font-weight: 600;
+            }
+
+            .content{
+                flex:1;
+                padding: 22px 22px 28px;
+            }
+
+            .topbar{
+                display:flex;
+                gap:12px;
+                align-items:center;
+                justify-content:space-between;
+                padding: 14px 16px;
+                border-radius: 18px;
+                background: rgba(255,255,255,.06);
+                border: 1px solid var(--line);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 18px 55px rgba(0,0,0,.35);
+            }
+            .page-h{
+                display:flex;
+                gap:12px;
+                align-items:center;
+            }
+            .page-h h1{
+                font-size: 18px;
+                margin:0;
+                font-weight: 900;
+                letter-spacing:.2px;
+            }
+            .page-h .crumb{
+                color: var(--muted);
+                font-weight: 600;
+                font-size: 12px;
+            }
+
+            .card-form{
+                margin-top: 14px;
+                border-radius: 18px;
+                overflow: hidden;
+                background: rgba(255,255,255,.96);
+                box-shadow: 0 22px 70px rgba(0,0,0,.35);
+            }
+            .card-form .card-header{
+                background: #0f1b33;
+                color: #e8efff;
+                border: none;
+                padding: 14px 16px;
+                font-weight: 900;
+                letter-spacing: .2px;
+            }
+
+            .req{ color:#ef4444; font-weight:900; }
+
+            .form-control, .form-select{ border-radius: 12px; }
+            .btn{ border-radius: 14px; }
+
+            /* showtime items */
+            .showtime-item{
+                display:flex;
+                align-items:center;
+                gap:10px;
+                margin-bottom:10px;
+            }
+            .showtime-item input[type="datetime-local"]{
+                border-radius: 12px;
+            }
+            .icon-btn{
+                width: 40px;
+                height: 40px;
+                display:inline-grid;
+                place-items:center;
+                border-radius: 12px;
+            }
+
+            @media (max-width: 992px){
+                .sidebar{ display:none; }
+            }
+        </style>
+
+        <script>
+            // ✅ validate client-side: chỉ check show + showTime (KHÔNG check status)
+            function validateShowForm() {
+                const showID = document.querySelector("select[name='showID']").value.trim();
+
+                const timeInputs = document.querySelectorAll("input[name='showTime']");
+                let hasEmptyTime = false;
+                timeInputs.forEach(ip => {
+                    if (!ip.value || ip.value.trim() === "") hasEmptyTime = true;
+                });
+
+                let error = "";
+                if (showID === "") error += "<li>Chưa chọn vở diễn</li>";
+                if (hasEmptyTime) error += "<li>Chưa chọn giờ chiếu</li>";
+
+                const box = document.getElementById("clientErrorBox");
+                const list = document.getElementById("clientErrorList");
+
+                if (error !== "") {
+                    if (list) list.innerHTML = error;
+                    if (box) box.classList.remove("d-none");
+                    return false;
+                }
+                if (box) box.classList.add("d-none");
+                return true;
+            }
+
+            const MAX_TIMES = 3;
+
+            function addShowTime() {
+                const container = document.getElementById("showTimeContainer");
+                const items = container.querySelectorAll(".showTimeItem");
+                if (items.length >= MAX_TIMES) {
+                    alert("Tối đa " + MAX_TIMES + " lịch chiếu.");
+                    return;
+                }
+
+                const div = document.createElement("div");
+                div.className = "showTimeItem showtime-item";
+                div.innerHTML = `
+                    <input type="datetime-local" name="showTime" class="form-control" required/>
+                    <button type="button" class="btn btn-outline-danger icon-btn" onclick="removeShowTime(this)">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            }
+
+            function removeShowTime(btn) {
+                const container = document.getElementById("showTimeContainer");
+                const items = container.querySelectorAll(".showTimeItem");
+                if (items.length <= 1) {
+                    alert("Phải có ít nhất 1 lịch chiếu.");
+                    return;
+                }
+                btn.parentElement.remove();
+            }
+        </script>
     </head>
+
     <body>
-        <h1>Thêm Lịch chiếu</h1>
+        <div class="admin-wrap">
 
-        <!-- Thông báo tổng -->
-        <c:if test="${not empty globalMessage}">
-            <div style="color: red; font-weight: bold; margin-bottom: 5px;">
-                ${globalMessage}
-            </div>
-        </c:if>
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+                <div class="brand">
+                    <div class="logo"><i class="fa-solid fa-masks-theater"></i></div>
+                    <div>
+                        <div class="title">Theater Admin</div>
+                        <small>Thêm lịch chiếu</small>
+                    </div>
+                </div>
 
-        <!-- Thông báo lỗi server-side (từ servlet) -->
-        <c:if test="${not empty error}">
-            <div style="color: red; font-weight: bold; margin-bottom: 10px;">
-                ${error}
-            </div>
-        </c:if>
+                <hr style="border-color: var(--line);">
+            </aside>
 
-        <!-- Thông báo lỗi client-side -->
-        <div id="clientError" style="color: red; font-weight: bold; margin-bottom: 10px;"></div>
+            <!-- CONTENT -->
+            <main class="content">
 
-        <!-- Lưu ý: enctype="multipart/form-data" để upload file hình -->
-        <form method="post"
-              action="${pageContext.request.contextPath}/admin/schedule/add"
-              onsubmit="return validateShowForm();" novalidate>
+                <!-- TOPBAR -->
+                <div class="topbar">
+                    <div class="page-h">
+                        <div class="d-none d-md-grid" style="place-items:center; width:44px; height:44px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid var(--line);">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                        </div>
+                        <div>
+                            <h1>Thêm lịch chiếu</h1>
+                            <div class="crumb">Admin / Schedule Management / Add</div>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Chọn vở diễn -->
-            <p>
-                <label>Vở diễn (<span style="color:red">*</span>):</label><br/>
-                <select name="showID" style="width: 300px;">
-                    <option value="">-- Chọn vở diễn --</option>
+                <!-- Server-side messages -->
+                <c:if test="${not empty globalMessage}">
+                    <div class="alert alert-danger mt-3 mb-0 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                        <div>${globalMessage}</div>
+                    </div>
+                </c:if>
 
-                    <c:forEach var="s" items="${shows}">
-                        <option value="${s.showID}"
-                                <c:if test="${param.showID == s.showID}">selected</c:if>>
-                            ${s.showName}
-                        </option>
-                    </c:forEach>
-                </select>
-            </p>
+                <c:if test="${not empty error}">
+                    <div class="alert alert-danger mt-3 mb-0 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <div>${error}</div>
+                    </div>
+                </c:if>
 
-            <!-- Giờ chiếu -->
-            <p>
-                <label>Giờ chiếu (<span style="color:red">*</span>):</label><br/>
-                <!-- input type="datetime-local" → format gửi lên: yyyy-MM-dd'T'HH:mm -->
-                <input type="datetime-local"
-                       name="showTime"
-                       value="${param.showTime != null ? param.showTime : ''}"
-                       style="width: 220px;"
-                       required/>
-            </p>
+                <!-- Client-side errors -->
+                <div id="clientErrorBox" class="alert alert-danger mt-3 mb-0 d-none">
+                    <strong><i class="fa-solid fa-triangle-exclamation"></i> Vui lòng kiểm tra:</strong>
+                    <ul id="clientErrorList" class="mt-2 mb-0"></ul>
+                </div>
 
-            <!-- Trạng thái -->
-            <p>
-                <label>Trạng thái(<span style="color:red">*</span>):</label><br/>
-                <select name="status" style="width: 220px;">
-                    <option value="">Chọn trạng thái</option>
+                <!-- FORM CARD -->
+                <div class="card-form mt-3">
+                    <div class="card-header">
+                        <i class="fa-solid fa-calendar-plus"></i> Tạo lịch chiếu mới
+                    </div>
 
-                    <option value="Active"
-                            <c:if test="${empty param.status || param.status eq 'Active'}">selected</c:if>>
-                                Đang chiếu
-                            </option>
+                    <div class="p-4 text-dark">
+                        <form method="post"
+                              action="${pageContext.request.contextPath}/admin/schedule/add"
+                              onsubmit="return validateShowForm();" novalidate>
 
-                            <option value="Inactive"
-                            <c:if test="${param.status eq 'Inactive'}">selected</c:if>>
-                                Sắp chiếu
-                            </option>
+                            <!-- Show -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Vở diễn <span class="req">*</span>
+                                </label>
+                                <select name="showID" class="form-select" required>
+                                    <option value="">-- Chọn vở diễn --</option>
+                                    <c:forEach var="s" items="${shows}">
+                                        <option value="${s.showID}"
+                                                <c:if test="${showIDValue == s.showID}">selected</c:if>>
+                                            ${s.showName}
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                            </div>
 
-                            <option value="Cancelled"
-                            <c:if test="${param.status eq 'Cancelled'}">selected</c:if>>
-                                Hủy
-                            </option>
-                    </select>
-                </p>
+                            <!-- Show times -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    Giờ chiếu <span class="req">*</span>
+                                </label>
 
+                                <div id="showTimeContainer">
+                                    <!-- item 1 -->
+                                    <div class="showTimeItem showtime-item">
+                                        <input type="datetime-local"
+                                               name="showTime"
+                                               class="form-control"
+                                               value="${showTimeValue != null ? showTimeValue : ''}"
+                                               required/>
+                                        <button type="button" class="btn btn-outline-danger icon-btn" onclick="removeShowTime(this)" title="Xóa giờ chiếu">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </div>
+                                </div>
 
-            <p>
-                <button type="submit">Lưu lịch chiếu</button>
-                <a href="${pageContext.request.contextPath}/admin/schedule">Quay lại danh sách</a>
-            </p>
+                                <button type="button" class="btn btn-outline-primary fw-bold mt-2" onclick="addShowTime()">
+                                    <i class="fa-solid fa-plus"></i> Thêm lịch chiếu
+                                </button>
 
-        </form>
+                                <div class="form-text">
+                                    <i class="fa-solid fa-circle-info"></i> Tối đa 3 lịch chiếu, tối thiểu 1 lịch chiếu.
+                                </div>
+                            </div>
 
+                            <!-- Status note -->
+                            <div class="alert alert-info d-flex align-items-start gap-2" style="border-radius:14px;">
+                                <i class="fa-solid fa-wand-magic-sparkles mt-1"></i>
+                                <div>
+                                    <b>Ghi chú:</b> Trạng thái sẽ được hệ thống tự gán theo ngày/giờ chiếu (không cần chọn).
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="d-flex gap-2 mt-3">
+                                <button type="submit" class="btn btn-success fw-bold">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu lịch chiếu
+                                </button>
+
+                                <a class="btn btn-outline-dark fw-bold" href="${pageContext.request.contextPath}/admin/schedule">
+                                    <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+                                </a>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     </body>
 </html>
