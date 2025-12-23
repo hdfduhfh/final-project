@@ -27,5 +27,13 @@ public interface TicketFacadeLocal {
     List<Ticket> findRange(int[] range);
 
     int count();
+
+    List<Ticket> findByOrderDetailId(int orderDetailId);
+
+    List<Ticket> findByOrderId(int orderId);
     
+    Ticket findByQRCode(String qrCode);
+
+    String checkInTicket(String qrCode);
+
 }

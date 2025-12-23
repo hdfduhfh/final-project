@@ -14,7 +14,9 @@ import mypack.utils.HashUtils;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet("/admin/user")
 public class UserManagementServlet extends HttpServlet {
@@ -71,10 +73,15 @@ public class UserManagementServlet extends HttpServlet {
 
         String error = null;
 
-        if (fullName == null || fullName.trim().isEmpty()) error = "Vui lòng nhập họ tên!";
-        else if (email == null || email.trim().isEmpty()) error = "Vui lòng nhập email!";
-        else if (roleName == null || roleName.trim().isEmpty()) error = "Vui lòng chọn vai trò!";
-        else if (userFacade.findByEmail(email) != null) error = "Email đã tồn tại trong hệ thống!";
+        if (fullName == null || fullName.trim().isEmpty()) {
+            error = "Vui lòng nhập họ tên!";
+        } else if (email == null || email.trim().isEmpty()) {
+            error = "Vui lòng nhập email!";
+        } else if (roleName == null || roleName.trim().isEmpty()) {
+            error = "Vui lòng chọn vai trò!";
+        } else if (userFacade.findByEmail(email) != null) {
+            error = "Email đã tồn tại trong hệ thống!";
+        }
 
         if (error != null) {
             request.setAttribute("error", error);
@@ -137,7 +144,9 @@ public class UserManagementServlet extends HttpServlet {
 
         if (roleName != null && !roleName.trim().isEmpty()) {
             Role role = roleFacade.findByName(roleName);
-            if (role != null) currentUser.setRoleID(role);
+            if (role != null) {
+                currentUser.setRoleID(role);
+            }
         }
 
         userFacade.edit(currentUser);
@@ -158,19 +167,40 @@ public class UserManagementServlet extends HttpServlet {
             return;
         }
 
+        // ✅ Kiểm tra user đã có đơn hàng chưa
+        Long orderCount = userFacade.countOrdersByUser(id);
+        if (orderCount != null && orderCount > 0) {
+            request.setAttribute("error", "❌ Không thể xóa người dùng này vì đã có "
+                    + orderCount + " đơn hàng trong hệ thống!");
+            return;
+        }
+
+        // Chỉ xóa nếu không có đơn hàng
         try {
             userFacade.remove(user);
-            request.setAttribute("message", "Xóa người dùng thành công!");
+            request.setAttribute("message", "✅ Xóa người dùng thành công!");
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("error", "Không thể xóa người dùng này vì đã có dữ liệu liên quan.");
+            request.setAttribute("error", "❌ Không thể xóa người dùng này: " + e.getMessage());
         }
     }
 
     private void loadList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
         List<User> users = userFacade.findAll();
+        
+        // 🔥 TẠO MAP ĐẾM SỐ ĐƠN HÀNG CHO MỖI USER
+        Map<Integer, Long> orderCountMap = new HashMap<>();
+        for (User user : users) {
+            Long count = userFacade.countOrdersByUser(user.getUserID());
+            orderCountMap.put(user.getUserID(), count != null ? count : 0L);
+        }
+        
         request.setAttribute("users", users);
-        request.getRequestDispatcher("/WEB-INF/views/admin/user/list.jsp").forward(request, response);
+        request.setAttribute("orderCountMap", orderCountMap);
+        
+        request.getRequestDispatcher("/WEB-INF/views/admin/user/list.jsp")
+                .forward(request, response);
     }
 }

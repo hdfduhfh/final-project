@@ -627,6 +627,9 @@
                                                     data-show-name="${fn:escapeXml(s.showName)}"
                                                     data-poster-url="${pageContext.request.contextPath}/${s.showImage}"
                                                     data-director="${fn:escapeXml(directorName)}"
+                                                    data-description="${fn:escapeXml(s.description)}"
+                                                    data-duration="${s.durationMinutes}"
+                                                    data-status="${fn:escapeXml(s.status)}"
                                                     data-actors="${fn:escapeXml(actorNames)}"
                                                     onclick="openShowDetail(this)">
                                                 <i class="fa-solid fa-circle-info"></i>
@@ -642,7 +645,7 @@
                                                     class="btn btn-danger btn-icon"
                                                     title="Xóa vở diễn"
                                                     onclick="openDeleteShowModal('${pageContext.request.contextPath}/admin/show/delete?id=${s.showID}',
-                        '${fn:escapeXml(s.showName)}')">
+                                                                    '${fn:escapeXml(s.showName)}')">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>
 
@@ -726,6 +729,20 @@
                     <div class="mb-2 show-detail-meta">
                         <strong><i class="fa-solid fa-user-tie"></i> Đạo diễn:</strong>
                         <span id="detailDirector"></span>
+                    </div>
+                    <div class="mt-2 show-detail-meta">
+                        <strong><i class="fa-solid fa-align-left"></i> Mô tả:</strong>
+                        <div id="detailDescription" class="mt-1" style="white-space:pre-line;"></div>
+                    </div>
+
+                    <div class="mt-2 show-detail-meta">
+                        <strong><i class="fa-regular fa-clock"></i> Thời lượng:</strong>
+                        <span id="detailDuration"></span>
+                    </div>
+
+                    <div class="mt-2 show-detail-meta">
+                        <strong><i class="fa-solid fa-tag"></i> Trạng thái:</strong>
+                        <span id="detailStatus"></span>
                     </div>
 
                     <div class="show-detail-artists">
@@ -815,6 +832,10 @@
             const titleEl = document.getElementById("detailTitle");
             const directorEl = document.getElementById("detailDirector");
             const artistsEl = document.getElementById("detailArtists");
+            const descEl = document.getElementById("detailDescription");
+            const durEl = document.getElementById("detailDuration");
+            const statusEl = document.getElementById("detailStatus");
+
 
             const posterImg = document.getElementById("detailPoster");
             const posterLoading = document.getElementById("posterLoading");
@@ -830,6 +851,15 @@
             }
 
             async function openShowDetail(btn) {
+                if (descEl)
+                    descEl.textContent = btn.getAttribute("data-description") || "";
+                if (durEl) {
+                    const d = btn.getAttribute("data-duration") || "";
+                    durEl.textContent = d ? (d + " phút") : "";
+                }
+                if (statusEl)
+                    statusEl.textContent = btn.getAttribute("data-status") || "";
+
                 // 1) Set text trước (nhẹ, popup hiện liền)
                 titleEl.textContent = btn.getAttribute("data-show-name") || "";
                 directorEl.textContent = btn.getAttribute("data-director") || "(Chưa có)";

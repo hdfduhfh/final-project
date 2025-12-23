@@ -282,18 +282,28 @@
                     <a href="<%=contextPath%>/admin/artist" class="list-group-item list-group-item-action">
                         <i class="fas fa-fw fa-microphone-alt me-2"></i> Nghệ sĩ (Artists)
                     </a>
-                        <a href="<%=contextPath%>/admin/schedule" class="list-group-item list-group-item-action">
+                    <a href="<%=contextPath%>/admin/schedule" class="list-group-item list-group-item-action">
                         <i class="fas fa-fw fa-theater-masks me-2"></i> Lịch diễn
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="<%=contextPath%>/admin/seats" class="list-group-item list-group-item-action">
                         <i class="fas fa-fw fa-chair me-2"></i> Sơ đồ ghế (Seats)
                     </a>
 
                     <div class="sidebar-divider">Kinh doanh</div>
-                    <a href="<%=contextPath%>/admin/ticket" class="list-group-item list-group-item-action">
+                    <a href="<%=contextPath%>/admin/promotions" class="list-group-item list-group-item-action">
+                        <i class="fas fa-fw fa-tags me-2"></i> Khuyến mãi
+                    </a>
+
+                    <a href="<%=contextPath%>/admin/tickets" class="list-group-item list-group-item-action">
                         <i class="fas fa-fw fa-ticket-alt me-2"></i> Vé bán
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <!-- 🔥 THÊM CÁI NÀY -->
+                    <a href="<%=contextPath%>/admin/ticket-checkin" 
+                       class="list-group-item list-group-item-action fw-bold"
+                       style="background: rgba(255,255,255,0.15);">
+                        <i class="fas fa-qrcode me-2"></i> CHECK-IN VÉ
+                    </a>
+                    <a href="<%=contextPath%>/admin/orders" class="list-group-item list-group-item-action">
                         <i class="fas fa-fw fa-shopping-cart me-2"></i> Đơn hàng <span class="badge bg-danger rounded-pill float-end">New</span>
                     </a>
                     <a href="#" class="list-group-item list-group-item-action">

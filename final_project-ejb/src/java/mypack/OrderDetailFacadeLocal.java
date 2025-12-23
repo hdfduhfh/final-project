@@ -6,6 +6,7 @@ package mypack;
 
 import jakarta.ejb.Local;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -27,5 +28,9 @@ public interface OrderDetailFacadeLocal {
     List<OrderDetail> findRange(int[] range);
 
     int count();
+
+    Set<Integer> findBookedSeatIdsBySchedule(int scheduleId);
+    
+    List<OrderDetail> findByOrderId(Integer oderId);
     
 }

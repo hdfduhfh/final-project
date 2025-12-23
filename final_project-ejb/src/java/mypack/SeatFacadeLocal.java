@@ -27,5 +27,10 @@ public interface SeatFacadeLocal {
     List<Seat> findRange(int[] range);
 
     int count();
+    // Thêm phương thức tìm ghế theo số ghế
+
+    Seat findBySeatNumber(String seatNumber);
+    
+    List<Seat> findBySeatType (String seatType);
     
 }

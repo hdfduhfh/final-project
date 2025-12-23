@@ -5,12 +5,13 @@
 <jsp:include page="/WEB-INF/views/layout/header.jsp" />
 
 <style>
-    /* --- GIỮ NGUYÊN CSS CƠ BẢN --- */
+    /* --- CẤU HÌNH FONT CHUNG --- */
     body {
         background-color: #050505;
         color: #e0e0e0;
-        font-family: 'Segoe UI', sans-serif;
+        font-family: 'Playfair Display', serif; /* Font gốc */
     }
+
     .backdrop-blur {
         position: fixed;
         top: 0;
@@ -39,15 +40,15 @@
         align-items: flex-start;
     }
 
-    /* --- PHẦN QUAN TRỌNG: CỘT ẢNH & KÍNH LÚP --- */
+    /* --- CỘT ẢNH & KÍNH LÚP --- */
     .poster-col {
         flex: 1;
         max-width: 350px;
-        position: relative; /* Để kính lúp bay bên trong khung này */
+        position: relative;
         border-radius: 16px;
         box-shadow: 0 15px 35px rgba(0,0,0,0.8);
         border: 1px solid rgba(212, 175, 55, 0.3);
-        cursor: none; /* Ẩn chuột đi để hiện cái kính lúp thay thế */
+        cursor: none; 
     }
 
     .poster-img {
@@ -56,36 +57,31 @@
         border-radius: 16px;
     }
 
-    /* KÍNH LÚP (Đã chỉnh sửa) */
     .magnifying-lens {
         position: absolute;
-        border: 2px solid #d4af37; /* Viền vàng mỏng sang trọng */
+        border: 2px solid #d4af37;
         border-radius: 50%;
-        width: 150px; /* Kích thước kính lúp vừa phải */
+        width: 150px;
         height: 150px;
-
-        /* Hiệu ứng bóng đổ để tạo cảm giác nổi 3D */
         box-shadow:
-            0 0 0 7px rgba(255, 255, 255, 0.1), /* Vòng sáng mờ bên ngoài */
-            inset 0 0 10px rgba(0,0,0,0.5), /* Bóng đổ vào trong */
-            0 10px 20px rgba(0,0,0,0.5); /* Bóng đổ xuống dưới */
-
+            0 0 0 7px rgba(255, 255, 255, 0.1),
+            inset 0 0 10px rgba(0,0,0,0.5),
+            0 10px 20px rgba(0,0,0,0.5);
         cursor: none;
-        display: none; /* Mặc định ẩn */
+        display: none;
         background-repeat: no-repeat;
-        background-color: #000; /* Màu nền đen lót dưới */
-
-        /* QUAN TRỌNG: Để chuột xuyên qua kính lúp chạm vào ảnh gốc bên dưới */
+        background-color: #000;
         pointer-events: none;
         z-index: 100;
+        box-sizing: border-box; /* Fix viền kính */
     }
 
-    /* --- CỘT THÔNG TIN (GIỮ NGUYÊN) --- */
+    /* --- CỘT THÔNG TIN --- */
     .info-col {
         flex: 2;
     }
     .show-title {
-        font-family: 'Playfair Display', serif;
+        font-family: 'Playfair Display', serif; /* Đã có, giữ nguyên */
         font-size: 3.5rem;
         color: #d4af37;
         margin: 0 0 20px 0;
@@ -107,6 +103,9 @@
         align-items: center;
         gap: 8px;
         border: 1px solid rgba(255,255,255,0.1);
+        
+        /* --- BỔ SUNG FONT --- */
+        font-family: 'Playfair Display', serif;
     }
     .dot {
         width: 8px;
@@ -144,6 +143,8 @@
         align-items: center;
         margin-top: auto;
     }
+
+    /* --- NÚT BẤM (QUAN TRỌNG) --- */
     .btn-book {
         background: linear-gradient(45deg, #d4af37, #f1c40f);
         color: #000;
@@ -158,6 +159,9 @@
         transition: 0.3s;
         border: none;
         cursor: pointer;
+
+        /* --- BẮT BUỘC PHẢI CÓ DÒNG NÀY ĐỂ HIỆN FONT ĐÚNG TRÊN NÚT --- */
+        font-family: 'Playfair Display', serif;
     }
     .btn-book:hover {
         transform: translateY(-3px);
@@ -173,6 +177,9 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        
+        /* --- BẮT BUỘC PHẢI CÓ --- */
+        font-family: 'Playfair Display', serif;
     }
     .btn-back:hover {
         color: #fff;
@@ -190,7 +197,7 @@
         }
         .magnifying-lens {
             display: none !important;
-        } /* Tắt trên mobile */
+        }
     }
 </style>
 
@@ -214,19 +221,16 @@
                             <span class="dot"></span> ĐANG DIỄN RA
                         </div>
                     </c:when>
-
                     <c:when test="${show.status == 'Upcoming'}">
                         <div class="tag-item st-upcoming">
                             <span class="dot"></span> SẮP CHIẾU
                         </div>
                     </c:when>
-
                     <c:when test="${show.status == 'Cancelled'}">
                         <div class="tag-item st-cancelled">
                             <span class="dot"></span> ĐÃ HỦY
                         </div>
                     </c:when>
-
                     <c:otherwise>
                         <div class="tag-item st-unknown">
                             <span class="dot"></span> KHÔNG XÁC ĐỊNH
@@ -237,9 +241,9 @@
                 <div class="tag-item"><span>📅</span> <fmt:formatDate value="${show.createdAt}" pattern="dd/MM/yyyy" /></div>
             </div>
             <div class="description-box">${show.description}</div>
-            <!-- ===== DANH SÁCH SUẤT CHIẾU ===== -->
+            
             <div style="margin-top: 40px;">
-                <h3 style="color:#d4af37; margin-bottom:15px;">
+                <h3 style="color:#d4af37; margin-bottom:15px; font-family: 'Playfair Display', serif;">
                     🎭 Suất chiếu
                 </h3>
 
@@ -251,7 +255,7 @@
 
                 <c:forEach items="${schedules}" var="sc">
                     <div class="tag-item" style="margin-bottom:10px;">
-                        🕒 
+                         🕒 
                         <fmt:formatDate value="${sc.showTime}" pattern="dd/MM/yyyy HH:mm"/>
                         &nbsp; | &nbsp;
 
@@ -269,10 +273,9 @@
                     </div>
                 </c:forEach>
             </div>
-            <!-- ===== END SUẤT CHIẾU ===== -->
 
             <div class="action-bar">
-                <a href="#" class="btn-book">ĐẶT VÉ NGAY</a>
+                <a href="${pageContext.request.contextPath}/seats/layout" class="btn-book">ĐẶT VÉ NGAY</a>
                 <a href="${pageContext.request.contextPath}/shows" class="btn-back">← Quay lại danh sách</a>
             </div>
         </div>
@@ -281,85 +284,51 @@
 
 <c:if test="${empty show}">
     <div style="text-align: center; padding: 100px; color: #fff;">
-        <h2>Không tìm thấy thông tin chương trình!</h2>
-        <a href="${pageContext.request.contextPath}/shows" style="color: #d4af37;">Quay lại</a>
+        <h2 style="font-family: 'Playfair Display', serif;">Không tìm thấy thông tin chương trình!</h2>
+        <a href="${pageContext.request.contextPath}/shows" style="color: #d4af37; font-family: 'Playfair Display', serif;">Quay lại</a>
     </div>
 </c:if>
 
 <jsp:include page="/WEB-INF/views/layout/footer.jsp" />
 
 <script>
-    window.addEventListener('load', function () { // Chờ tải xong hết trang mới chạy để lấy đúng kích thước ảnh
+    window.addEventListener('load', function () {
         const container = document.getElementById('posterContainer');
         const img = document.getElementById('posterImage');
         const lens = document.getElementById('magnifyingLens');
-
-        // Cấu hình độ phóng đại (2 lần là đẹp nhất)
         const zoomLevel = 2;
 
         if (container && img && lens) {
-
-            // 1. Cài đặt ảnh nền cho kính lúp
             lens.style.backgroundImage = "url('" + img.src + "')";
 
-            // Hàm tính toán và di chuyển
             function moveLens(e) {
-                e.preventDefault(); // Ngăn các hành vi mặc định
-
-                // Lấy vị trí và kích thước thực tế của ảnh trên màn hình
+                e.preventDefault();
                 const rect = img.getBoundingClientRect();
-
-                // Lấy tọa độ con chuột (x, y) so với ảnh
                 let x = e.clientX - rect.left;
                 let y = e.clientY - rect.top;
-
-                // Tính toán vị trí của kính lúp (để tâm kính trùng với chuột)
                 let lensX = x - (lens.offsetWidth / 2);
                 let lensY = y - (lens.offsetHeight / 2);
 
-                // --- XỬ LÝ GIỚI HẠN (Không cho kính chạy ra ngoài ảnh) ---
-                // Nếu muốn kính lúp chạy ra ngoài viền tí xíu cho đẹp thì bỏ đoạn này cũng được
-                if (lensX > img.width - lens.offsetWidth) {
-                    lensX = img.width - lens.offsetWidth;
-                }
-                if (lensX < 0) {
-                    lensX = 0;
-                }
-                if (lensY > img.height - lens.offsetHeight) {
-                    lensY = img.height - lens.offsetHeight;
-                }
-                if (lensY < 0) {
-                    lensY = 0;
-                }
+                if (lensX > img.width - lens.offsetWidth) lensX = img.width - lens.offsetWidth;
+                if (lensX < 0) lensX = 0;
+                if (lensY > img.height - lens.offsetHeight) lensY = img.height - lens.offsetHeight;
+                if (lensY < 0) lensY = 0;
 
-                // Cập nhật vị trí khung kính lúp
                 lens.style.left = lensX + 'px';
                 lens.style.top = lensY + 'px';
-
-                // --- QUAN TRỌNG: TÍNH TOÁN ẢNH NỀN BÊN TRONG ---
-                // Set kích thước ảnh nền to gấp 'zoomLevel' lần ảnh gốc
                 lens.style.backgroundSize = (img.width * zoomLevel) + "px " + (img.height * zoomLevel) + "px";
 
-                // Di chuyển ảnh nền ngược chiều chuột để tạo hiệu ứng soi
-                // Công thức: -(vị trí chuột * độ zoom - nửa bán kính lens)
                 const bgX = -((x * zoomLevel) - lens.offsetWidth / 2);
                 const bgY = -((y * zoomLevel) - lens.offsetHeight / 2);
-
                 lens.style.backgroundPosition = bgX + "px " + bgY + "px";
             }
 
-            // Bắt sự kiện
             container.addEventListener('mousemove', moveLens);
-            container.addEventListener('touchmove', moveLens); // Cho màn hình cảm ứng
-
-            // Hiện kính khi chuột vào
+            container.addEventListener('touchmove', moveLens);
             container.addEventListener('mouseenter', function () {
                 lens.style.display = 'block';
-                // Tính lại kích thước background lần nữa cho chắc ăn (phòng trường hợp resize)
                 lens.style.backgroundSize = (img.width * zoomLevel) + "px " + (img.height * zoomLevel) + "px";
             });
-
-            // Ẩn kính khi chuột ra
             container.addEventListener('mouseleave', function () {
                 lens.style.display = 'none';
             });

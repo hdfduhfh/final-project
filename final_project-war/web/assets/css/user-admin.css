@@ -22,7 +22,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
                 linear-gradient(180deg, var(--bg), #070b14);
             min-height:100vh;
             color:#e6ecff;
-            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+            font-family: 'Playfair Display', serif;
         }
 
         /* Layout */

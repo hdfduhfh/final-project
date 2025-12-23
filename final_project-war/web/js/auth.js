@@ -80,11 +80,18 @@ document.getElementById('loginFormElement').addEventListener('submit', function 
                 if (!data.success) {
                     document.getElementById('loginPasswordError').textContent = data.message;
                 } else {
-                    if (data.role === 'ADMIN')
+                    // ===== FIX Ở ĐÂY =====
+                    if (data.role === 'ADMIN') {
                         window.location.href = `${window.location.origin}/final_project-war/admin/dashboard`;
-                    else {
+                    } else {
                         closeAuthModal();
-                        location.reload();
+
+                        // 🔥 nếu server có redirectAfterLogin (vd: /checkout)
+                        if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            location.reload();
+                        }
                     }
                 }
             })

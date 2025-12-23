@@ -365,6 +365,28 @@
                                     </button>
                                 </div>
                             </form>
+
+                            <!-- FILTER STATUS (Client-side, không đụng servlet) -->
+                            <div class="col-12 mt-2">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Filter status">
+                                    <button type="button" class="btn btn-outline-light fw-bold status-filter active" data-status="ALL">
+                                        <i class="fa-solid fa-layer-group"></i> Tất cả
+                                    </button>
+                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="Ongoing">
+                                        <i class="fa-solid fa-circle-play"></i> Ongoing
+                                    </button>
+                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="Upcoming">
+                                        <i class="fa-solid fa-clock"></i> Upcoming
+                                    </button>
+                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="Cancelled">
+                                        <i class="fa-solid fa-ban"></i> Cancelled
+                                    </button>
+                                </div>
+
+                                <span class="ms-2 text-white-50" style="font-weight:700; font-size:13px;">
+                                    Lọc nhanh theo trạng thái (không tải lại trang)
+                                </span>
+                            </div>
                         </div>
 
                         <div class="col-lg-4 text-lg-end">
@@ -387,6 +409,7 @@
                                     <th style="width:220px;">Hành động</th>
                                 </tr>
                             </thead>
+
                             <tbody>
                                 <!-- groupedSchedules: Map<showId, List<ShowSchedule>> -->
                                 <c:forEach var="entry" items="${groupedSchedules}">
@@ -396,7 +419,104 @@
                                     <c:forEach var="sc" items="${list}" varStatus="st">
                                         <fmt:formatDate value="${sc.showTime}" pattern="dd/MM/yyyy HH:mm" var="timeFmt"/>
 
-                                        <tr>
+                                        <!-- durationMinutes từ Show -->
+                                        <c:set var="dur" value="${sc.showID != null ? sc.showID.durationMinutes : 0}" />
+
+                                        <!-- ✅ Tính endTime + rtStatus (real-time theo NGÀY giữ nguyên, thêm GIỜ/PHÚT khi hôm nay) -->
+                                        <%
+                                            // ===== LẤY DATA =====
+                                            mypack.ShowSchedule scObj = (mypack.ShowSchedule) pageContext.findAttribute("sc");
+
+                                            int _dur = 0;
+                                            Object durObj = pageContext.findAttribute("dur");
+                                            if (durObj != null) {
+                                                try {
+                                                    _dur = Integer.parseInt(durObj.toString());
+                                                } catch (Exception ignored) {
+                                                    _dur = 0;
+                                                }
+                                            }
+
+                                            java.util.Date _start = (scObj != null) ? scObj.getShowTime() : null;
+
+                                            // ===== endTime =====
+                                            java.util.Date _end = null;
+                                            if (_start != null && _dur > 0) {
+                                                java.util.Calendar cal = java.util.Calendar.getInstance();
+                                                cal.setTime(_start);
+                                                cal.add(java.util.Calendar.MINUTE, _dur);
+                                                _end = cal.getTime();
+                                            }
+                                            pageContext.setAttribute("endTime", _end);
+
+                                            // ===== REAL-TIME STATUS =====
+                                            // Rule theo NGÀY vẫn giữ nguyên:
+                                            // - showDate < today => Cancelled
+                                            // - showDate > today => Upcoming
+                                            // - showDate == today => xét thêm theo GIỜ/PHÚT:
+                                            //      + now < start => Upcoming
+                                            //      + start <= now <= end => Ongoing
+                                            //      + now > end => Cancelled
+                                            String _rtStatus = "Upcoming";
+
+                                            if (_start != null) {
+                                                // timezone VN (để tránh server lệch múi giờ)
+                                                java.util.TimeZone tz = java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
+
+                                                java.util.Calendar nowCal = java.util.Calendar.getInstance(tz);
+                                                nowCal.setTime(new java.util.Date());
+
+                                                // today 00:00
+                                                java.util.Calendar cToday = java.util.Calendar.getInstance(tz);
+                                                cToday.setTime(nowCal.getTime());
+                                                cToday.set(java.util.Calendar.HOUR_OF_DAY, 0);
+                                                cToday.set(java.util.Calendar.MINUTE, 0);
+                                                cToday.set(java.util.Calendar.SECOND, 0);
+                                                cToday.set(java.util.Calendar.MILLISECOND, 0);
+
+                                                // showDate 00:00
+                                                java.util.Calendar cShow = java.util.Calendar.getInstance(tz);
+                                                cShow.setTime(_start);
+                                                cShow.set(java.util.Calendar.HOUR_OF_DAY, 0);
+                                                cShow.set(java.util.Calendar.MINUTE, 0);
+                                                cShow.set(java.util.Calendar.SECOND, 0);
+                                                cShow.set(java.util.Calendar.MILLISECOND, 0);
+
+                                                if (cShow.before(cToday)) {
+                                                    _rtStatus = "Cancelled";
+                                                } else if (cShow.after(cToday)) {
+                                                    _rtStatus = "Upcoming";
+                                                } else {
+                                                    // ✅ showDate == today => xét thêm GIỜ/PHÚT
+                                                    long nowMs = nowCal.getTimeInMillis();
+                                                    long startMs = _start.getTime();
+
+                                                    if (nowMs < startMs) {
+                                                        _rtStatus = "Upcoming";
+                                                    } else {
+                                                        // now >= start
+                                                        if (_end != null && _dur > 0) {
+                                                            long endMs = _end.getTime();
+                                                            if (nowMs > endMs) {
+                                                                _rtStatus = "Cancelled";
+                                                            } else {
+                                                                _rtStatus = "Ongoing";
+                                                            }
+                                                        } else {
+                                                            // nếu không có duration/endTime thì coi như đã tới giờ => Ongoing
+                                                            _rtStatus = "Ongoing";
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            pageContext.setAttribute("rtStatus", _rtStatus);
+                                        %>
+
+                                        <!-- format end -->
+                                        <fmt:formatDate value="${endTime}" pattern="dd/MM/yyyy HH:mm" var="endFmt"/>
+
+                                        <tr data-status="${rtStatus}">
                                             <!-- Merge cell: chỉ show 1 lần -->
                                             <c:if test="${st.first}">
                                                 <td rowspan="${rowspan}" class="fw-bold" style="vertical-align: middle;">
@@ -413,11 +533,15 @@
                                             <td>
                                                 <i class="fa-regular fa-clock text-secondary"></i>
                                                 ${timeFmt}
+                                                <c:if test="${endTime != null && dur > 0}">
+                                                    – ${endFmt}
+                                                    <span class="text-muted fw-semibold">(${dur} phút)</span>
+                                                </c:if>
                                             </td>
 
                                             <td>
                                                 <span class="badge text-bg-light border fw-bold">
-                                                    <i class="fa-solid fa-tag"></i> ${sc.status}
+                                                    <i class="fa-solid fa-tag"></i> ${rtStatus}
                                                 </span>
                                             </td>
 
@@ -428,7 +552,9 @@
                                                         title="Chi tiết"
                                                         data-show-name="<c:out value='${sc.showID != null ? sc.showID.showName : "(Không có vở diễn)"}'/>"
                                                         data-show-time="<c:out value='${timeFmt}'/>"
-                                                        data-status="<c:out value='${sc.status}'/>"
+                                                        data-end-time="<c:out value='${endTime != null && dur > 0 ? endFmt : ""}'/>"
+                                                        data-duration="<c:out value='${dur}'/>"
+                                                        data-status="<c:out value='${rtStatus}'/>"
                                                         onclick="openScheduleDetail(this)">
                                                     <i class="fa-solid fa-circle-info"></i>
                                                 </button>
@@ -438,12 +564,13 @@
                                                    title="Sửa">
                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                 </a>
+
                                                 <button type="button"
                                                         class="btn btn-danger btn-icon"
                                                         title="Xóa"
                                                         onclick="openDeleteScheduleModal('${pageContext.request.contextPath}/admin/schedule/delete?id=${sc.scheduleID}',
-                        '<c:out value="${sc.showID != null ? sc.showID.showName : '(Không có vở diễn)'}"/>',
-                        '<c:out value="${timeFmt}"/>')">
+                                                                        '<c:out value="${sc.showID != null ? sc.showID.showName : '(Không có vở diễn)'}"/>',
+                                                                        '<c:out value="${timeFmt}"/>')">
                                                     <i class="fa-solid fa-trash"></i>
                                                 </button>
 
@@ -569,13 +696,22 @@
                             }
         </script>
 
-
         <!-- Popup detail schedule -->
         <script>
             function openScheduleDetail(btn) {
                 document.getElementById("detailTitle").textContent = "Chi tiết lịch chiếu";
                 document.getElementById("detailShowName").textContent = btn.getAttribute("data-show-name") || "";
-                document.getElementById("detailShowTime").textContent = btn.getAttribute("data-show-time") || "";
+
+                const start = btn.getAttribute("data-show-time") || "";
+                const end = btn.getAttribute("data-end-time") || "";
+                const dur = btn.getAttribute("data-duration") || "0";
+
+                let timeText = start;
+                if (end && dur && dur !== "0") {
+                    timeText = start + " – " + end + " (" + dur + " phút)";
+                }
+                document.getElementById("detailShowTime").textContent = timeText;
+
                 document.getElementById("detailStatus").textContent = btn.getAttribute("data-status") || "";
                 document.getElementById("scheduleOverlay").style.display = "flex";
             }
@@ -584,7 +720,6 @@
                 document.getElementById("scheduleOverlay").style.display = "none";
             }
 
-            // click ra ngoài overlay để đóng
             document.addEventListener("click", function (e) {
                 var overlay = document.getElementById("scheduleOverlay");
                 if (!overlay)
@@ -594,7 +729,6 @@
                 }
             });
 
-            // ESC để đóng
             document.addEventListener("keydown", function (e) {
                 var overlay = document.getElementById("scheduleOverlay");
                 if (e.key === "Escape" && overlay && overlay.style.display === "flex") {
@@ -603,7 +737,7 @@
             });
         </script>
 
-        <!-- ✅ Clear X giống trang quản lý nghệ sĩ (JS tự tạo + chèn trước nút Tìm) -->
+        <!-- ✅ Clear X giống trang quản lý nghệ sĩ -->
         <script>
             (function () {
                 const input = document.getElementById('keywordInput');
@@ -614,7 +748,6 @@
                 if (!group)
                     return;
 
-                // tạo nút X
                 const clearBtn = document.createElement('button');
                 clearBtn.type = 'button';
                 clearBtn.className = 'btn btn-outline-secondary';
@@ -622,7 +755,6 @@
                 clearBtn.style.display = 'none';
                 clearBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
 
-                // chèn nút X trước nút submit
                 const submitBtn = group.querySelector('button[type="submit"], input[type="submit"]');
                 if (submitBtn)
                     group.insertBefore(clearBtn, submitBtn);
@@ -637,16 +769,98 @@
                     input.value = '';
                     toggle();
                     input.focus();
-                    // muốn clear xong auto submit:
-                    // input.form && input.form.submit();
                 });
 
                 input.addEventListener('input', toggle);
                 input.addEventListener('change', toggle);
 
-                toggle(); // init khi reload có sẵn keyword
+                toggle();
             })();
         </script>
+
+        <!-- FILTER STATUS + FIX ROWSPAN -->
+        <script>
+            (function () {
+                const table = document.querySelector('.table-wrap table');
+                if (!table)
+                    return;
+
+                const filterButtons = document.querySelectorAll('.status-filter');
+                const tbody = table.querySelector('tbody');
+                if (!tbody)
+                    return;
+
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                const groupMap = new Map();
+                let currentShowCell = null;
+                let currentGroupRows = [];
+
+                rows.forEach((tr) => {
+                    const showCell = tr.querySelector('td[rowspan]');
+                    if (showCell) {
+                        if (currentShowCell && currentGroupRows.length) {
+                            groupMap.set(currentShowCell, currentGroupRows);
+                        }
+                        currentShowCell = showCell;
+                        currentGroupRows = [tr];
+                    } else {
+                        if (currentShowCell)
+                            currentGroupRows.push(tr);
+                    }
+                });
+                if (currentShowCell && currentGroupRows.length) {
+                    groupMap.set(currentShowCell, currentGroupRows);
+                }
+
+                function applyFilter(status) {
+                    rows.forEach(tr => {
+                        const st = (tr.getAttribute('data-status') || '').trim();
+                        const show = (status === 'ALL') || (st === status);
+                        tr.style.display = show ? '' : 'none';
+                    });
+
+                    groupMap.forEach((groupRows, showCell) => {
+                        const visibleRows = groupRows.filter(r => r.style.display !== 'none');
+
+                        if (visibleRows.length === 0) {
+                            showCell.style.display = 'none';
+                            showCell.setAttribute('rowspan', '1');
+                            return;
+                        }
+
+                        showCell.style.display = '';
+                        showCell.setAttribute('rowspan', String(visibleRows.length));
+
+                        const firstRow = groupRows[0];
+                        const firstVisibleRow = visibleRows[0];
+
+                        if (firstRow !== firstVisibleRow) {
+                            if (firstRow.contains(showCell))
+                                firstRow.removeChild(showCell);
+                            firstVisibleRow.insertBefore(showCell, firstVisibleRow.firstElementChild);
+                        } else {
+                            if (!firstRow.contains(showCell)) {
+                                firstRow.insertBefore(showCell, firstRow.firstElementChild);
+                            }
+                        }
+                    });
+                }
+
+                filterButtons.forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        filterButtons.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+
+                        const status = (this.getAttribute('data-status') || 'ALL').trim();
+                        applyFilter(status);
+                    });
+                });
+
+                applyFilter('ALL');
+            })();
+        </script>
+
         <!-- ===== DELETE SCHEDULE CONFIRM MODAL (Bootstrap) ===== -->
         <div class="modal fade" id="deleteScheduleModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">

@@ -76,8 +76,9 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
 /* NAVIGATION */
 .nav-list {
     display: flex;
-    gap: 28px;
+    gap: 20px; /* Giảm xuống 20px hoặc 15px cho an toàn */
     list-style: none;
+    flex-wrap: nowrap; /* Ép không cho danh sách rớt xuống dòng */
 }
 
 .nav-item a {
@@ -89,6 +90,10 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to ed
     padding: 6px 10px;
     border-radius: var(--radius);
     transition: 0.25s;
+    
+    /* === THÊM DÒNG NÀY ĐỂ CHỐNG RỚT DÒNG === */
+    white-space: nowrap; 
+    display: block; /* Giúp khối link cứng cáp hơn */
 }
 
 .nav-item a:hover {

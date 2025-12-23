@@ -81,4 +81,12 @@ public class UserFacade extends AbstractFacade<User> implements UserFacadeLocal 
         }
     }
 
+    @Override
+    public Long countOrdersByUser(Integer userID) {
+        return em.createQuery(
+                "SELECT COUNT(o) FROM Order1 o WHERE o.userID.userID = :uid", Long.class)
+                .setParameter("uid", userID)
+                .getSingleResult();
+    }
+
 }

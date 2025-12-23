@@ -15,7 +15,7 @@
         background-position: center center;
         background-size: cover;
         color: #e0e0e0;
-        font-family: 'Segoe UI', sans-serif;
+        font-family: 'Playfair Display', serif;
         overflow-x: hidden;
         min-height: 100vh;
     }
@@ -110,6 +110,7 @@
         font-weight: 700;
         cursor: pointer;
         transition: 0.3s;
+        font-family: 'Playfair Display', serif;
     }
 
     .search-box button:hover {

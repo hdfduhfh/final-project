@@ -75,9 +75,19 @@ public class ScheduleManagementServlet extends HttpServlet {
 
         // showDate == today
         if (st.isBefore(now)) {
-            return "Cancelled";
+            return "Ongoing";
         }
         return "Ongoing";
+    }
+
+    // ✅ NEW: Ràng buộc không cho chọn ngày/giờ thấp hơn thời điểm hiện tại (VN timezone)
+    private boolean isBeforeNowVN(Date showTime) {
+        if (showTime == null) return true;
+
+        ZonedDateTime now = ZonedDateTime.now(APP_ZONE);
+        ZonedDateTime picked = showTime.toInstant().atZone(APP_ZONE);
+
+        return picked.isBefore(now);
     }
 
     @Override
@@ -142,7 +152,7 @@ public class ScheduleManagementServlet extends HttpServlet {
             List<ShowSchedule> schedules;
 
             if (keyword != null && !keyword.trim().isEmpty()) {
-                schedules = showScheduleFacade.searchByKeyword(keyword.trim());
+                schedules = showScheduleFacade.searchByShowNameKeyword(keyword);
                 if (schedules == null) {
                     schedules = java.util.Collections.emptyList();
                 }
@@ -324,6 +334,12 @@ public class ScheduleManagementServlet extends HttpServlet {
                     return;
                 }
 
+                // ✅ NEW: Không cho chọn ngày/giờ thấp hơn thời điểm hiện tại (VN)
+                if (isBeforeNowVN(t)) {
+                    forwardAddError(request, response, "Ngày và giờ bạn chọn không được thấp hơn thời điểm hiện tại");
+                    return;
+                }
+
                 // ✅ vẫn giữ: không cho trùng nhau trong chính form
                 long key = t.getTime();
                 if (timeKeySet.contains(key)) {
@@ -460,6 +476,12 @@ public class ScheduleManagementServlet extends HttpServlet {
                 return;
             }
 
+            // ✅ NEW: Không cho chọn ngày/giờ thấp hơn thời điểm hiện tại (VN)
+            if (isBeforeNowVN(showTime)) {
+                forwardEditError(request, response, schedule, "Ngày và giờ bạn chọn không được thấp hơn thời điểm hiện tại");
+                return;
+            }
+
             Integer currentId = schedule.getScheduleID();
 
             // ✅ GIỮ ràng buộc: 1 show tối đa 3 lịch (trừ chính nó)
@@ -472,7 +494,6 @@ public class ScheduleManagementServlet extends HttpServlet {
 
             // ✅ BỎ ràng buộc trùng show
             // ✅ BỎ ràng buộc trùng ngày/giờ chiếu
-
             schedule.setShowID(show);
             schedule.setShowTime(showTime);
 

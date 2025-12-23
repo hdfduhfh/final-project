@@ -60,6 +60,9 @@ public class Seat implements Serializable {
     @Column(name = "IsActive", nullable = false)
     private boolean isActive;
     @Basic(optional = false)
+    @Column(name = "Price", nullable = false)
+    private double price;
+    @Basic(optional = false)
     @Column(name = "CreatedAt", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
@@ -131,6 +134,14 @@ public class Seat implements Serializable {
         this.isActive = isActive;
     }
 
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -171,5 +182,5 @@ public class Seat implements Serializable {
     public String toString() {
         return "mypack.Seat[ seatID=" + seatID + " ]";
     }
-    
+
 }

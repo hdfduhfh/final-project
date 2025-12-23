@@ -180,6 +180,32 @@ public class ShowScheduleFacade extends AbstractFacade<ShowSchedule> implements 
                 .getResultList();
     }
 
+    @Override
+    public List<ShowSchedule> searchByShowNameKeyword(String keyword) {
+        if (keyword == null) {
+            keyword = "";
+        }
+
+        // trim + gộp nhiều khoảng trắng thành 1
+        String k = keyword.trim().replaceAll("\\s+", " ").toLowerCase();
+
+        // nếu keyword rỗng thì trả all (để servlet khỏi phải if nhiều)
+        if (k.isEmpty()) {
+            return findAll();
+        }
+
+        String kw = "%" + k + "%";
+
+        return em.createQuery(
+                "SELECT sc FROM ShowSchedule sc "
+                + "WHERE sc.showID IS NOT NULL "
+                + "AND LOWER(sc.showID.showName) LIKE :kw",
+                ShowSchedule.class
+        )
+                .setParameter("kw", kw)
+                .getResultList();
+    }
+
     public int countUpcoming() {
         Long count = em.createQuery(
                 "SELECT COUNT(s) FROM ShowSchedule s "
@@ -188,6 +214,16 @@ public class ShowScheduleFacade extends AbstractFacade<ShowSchedule> implements 
                 Long.class)
                 .getSingleResult();
         return count.intValue();
+    }
+
+    @Override
+    public List<ShowSchedule> findActiveSchedules() {
+        TypedQuery<ShowSchedule> query = em.createQuery(
+                "SELECT s FROM ShowSchedule s WHERE s.showTime >= :now ORDER BY s.showTime ASC",
+                ShowSchedule.class
+        );
+        query.setParameter("now", new Date());
+        return query.getResultList();
     }
 
 }

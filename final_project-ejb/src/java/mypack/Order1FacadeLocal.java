@@ -28,4 +28,7 @@ public interface Order1FacadeLocal {
 
     int count();
     
+    List<Order1> findByUser(User user);
+
+    
 }

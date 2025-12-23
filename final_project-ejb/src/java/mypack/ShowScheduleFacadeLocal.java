@@ -29,6 +29,8 @@ public interface ShowScheduleFacadeLocal {
 
     int count();
 
+    List<ShowSchedule> searchByShowNameKeyword(String keyword);
+
     // Tìm theo ShowID
     List<ShowSchedule> findByShowId(Integer showId);
 
@@ -53,4 +55,6 @@ public interface ShowScheduleFacadeLocal {
     List<ShowSchedule> findUpcoming(int offset, int limit);
 
     int countUpcoming();
+
+    List<ShowSchedule> findActiveSchedules();
 }

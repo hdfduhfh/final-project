@@ -242,3 +242,11 @@ ALTER TABLE dbo.[Show]
 
 ALTER TABLE dbo.[Show]
 ALTER COLUMN Description NVARCHAR(MAX);
+
+ALTER TABLE dbo.Seat
+ADD Price DECIMAL(12,2) NOT NULL DEFAULT 0;
+
+
+ALTER TABLE [BookingStageDB].[dbo].[Order]
+ADD CancellationRequested BIT DEFAULT 0,
+    CancellationReason NVARCHAR(500);

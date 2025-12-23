@@ -2,6 +2,7 @@
 function showUserDetail(btn) {
     const fullname = btn.dataset.fullname;
     const role = btn.dataset.role;
+    const orderCount = btn.dataset.ordercount || '0';
 
     document.getElementById('detailUserID').textContent = btn.dataset.id;
     document.getElementById('detailFullName').textContent = fullname;
@@ -18,6 +19,13 @@ function showUserDetail(btn) {
 
     document.getElementById('detailCreatedAt').textContent = btn.dataset.created;
     document.getElementById('detailLastLogin').textContent = btn.dataset.lastlogin;
+    
+    // 🔥 HIỂN THỊ SỐ ĐƠN HÀNG
+    const orderCountEl = document.getElementById('detailOrderCount');
+    if (orderCountEl) {
+        orderCountEl.textContent = orderCount + ' đơn hàng';
+        orderCountEl.className = parseInt(orderCount) > 0 ? 'detail-value text-primary fw-bold' : 'detail-value text-secondary';
+    }
 
     new bootstrap.Modal(document.getElementById('userDetailModal')).show();
 }
@@ -31,16 +39,44 @@ function showUserEdit(userID, fullName, email, phone) {
     new bootstrap.Modal(document.getElementById('userEditModal')).show();
 }
 
-// ================= DELETE MODAL =================
+// ================= DELETE MODAL - WITH ORDER COUNT CHECK =================
 let deleteUserId = null;
-function confirmDelete(id, name, role) {
+function confirmDelete(id, name, role, orderCount) {
+    const displayEl = document.getElementById("deleteUserNameDisplay");
+    
+    // 🔒 Check nếu là ADMIN
     if (role === 'ADMIN') {
-        document.getElementById("deleteUserNameDisplay").innerHTML = '❌ <strong>' + name + '</strong> là ADMIN <br>Không thể xóa!';
+        displayEl.innerHTML = '❌ <strong>' + name + '</strong> là ADMIN <br>Không thể xóa!';
+        displayEl.className = 'alert alert-danger text-center fw-bold mb-0';
+        
+        // Ẩn nút "Xóa ngay"
+        document.querySelector('#deleteModal .btn-danger').style.display = 'none';
+        
         new bootstrap.Modal(document.getElementById("deleteModal")).show();
         return;
     }
+    
+    // 🛒 Check nếu có đơn hàng
+    if (orderCount && parseInt(orderCount) > 0) {
+        displayEl.innerHTML = '❌ <strong>' + name + '</strong><br>' +
+                             '📦 Đã có <span class="badge bg-danger">' + orderCount + ' đơn hàng</span> trong hệ thống<br>' +
+                             '<small class="text-muted">Không thể xóa người dùng này!</small>';
+        displayEl.className = 'alert alert-danger text-center fw-bold mb-0';
+        
+        // Ẩn nút "Xóa ngay"
+        document.querySelector('#deleteModal .btn-danger').style.display = 'none';
+        
+        new bootstrap.Modal(document.getElementById("deleteModal")).show();
+        return;
+    }
+    
+    // ✅ Cho phép xóa
     deleteUserId = id;
-    document.getElementById("deleteUserNameDisplay").textContent = name;
+    displayEl.textContent = name;
+    displayEl.className = 'alert alert-warning text-center fw-bold mb-0';
+    
+    // Hiển thị nút "Xóa ngay"
+    document.querySelector('#deleteModal .btn-danger').style.display = 'inline-block';
 
     // Hide other modals if open
     ['userCreateModal','userEditModal'].forEach(modalId=>{

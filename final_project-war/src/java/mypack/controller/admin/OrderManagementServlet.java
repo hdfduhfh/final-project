@@ -1,13 +1,203 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack.controller.admin;
 
-/**
- *
- * @author DANG KHOA
- */
-public class OrderManagementServlet {
-    
+import jakarta.ejb.EJB;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
+import java.io.IOException;
+import java.util.*;
+import mypack.*;
+
+@WebServlet(name = "OrderManagementServlet", urlPatterns = {"/admin/orders"})
+public class OrderManagementServlet extends HttpServlet {
+
+    @EJB
+    private Order1FacadeLocal orderFacade;
+
+    @EJB
+    private OrderDetailFacadeLocal orderDetailFacade;
+
+    @EJB
+    private TicketFacadeLocal ticketFacade;
+
+    // --- XỬ LÝ GET (Xem, Filter, Redirect) ---
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String action = request.getParameter("action");
+
+        // 1. Xem chi tiết đơn hàng
+        if ("view".equals(action)) {
+            String idParam = request.getParameter("id");
+            if (idParam != null) {
+                try {
+                    int orderId = Integer.parseInt(idParam);
+                    Order1 order = orderFacade.find(orderId);
+
+                    if (order != null) {
+                        List<OrderDetail> orderDetails = orderDetailFacade.findByOrderId(orderId);
+                        request.setAttribute("order", order);
+                        request.setAttribute("orderDetails", orderDetails);
+                        request.getRequestDispatcher("/WEB-INF/views/admin/orders/view.jsp")
+                                .forward(request, response);
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+            response.sendRedirect(request.getContextPath() + "/admin/orders");
+            return;
+        }
+
+        // 2. Cập nhật trạng thái (GET link)
+        if ("updateStatus".equals(action)) {
+            handleUpdateStatus(request, response);
+            return;
+        }
+
+        // 3. Cập nhật thanh toán (GET link)
+        if ("updatePaymentStatus".equals(action)) {
+            handleUpdatePayment(request, response);
+            return;
+        }
+
+        // 4. Xóa đơn hàng (GET link)
+        if ("delete".equals(action)) {
+            handleDelete(request, response);
+            return;
+        }
+
+        // DEFAULT: Hiển thị danh sách đơn hàng
+        List<Order1> orders = orderFacade.findAll();
+        // Sắp xếp mới nhất lên đầu
+        orders.sort((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()));
+
+        request.setAttribute("orders", orders);
+        request.getRequestDispatcher("/WEB-INF/views/admin/orders/list.jsp")
+               .forward(request, response);
+    }
+
+    // --- XỬ LÝ POST (Form submit: Duyệt hủy) ---
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        request.setCharacterEncoding("UTF-8");
+        String action = request.getParameter("action");
+
+        // >>> ĐOẠN NÀY LÀ MỚI THÊM ĐỂ DUYỆT HỦY <<<
+        if ("approveCancel".equals(action)) {
+            try {
+                String idParam = request.getParameter("orderId");
+                if (idParam != null) {
+                    int orderId = Integer.parseInt(idParam);
+                    Order1 order = orderFacade.find(orderId);
+
+                    if (order != null) {
+                        // 1. Đổi trạng thái sang Hủy
+                        order.setStatus("CANCELLED");
+                        // 2. Tắt cờ yêu cầu hủy (đã xử lý xong)
+                        order.setCancellationRequested(false); 
+                        
+                        // 3. Lưu xuống Database
+                        orderFacade.edit(order);
+                    }
+                    
+                    // Xử lý xong thì quay lại trang chi tiết đơn hàng đó
+                    response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
+                    return;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            // Nếu lỗi thì về trang danh sách
+            response.sendRedirect(request.getContextPath() + "/admin/orders");
+            return;
+        }
+
+        // Nếu không phải action đặc biệt của POST, chuyển về doGet xử lý tiếp
+        doGet(request, response);
+    }
+
+    // --- CÁC HÀM PHỤ TRỢ (Tách ra cho gọn) ---
+
+    private void handleUpdateStatus(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String idParam = request.getParameter("id");
+        String status = request.getParameter("status");
+
+        if (idParam != null && status != null) {
+            try {
+                int orderId = Integer.parseInt(idParam);
+                Order1 order = orderFacade.find(orderId);
+                if (order != null) {
+                    order.setStatus(status);
+                    orderFacade.edit(order);
+                    // Nếu CONFIRMED và PAID -> Tạo vé
+                    if ("CONFIRMED".equals(status) && "PAID".equals(order.getPaymentStatus())) {
+                        createTicketsForOrder(order);
+                    }
+                }
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        response.sendRedirect(request.getContextPath() + "/admin/orders");
+    }
+
+    private void handleUpdatePayment(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String idParam = request.getParameter("id");
+        String paymentStatus = request.getParameter("paymentStatus");
+
+        if (idParam != null && paymentStatus != null) {
+            try {
+                int orderId = Integer.parseInt(idParam);
+                Order1 order = orderFacade.find(orderId);
+                if (order != null) {
+                    order.setPaymentStatus(paymentStatus);
+                    orderFacade.edit(order);
+                    // Nếu PAID và CONFIRMED -> Tạo vé
+                    if ("PAID".equals(paymentStatus) && "CONFIRMED".equals(order.getStatus())) {
+                        createTicketsForOrder(order);
+                    }
+                }
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        response.sendRedirect(request.getContextPath() + "/admin/orders");
+    }
+
+    private void handleDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String idParam = request.getParameter("id");
+        if (idParam != null) {
+            try {
+                int orderId = Integer.parseInt(idParam);
+                Order1 order = orderFacade.find(orderId);
+                if (order != null) {
+                    List<OrderDetail> orderDetails = orderDetailFacade.findByOrderId(orderId);
+                    for (OrderDetail detail : orderDetails) {
+                        orderDetailFacade.remove(detail);
+                    }
+                    orderFacade.remove(order);
+                }
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        response.sendRedirect(request.getContextPath() + "/admin/orders");
+    }
+
+    private void createTicketsForOrder(Order1 order) {
+        List<OrderDetail> details = orderDetailFacade.findByOrderId(order.getOrderID());
+        // order.setOrderDetailCollection(details); // Dòng này có thể không cần thiết nếu JPA tự load
+
+        for (OrderDetail detail : details) {
+            List<Ticket> existingTickets = ticketFacade.findByOrderDetailId(detail.getOrderDetailID());
+            if (existingTickets.isEmpty()) {
+                Ticket ticket = new Ticket();
+                ticket.setOrderDetailID(detail);
+                ticket.setQRCode("TK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                ticket.setStatus("VALID");
+                ticket.setIssuedAt(new Date());
+                ticket.setCreatedAt(new Date());
+                ticketFacade.create(ticket);
+            }
+        }
+    }
 }

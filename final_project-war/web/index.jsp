@@ -183,7 +183,7 @@
 
                         <%-- TRƯỜNG HỢP DEMO --%>
                         <c:otherwise>
-                            <a href="#" class="luxury-card" data-aos="fade-up" data-aos-delay="0">
+                            <a href="${pageContext.request.contextPath}/seats/layout" class="luxury-card" data-aos="fade-up" data-aos-delay="0">
                                 <div class="badge-corner">BÁN CHẠY</div>
                                 <img src="${pageContext.request.contextPath}/assets/images/show/NGHIEP_QUAT.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Nghiệp+Quật'" />
                                 <div class="luxury-info">
@@ -192,7 +192,7 @@
                                 </div>
                             </a>
 
-                            <a href="#" class="luxury-card" data-aos="fade-up" data-aos-delay="100">
+                            <a href="${pageContext.request.contextPath}/seats/layout" class="luxury-card" data-aos="fade-up" data-aos-delay="100">
                                 <div class="badge-corner">MỚI</div>
                                 <img src="${pageContext.request.contextPath}/assets/images/show/ANH_TRAI_SAY_AI.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Anh+Trai'" />
                                 <div class="luxury-info">
@@ -201,7 +201,7 @@
                                 </div>
                             </a>
 
-                            <a href="#" class="luxury-card" data-aos="fade-up" data-aos-delay="200">
+                            <a href="${pageContext.request.contextPath}/seats/layout" class="luxury-card" data-aos="fade-up" data-aos-delay="200">
                                 <img src="${pageContext.request.contextPath}/assets/images/show/ESCAPE_ROOM_CAN_NHA_MA_QUAI.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Nhà+Ma'" />
                                 <div class="luxury-info">
                                     <h3 class="show-name">Căn Nhà Ma Quái</h3>
@@ -209,7 +209,7 @@
                                 </div>
                             </a>
 
-                            <a href="#" class="luxury-card" data-aos="fade-up" data-aos-delay="300">
+                            <a href="${pageContext.request.contextPath}/seats/layout" class="luxury-card" data-aos="fade-up" data-aos-delay="300">
                                 <img src="${pageContext.request.contextPath}/assets/images/show/DAI_NAO_THANH_BOMBAY.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Đại+Náo'" />
                                 <div class="luxury-info">
                                     <h3 class="show-name">Đại Náo Bombay</h3>

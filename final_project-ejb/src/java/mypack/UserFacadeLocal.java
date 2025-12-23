@@ -33,5 +33,6 @@ public interface UserFacadeLocal {
     boolean existsByEmail(String email);
 
     User findByEmail(String email);
-    
+
+    Long countOrdersByUser(Integer userID);
 }

@@ -90,6 +90,11 @@ public class Order1 implements Serializable {
     @JoinColumn(name = "UserID", referencedColumnName = "UserID", nullable = false)
     @ManyToOne(optional = false)
     private User userID;
+    @Column(name = "CancellationRequested")
+    private Boolean cancellationRequested = false; // Mặc định là false (chưa yêu cầu)
+
+    @Column(name = "CancellationReason", length = 500)
+    private String cancellationReason; // Lưu lý do khách viết
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "orderID")
     private Collection<OrderDetail> orderDetailCollection;
 
@@ -108,6 +113,22 @@ public class Order1 implements Serializable {
         this.paymentStatus = paymentStatus;
         this.status = status;
         this.createdAt = createdAt;
+    }
+
+    public Boolean getCancellationRequested() {
+        return cancellationRequested;
+    }
+
+    public void setCancellationRequested(Boolean cancellationRequested) {
+        this.cancellationRequested = cancellationRequested;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
     }
 
     public Integer getOrderID() {
@@ -254,5 +275,5 @@ public class Order1 implements Serializable {
     public String toString() {
         return "mypack.Order1[ orderID=" + orderID + " ]";
     }
-    
+
 }

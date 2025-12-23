@@ -6,6 +6,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 <header class="site-header">
     <div class="header-inner">
@@ -27,6 +30,11 @@
                         Lịch diễn
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="${pageContext.request.contextPath}/seats/layout">
+                        Mua vé
+                    </a>
+                </li>
 
 
                 <li class="nav-item"><a href="${pageContext.request.contextPath}/news">Tin tức</a></li>
@@ -37,6 +45,13 @@
         <div class="auth">
             <c:choose>
                 <c:when test="${not empty sessionScope.user}">
+                    <!-- Link Vé của tôi -->
+                    <c:if test="${not empty sessionScope.userOrders}">
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/my-tickets">🎫</a>
+                        </li>
+                    </c:if>
+
                     <a href="${pageContext.request.contextPath}/profile"
                        class="user-greeting">
                         <i class="fa-solid fa-user"></i>

@@ -7,6 +7,7 @@ package mypack;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.util.List;
 
 /**
  *
@@ -26,5 +27,12 @@ public class Order1Facade extends AbstractFacade<Order1> implements Order1Facade
     public Order1Facade() {
         super(Order1.class);
     }
-    
+
+    public List<Order1> findByUser(User user) {
+        return em.createQuery(
+                "SELECT o FROM Order1 o WHERE o.userID = :user ORDER BY o.createdAt DESC",
+                Order1.class
+        ).setParameter("user", user).getResultList();
+    }
+
 }

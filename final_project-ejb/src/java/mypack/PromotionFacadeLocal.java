@@ -5,12 +5,9 @@
 package mypack;
 
 import jakarta.ejb.Local;
+import java.math.BigDecimal;
 import java.util.List;
 
-/**
- *
- * @author DANG KHOA
- */
 @Local
 public interface PromotionFacadeLocal {
 
@@ -28,4 +25,14 @@ public interface PromotionFacadeLocal {
 
     int count();
     
+    // Tìm promotion theo mã code
+    Promotion findByCode(String code);
+    
+    // Kiểm tra promotion có hợp lệ không
+    boolean isPromotionValid(Promotion promotion, BigDecimal orderAmount);
+    
+    // Tính toán số tiền giảm
+    BigDecimal calculateDiscount(Promotion promotion, BigDecimal orderAmount);
+    
+    boolean isPromotionValid(Promotion promotion, BigDecimal orderAmount, User user);
 }
