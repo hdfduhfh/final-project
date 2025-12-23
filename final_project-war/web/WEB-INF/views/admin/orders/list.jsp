@@ -1,207 +1,586 @@
 <%-- 
     Document   : list
-    Created on : Dec 20, 2025, 10:24:04 AM
+    Created on : Dec 20, 2025, 10:24:04 AM
     Author     : DANG KHOA
 --%>
 
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <!DOCTYPE html>
-<html>
+<html lang="vi">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Quản lý đơn hàng</title>
+
+        <!-- Bootstrap 5 -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Font Awesome 6 -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
         <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 20px; }
-            .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            h2 { color: #333; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 3px solid #007bff; }
-            .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-            .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
-            .stat-card h3 { font-size: 32px; margin-bottom: 5px; }
-            .stat-card p { opacity: 0.9; font-size: 14px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-            th { background-color: #007bff; color: white; font-weight: bold; }
-            tr:hover { background-color: #f8f9fa; }
-            .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-            .status-confirmed { background: #28a745; color: white; }
-            .status-pending { background: #ffc107; color: #333; }
-            .status-cancelled { background: #dc3545; color: white; }
-            .status-paid { background: #28a745; color: white; }
-            .status-unpaid { background: #dc3545; color: white; }
-            .btn { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 14px; margin: 2px; }
-            .btn-view { background: #17a2b8; color: white; }
-            .btn-edit { background: #ffc107; color: #333; }
-            .btn-delete { background: #dc3545; color: white; }
-            .btn:hover { opacity: 0.8; }
-            .empty { text-align: center; padding: 60px 20px; color: #999; }
-            .filter-bar { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
-            .filter-bar select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 5px; }
-            
-            /* Style cho badge yêu cầu hủy */
-            .req-cancel { color: red; font-weight: bold; font-size: 0.85em; display: block; margin-top: 5px; }
+            :root{
+                --bg:#0b1220;
+                --panel:#0f1b33;
+                --muted:#8ea0c4;
+                --line:rgba(255,255,255,.08);
+                --primary:#4f46e5;
+                --danger:#ef4444;
+                --success:#22c55e;
+                --warning:#f59e0b;
+                --info:#06b6d4;
+            }
+
+            body{
+                background:
+                    radial-gradient(1200px 700px at 20% -10%, rgba(79,70,229,.28), transparent 55%),
+                    radial-gradient(900px 500px at 80% 0%, rgba(6,182,212,.22), transparent 60%),
+                    linear-gradient(180deg, var(--bg), #070b14);
+                min-height:100vh;
+                color:#e6ecff;
+                font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+            }
+
+            .admin-wrap{
+                display:flex;
+                min-height:100vh;
+            }
+            .sidebar{
+                width: 270px;
+                background: rgba(15,27,51,.86);
+                border-right: 1px solid var(--line);
+                backdrop-filter: blur(10px);
+                padding: 18px 14px;
+                position: sticky;
+                top:0;
+                height:100vh;
+            }
+            .brand{
+                display:flex;
+                align-items:center;
+                gap:10px;
+                padding:10px 12px;
+                border-radius:14px;
+                background: rgba(255,255,255,.06);
+                border: 1px solid var(--line);
+            }
+            .brand .logo{
+                width: 38px;
+                height: 38px;
+                border-radius: 12px;
+                display:grid;
+                place-items:center;
+                background: linear-gradient(135deg, rgba(79,70,229,.9), rgba(6,182,212,.9));
+                box-shadow: 0 14px 35px rgba(0,0,0,.35);
+            }
+            .brand .title{
+                line-height: 1.1;
+                font-weight: 800;
+                letter-spacing: .2px;
+            }
+            .brand small{
+                color: var(--muted);
+                font-weight: 600;
+            }
+
+            .nav-group{
+                margin-top: 14px;
+            }
+            .nav-item{
+                display:flex;
+                align-items:center;
+                gap:10px;
+                padding: 10px 12px;
+                border-radius: 12px;
+                color:#dbe5ff;
+                text-decoration:none;
+                border: 1px solid transparent;
+            }
+            .nav-item:hover{
+                background: rgba(255,255,255,.06);
+                border-color: var(--line);
+            }
+            .nav-item.active{
+                background: rgba(6,182,212,.16);
+                border-color: rgba(6,182,212,.35);
+            }
+            .nav-item i{
+                width:20px;
+                text-align:center;
+                color:#bcd0ff;
+            }
+
+            .content{
+                flex:1;
+                padding: 22px 22px 28px;
+            }
+
+            .topbar{
+                display:flex;
+                gap:12px;
+                align-items:center;
+                justify-content:space-between;
+                padding: 14px 16px;
+                border-radius: 18px;
+                background: rgba(255,255,255,.06);
+                border: 1px solid var(--line);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 18px 55px rgba(0,0,0,.35);
+            }
+            .page-h{
+                display:flex;
+                gap:12px;
+                align-items:center;
+            }
+            .page-h h1{
+                font-size: 18px;
+                margin:0;
+                font-weight: 900;
+                letter-spacing:.2px;
+            }
+            .page-h .crumb{
+                color: var(--muted);
+                font-weight: 600;
+                font-size: 12px;
+            }
+
+            /* Stats */
+            .stat-grid{
+                margin-top: 14px;
+                display:grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 12px;
+            }
+            @media (max-width: 992px){
+                .sidebar{
+                    display:none;
+                }
+                .stat-grid{
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
+            @media (max-width: 576px){
+                .stat-grid{
+                    grid-template-columns: 1fr;
+                }
+            }
+            .stat{
+                background: rgba(255,255,255,.92);
+                border-radius: 18px;
+                padding: 14px 14px;
+                border: 1px solid rgba(0,0,0,.06);
+                box-shadow: 0 18px 45px rgba(0,0,0,.25);
+                color:#0b1220;
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+            }
+            .stat .label{
+                font-size: 12px;
+                color:#58627a;
+                font-weight: 900;
+                letter-spacing:.2px;
+                text-transform: uppercase;
+            }
+            .stat .value{
+                font-size: 20px;
+                font-weight: 950;
+                margin-top: 2px;
+                line-height: 1.2;
+            }
+            .stat .icon{
+                width: 44px;
+                height: 44px;
+                border-radius: 16px;
+                display:grid;
+                place-items:center;
+                color:#fff;
+                box-shadow: 0 18px 35px rgba(0,0,0,.18);
+            }
+            .i-total{
+                background: linear-gradient(135deg, #4f46e5, #06b6d4);
+            }
+            .i-confirm{
+                background: linear-gradient(135deg, #22c55e, #06b6d4);
+            }
+            .i-paid{
+                background: linear-gradient(135deg, #22c55e, #4f46e5);
+            }
+            .i-rev{
+                background: linear-gradient(135deg, #f59e0b, #4f46e5);
+            }
+
+            /* Panel */
+            .panel{
+                margin-top: 14px;
+                padding: 14px;
+                border-radius: 18px;
+                background: rgba(255,255,255,.06);
+                border: 1px solid var(--line);
+                backdrop-filter: blur(10px);
+            }
+
+            /* Table */
+            .table-wrap{
+                margin-top: 12px;
+                border-radius: 18px;
+                overflow: hidden;
+                background: rgba(255,255,255,.96);
+                box-shadow: 0 22px 70px rgba(0,0,0,.35);
+            }
+            table thead th{
+                background: #0f1b33 !important;
+                color: #e8efff !important;
+                border: none !important;
+                white-space: nowrap;
+                font-size: 13px;
+                letter-spacing: .2px;
+            }
+            table tbody td{
+                color: #0b1220;
+                vertical-align: middle;
+            }
+
+            .status-badge{
+                display:inline-flex;
+                align-items:center;
+                gap:6px;
+                padding: 6px 10px;
+                border-radius: 999px;
+                font-size: 12px;
+                font-weight: 900;
+                border: 1px solid rgba(0,0,0,.08);
+                background: #fff;
+                white-space: nowrap;
+            }
+            .st-confirmed{
+                color:#0b6b33;
+                border-color: rgba(34,197,94,.25);
+                background: rgba(34,197,94,.10);
+            }
+            .st-pending{
+                color:#7a4b00;
+                border-color: rgba(245,158,11,.25);
+                background: rgba(245,158,11,.12);
+            }
+            .st-cancelled{
+                color:#7a1010;
+                border-color: rgba(239,68,68,.25);
+                background: rgba(239,68,68,.12);
+            }
+
+            .pay-paid{
+                color:#0b6b33;
+                border-color: rgba(34,197,94,.25);
+                background: rgba(34,197,94,.10);
+            }
+            .pay-unpaid{
+                color:#7a1010;
+                border-color: rgba(239,68,68,.25);
+                background: rgba(239,68,68,.12);
+            }
+
+            .req-cancel{
+                display:inline-flex;
+                align-items:center;
+                gap:6px;
+                margin-top: 6px;
+                font-size: 12px;
+                font-weight: 950;
+                color: #7a1010;
+                background: rgba(239,68,68,.10);
+                border: 1px dashed rgba(239,68,68,.35);
+                border-radius: 999px;
+                padding: 4px 10px;
+            }
+
+            .btn-icon{
+                height: 36px;
+                padding: 0 12px;
+                display:inline-flex;
+                align-items:center;
+                gap:8px;
+                border-radius: 12px;
+                font-weight: 900;
+                white-space: nowrap;
+            }
+
+            .empty{
+                padding: 58px 16px;
+                text-align:center;
+                color:#6b7280;
+            }
         </style>
     </head>
+
     <body>
-        <div class="container">
-            <h2>📋 Quản lý đơn hàng</h2>
+        <div class="admin-wrap">
 
-            <div class="stats">
-                <div class="stat-card">
-                    <h3>${orders.size()}</h3>
-                    <p>Tổng đơn hàng</p>
-                </div>
-                <div class="stat-card">
-                    <h3>
-                        <c:set var="confirmedCount" value="0" />
-                        <c:forEach var="order" items="${orders}">
-                            <c:if test="${order.status == 'CONFIRMED'}">
-                                <c:set var="confirmedCount" value="${confirmedCount + 1}" />
-                            </c:if>
-                        </c:forEach>
-                        ${confirmedCount}
-                    </h3>
-                    <p>Đã xác nhận</p>
-                </div>
-                <div class="stat-card">
-                    <h3>
-                        <c:set var="paidCount" value="0" />
-                        <c:forEach var="order" items="${orders}">
-                            <c:if test="${order.paymentStatus == 'PAID'}">
-                                <c:set var="paidCount" value="${paidCount + 1}" />
-                            </c:if>
-                        </c:forEach>
-                        ${paidCount}
-                    </h3>
-                    <p>Đã thanh toán</p>
-                </div>
-                <div class="stat-card">
-                    <h3>
-                        <c:set var="totalRevenue" value="0" />
-                        <c:forEach var="order" items="${orders}">
-                            <c:if test="${order.paymentStatus == 'PAID'}">
-                                <c:set var="totalRevenue" value="${totalRevenue + order.finalAmount}" />
-                            </c:if>
-                        </c:forEach>
-                        <fmt:formatNumber value="${totalRevenue}" type="number" maxFractionDigits="0" />đ
-                    </h3>
-                    <p>Doanh thu</p>
-                </div>
-            </div>
-
-            <div class="filter-bar">
-                <label><strong>Lọc theo:</strong></label>
-                <select id="filterStatus" onchange="filterOrders()">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="CONFIRMED">Đã xác nhận</option>
-                    <option value="PENDING">Đang chờ</option>
-                    <option value="CANCELLED">Đã hủy</option>
-                </select>
-
-                <select id="filterPayment" onchange="filterOrders()">
-                    <option value="">Tất cả thanh toán</option>
-                    <option value="PAID">Đã thanh toán</option>
-                    <option value="PENDING">Chưa thanh toán</option>
-                </select>
-            </div>
-
-            <c:choose>
-                <c:when test="${empty orders}">
-                    <div class="empty">
-                        <h3>📭 Chưa có đơn hàng nào</h3>
-                        <p>Đơn hàng sẽ hiển thị ở đây khi khách hàng đặt vé</p>
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+                <div class="brand">
+                    <div class="logo"><i class="fa-solid fa-masks-theater"></i></div>
+                    <div>
+                        <div class="title">Theater Admin</div>
+                        <small>Quản lý đơn hàng</small>
                     </div>
-                </c:when>
-                <c:otherwise>
-                    <table id="ordersTable">
-                        <thead>
-                            <tr>
-                                <th>Mã ĐH</th>
-                                <th>Khách hàng</th>
-                                <th>Ngày đặt</th>
-                                <th>Tổng tiền</th>
-                                <th>Thanh toán</th>
-                                <th>Trạng thái</th>
-                                <th>Phương thức</th>
-                                <th>Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <c:forEach var="order" items="${orders}">
-                            <tr data-status="${order.status}" data-payment="${order.paymentStatus}">
-                                <td><strong>#${order.orderID}</strong></td>
-                                <td>
-                                    ${order.userID.fullName}<br>
-                                    <small style="color: #666;">${order.userID.email}</small>
-                                </td>
-                                <td>
-                                    <fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
-                                </td>
-                                <td>
-                                    <strong><fmt:formatNumber value="${order.finalAmount}" type="number" maxFractionDigits="0"/> đ</strong>
-                                </td>
-                                <td>
-                                    <span class="status-badge ${order.paymentStatus == 'PAID' ? 'status-paid' : 'status-unpaid'}">
-                                        ${order.paymentStatus == 'PAID' ? '✓ Đã thanh toán' : '⏳ Chưa thanh toán'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="status-badge 
-                                          ${order.status == 'CONFIRMED' ? 'status-confirmed' : 
-                                            order.status == 'CANCELLED' ? 'status-cancelled' : 'status-pending'}">
-                                            ${order.status}
-                                    </span>
-                                    
-                                    <c:if test="${order.cancellationRequested}">
-                                        <span class="req-cancel">⚠️ Yêu cầu hủy</span>
-                                    </c:if>
-                                </td>
-                                <td>${order.paymentMethod}</td>
-                                <td>
-                                    <a href="${pageContext.request.contextPath}/admin/orders?action=view&id=${order.orderID}" 
-                                       class="btn btn-view">👁️ Xem</a>
+                </div>
 
-                                    <c:if test="${order.status != 'CANCELLED' && order.cancellationRequested}">
-                                        <form action="${pageContext.request.contextPath}/admin/orders" method="post" style="display:inline;">
-                                            <input type="hidden" name="action" value="approveCancel">
-                                            <input type="hidden" name="orderId" value="${order.orderID}">
-                                            <button type="submit" class="btn btn-delete" onclick="return confirm('Xác nhận duyệt yêu cầu hủy đơn hàng này?');">
-                                                ✅ Duyệt Hủy
-                                            </button>
-                                        </form>
+                <hr style="border-color: var(--line);">
+
+                <div class="px-2">
+                    <div class="text-uppercase" style="font-size:12px; color:var(--muted); font-weight:900; letter-spacing:.3px;">
+                        Quick actions
+                    </div>
+                    <div class="mt-2 d-grid gap-2">
+                        <a class="btn btn-outline-light fw-bold" href="${pageContext.request.contextPath}/admin/dashboard" style="border-radius:14px;">
+                            <i class="fa-solid fa-arrow-left"></i> Về Dashboard
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CONTENT -->
+            <main class="content">
+
+                <!-- TOPBAR -->
+                <div class="topbar">
+                    <div class="page-h">
+                        <div class="d-none d-md-grid" style="place-items:center; width:44px; height:44px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid var(--line);">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div>
+                            <h1>Danh sách đơn hàng</h1>
+                            <div class="crumb">Admin / Order Management</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATS -->
+                <div class="stat-grid">
+                    <div class="stat">
+                        <div>
+                            <div class="label">Tổng đơn hàng</div>
+                            <div class="value">${orders.size()}</div>
+                        </div>
+                        <div class="icon i-total"><i class="fa-solid fa-layer-group"></i></div>
+                    </div>
+
+                    <div class="stat">
+                        <div>
+                            <div class="label">Đã xác nhận</div>
+                            <div class="value">
+                                <c:set var="confirmedCount" value="0" />
+                                <c:forEach var="order" items="${orders}">
+                                    <c:if test="${order.status == 'CONFIRMED'}">
+                                        <c:set var="confirmedCount" value="${confirmedCount + 1}" />
                                     </c:if>
-                                </td>
-                            </tr>
-                        </c:forEach>
-                        </tbody>
-                    </table>
-                </c:otherwise>
-            </c:choose>
+                                </c:forEach>
+                                ${confirmedCount}
+                            </div>
+                        </div>
+                        <div class="icon i-confirm"><i class="fa-solid fa-circle-check"></i></div>
+                    </div>
+
+                    <div class="stat">
+                        <div>
+                            <div class="label">Đã thanh toán</div>
+                            <div class="value">
+                                <c:set var="paidCount" value="0" />
+                                <c:forEach var="order" items="${orders}">
+                                    <c:if test="${order.paymentStatus == 'PAID'}">
+                                        <c:set var="paidCount" value="${paidCount + 1}" />
+                                    </c:if>
+                                </c:forEach>
+                                ${paidCount}
+                            </div>
+                        </div>
+                        <div class="icon i-paid"><i class="fa-solid fa-money-check-dollar"></i></div>
+                    </div>
+
+                    <div class="stat">
+                        <div>
+                            <div class="label">Doanh thu</div>
+                            <div class="value">
+                                <c:set var="totalRevenue" value="0" />
+                                <c:forEach var="order" items="${orders}">
+                                    <c:if test="${order.paymentStatus == 'PAID'}">
+                                        <c:set var="totalRevenue" value="${totalRevenue + order.finalAmount}" />
+                                    </c:if>
+                                </c:forEach>
+                                <fmt:formatNumber value="${totalRevenue}" type="number" maxFractionDigits="0" />đ
+                            </div>
+                        </div>
+                        <div class="icon i-rev"><i class="fa-solid fa-chart-line"></i></div>
+                    </div>
+                </div>
+
+                <!-- FILTER PANEL -->
+                <div class="panel">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-lg-6">
+                            <label class="form-label fw-bold mb-1" style="color:#e6ecff;">Lọc theo trạng thái</label>
+                            <select id="filterStatus" class="form-select" onchange="filterOrders()">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="CONFIRMED">Đã xác nhận</option>
+                                <option value="PENDING">Đang chờ</option>
+                                <option value="CANCELLED">Đã hủy</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <label class="form-label fw-bold mb-1" style="color:#e6ecff;">Lọc theo thanh toán</label>
+                            <select id="filterPayment" class="form-select" onchange="filterOrders()">
+                                <option value="">Tất cả thanh toán</option>
+                                <option value="PAID">Đã thanh toán</option>
+                                <option value="PENDING">Chưa thanh toán</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLE -->
+                <c:choose>
+                    <c:when test="${empty orders}">
+                        <div class="table-wrap">
+                            <div class="empty">
+                                <i class="fa-regular fa-folder-open fa-2x"></i>
+                                <div class="mt-2 fw-bold">Chưa có đơn hàng nào.</div>
+                                <div class="mt-1">Đơn hàng sẽ hiển thị ở đây khi khách hàng đặt vé.</div>
+                            </div>
+                        </div>
+                    </c:when>
+
+                    <c:otherwise>
+                        <div class="table-wrap">
+                            <div class="table-responsive">
+                                <table id="ordersTable" class="table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Mã ĐH</th>
+                                            <th>Khách hàng</th>
+                                            <th>Ngày đặt</th>
+                                            <th>Tổng tiền</th>
+                                            <th>Thanh toán</th>
+                                            <th>Trạng thái</th>
+                                            <th>Phương thức</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <c:forEach var="order" items="${orders}">
+                                            <tr data-status="${order.status}" data-payment="${order.paymentStatus}">
+                                                <td class="fw-bold">#${order.orderID}</td>
+
+                                                <td>
+                                                    <div class="fw-bold">${order.userID.fullName}</div>
+                                                    <div class="text-secondary small">${order.userID.email}</div>
+                                                </td>
+
+                                                <td>
+                                                    <fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
+                                                </td>
+
+                                                <td class="fw-bold">
+                                                    <fmt:formatNumber value="${order.finalAmount}" type="number" maxFractionDigits="0"/> đ
+                                                </td>
+
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${order.paymentStatus == 'PAID'}">
+                                                            <span class="status-badge pay-paid">
+                                                                <i class="fa-solid fa-circle-check"></i> Đã thanh toán
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="status-badge pay-unpaid">
+                                                                <i class="fa-solid fa-clock"></i> Chưa thanh toán
+                                                            </span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${order.status == 'CONFIRMED'}">
+                                                            <span class="status-badge st-confirmed">
+                                                                <i class="fa-solid fa-badge-check"></i> CONFIRMED
+                                                            </span>
+                                                        </c:when>
+                                                        <c:when test="${order.status == 'CANCELLED'}">
+                                                            <span class="status-badge st-cancelled">
+                                                                <i class="fa-solid fa-ban"></i> CANCELLED
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="status-badge st-pending">
+                                                                <i class="fa-solid fa-hourglass-half"></i> PENDING
+                                                            </span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+
+                                                    <c:if test="${order.cancellationRequested}">
+                                                        <span class="req-cancel">
+                                                            <i class="fa-solid fa-triangle-exclamation"></i> Yêu cầu hủy
+                                                        </span>
+                                                    </c:if>
+                                                </td>
+
+                                                <td>${order.paymentMethod}</td>
+
+                                                <td class="text-nowrap">
+                                                    <a href="${pageContext.request.contextPath}/admin/orders?action=view&id=${order.orderID}"
+                                                       class="btn btn-info btn-icon text-white">
+                                                        <i class="fa-solid fa-eye"></i> Xem
+                                                    </a>
+
+                                                    <c:if test="${order.status != 'CANCELLED' && order.cancellationRequested}">
+                                                        <form action="${pageContext.request.contextPath}/admin/orders"
+                                                              method="post" style="display:inline;">
+                                                            <input type="hidden" name="action" value="approveCancel">
+                                                            <input type="hidden" name="orderId" value="${order.orderID}">
+                                                            <button type="submit" class="btn btn-danger btn-icon"
+                                                                    onclick="return confirm('Xác nhận duyệt yêu cầu hủy đơn hàng này?');">
+                                                                <i class="fa-solid fa-check"></i> Duyệt hủy
+                                                            </button>
+                                                        </form>
+                                                    </c:if>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+
+            </main>
         </div>
 
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
         <script>
-            function filterOrders() {
-                const statusFilter = document.getElementById('filterStatus').value;
-                const paymentFilter = document.getElementById('filterPayment').value;
-                const rows = document.querySelectorAll('#ordersTable tbody tr');
+                                                                        function filterOrders() {
+                                                                            const statusFilter = document.getElementById('filterStatus').value;
+                                                                            const paymentFilter = document.getElementById('filterPayment').value;
+                                                                            const rows = document.querySelectorAll('#ordersTable tbody tr');
 
-                rows.forEach(row => {
-                    const status = row.getAttribute('data-status');
-                    const payment = row.getAttribute('data-payment');
+                                                                            rows.forEach(row => {
+                                                                                const status = row.getAttribute('data-status');
+                                                                                const payment = row.getAttribute('data-payment');
 
-                    const statusMatch = !statusFilter || status === statusFilter;
-                    const paymentMatch = !paymentFilter || payment === paymentFilter;
+                                                                                const statusMatch = !statusFilter || status === statusFilter;
+                                                                                const paymentMatch = !paymentFilter || payment === paymentFilter;
 
-                    if (statusMatch && paymentMatch) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            }
+                                                                                row.style.display = (statusMatch && paymentMatch) ? '' : 'none';
+                                                                            });
+                                                                        }
         </script>
     </body>
 </html>

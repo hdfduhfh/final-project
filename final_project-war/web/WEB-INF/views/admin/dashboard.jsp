@@ -1,569 +1,498 @@
 <%-- 
-    Document    : dashboard_modern
-    Created on  : Dec 16, 2025
-    Author      : GEMINI AI
-    Style       : Modern Sidebar & Soft UI
+    Document   : dashboard_dark_final
+    Updated    : Map Real Data & Added Revenue Link
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="mypack.User" %>
+<%@ page import="java.math.BigDecimal" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <%
-    // 1. KIỂM TRA QUYỀN ADMIN (GIỮ NGUYÊN)
+    // 1. KIỂM TRA SESSION USER
     User user = (User) session.getAttribute("user");
-    // Code demo nên mình comment đoạn check để bạn chạy thử giao diện ngay
-    // if (user == null || !"ADMIN".equalsIgnoreCase(user.getRoleID().getRoleName())) {
-    //    response.sendRedirect(request.getContextPath() + "/");
-    //    return;
-    // }
     String contextPath = request.getContextPath();
+    String fullName = (user != null) ? user.getFullName() : "Admin";
 
-    // 2. GIẢ LẬP DỮ LIỆU (GIỮ NGUYÊN ĐỂ TEST)
-    if (request.getAttribute("monthlyRevenue") == null) {
-        request.setAttribute("monthlyRevenue", 150000000);
+    // 2. XỬ LÝ DỮ LIỆU THẬT TỪ SERVLET
+    // Servlet gửi: COUNT_USER, COUNT_ORDER, COUNT_SHOW, COUNT_ARTIST, TOTAL_REVENUE
+    if (request.getAttribute("TOTAL_REVENUE") == null) {
+        request.setAttribute("TOTAL_REVENUE", BigDecimal.ZERO);
     }
-    if (request.getAttribute("totalUsers") == null) {
-        request.setAttribute("totalUsers", 1250);
-    }
-    if (request.getAttribute("activeShows") == null) {
-        request.setAttribute("activeShows", 8);
-    }
-    if (request.getAttribute("ticketsSoldToday") == null) {
-        request.setAttribute("ticketsSoldToday", 45); // Đã đổi ý nghĩa màu
-    }%>
+%>
 
 <!DOCTYPE html>
 <html lang="vi">
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Admin Portal - Quản trị hệ thống</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Dark Cinematic</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
 
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-        <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* DARK THEME PALETTE */
+            --bg-body: #0f111a;
+            --bg-sidebar: #131722;
+            --bg-card: #1e2433;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255,255,255,0.05);
+            
+            /* Accent Colors */
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            
+            --sidebar-width: 260px;
+        }
 
-        <style>
-            :root {
-                --sidebar-width: 260px;
-                --primary-color: #4e73df;
-                --secondary-color: #858796;
-                --success-color: #1cc88a;
-                --info-color: #36b9cc;
-                --warning-color: #f6c23e;
-                --danger-color: #e74a3b;
-                --dark-blue: #224abe;
-                --light-bg: #f3f4f6;
-            }
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
 
-            body {
-                font-family: 'Inter', sans-serif;
-                background-color: var(--light-bg);
-                overflow-x: hidden;
-            }
+        /* --- SIDEBAR --- */
+        #sidebar-wrapper {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            top: 0; left: 0;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            z-index: 1000;
+            overflow-y: auto;
+            transition: margin .25s ease-out;
+        }
 
-            /* --- SIDEBAR STYLE --- */
-            #sidebar-wrapper {
-                height: 100vh; /* Chiều cao bằng đúng màn hình */
-                width: var(--sidebar-width);
-                margin-left: 0;
-                position: fixed; /* Cố định vị trí */
-                top: 0;
-                left: 0;
-                z-index: 1000;
-                background: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
-                color: #fff;
-                transition: margin .25s ease-out;
+        #sidebar-wrapper::-webkit-scrollbar { width: 5px; }
+        #sidebar-wrapper::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 
-                /* QUAN TRỌNG: Thêm 2 dòng này để cuộn khi nội dung dài quá */
-                overflow-y: auto;
-                overflow-x: hidden;
-            }
+        .sidebar-brand {
+            padding: 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center;
+        }
 
-            /* --- TÙY CHỈNH THANH CUỘN (SCROLLBAR) CHO ĐẸP --- */
-            /* Chỉ hiện thanh cuộn mảnh, màu trắng mờ để sang trọng */
-            #sidebar-wrapper::-webkit-scrollbar {
-                width: 6px;
-            }
+        .list-group-item {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 0.85rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex; align-items: center;
+        }
+        .list-group-item i { width: 25px; margin-right: 10px; text-align: center; }
+        
+        .list-group-item:hover, .list-group-item.active {
+            color: white;
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid var(--accent-blue);
+        }
+        
+        .sidebar-heading {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            padding: 1.5rem 1.5rem 0.5rem;
+            font-weight: 700;
+        }
 
-            #sidebar-wrapper::-webkit-scrollbar-track {
-                background: transparent;
-            }
+        /* --- MAIN CONTENT --- */
+        #page-content-wrapper {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            transition: margin .25s ease-out;
+            min-height: 100vh;
+        }
 
-            #sidebar-wrapper::-webkit-scrollbar-thumb {
-                background-color: rgba(255, 255, 255, 0.2); /* Màu trắng mờ */
-                border-radius: 20px; /* Bo tròn */
-            }
+        .top-navbar {
+            background-color: rgba(19, 23, 34, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky; top: 0; z-index: 999;
+        }
 
-            #sidebar-wrapper::-webkit-scrollbar-thumb:hover {
-                background-color: rgba(255, 255, 255, 0.5); /* Sáng hơn khi rê chuột vào */
-            }
+        /* --- CARDS --- */
+        .card-custom {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .stat-card {
+            padding: 1.5rem;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
 
-            .sidebar-heading {
-                padding: 1.5rem 1.5rem;
-                font-size: 1.2rem;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                color: rgba(255,255,255,0.9);
-                border-bottom: 1px solid rgba(255,255,255,0.15);
-            }
+        .stat-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: white; }
+        
+        .stat-icon-box {
+            width: 50px; height: 50px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+        .icon-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+        .icon-green { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .icon-orange { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+        .icon-purple { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
 
-            .list-group-item {
-                background-color: transparent;
-                color: rgba(255,255,255,0.8);
-                border: none;
-                padding: 0.75rem 1.5rem;
-                font-weight: 500;
-                transition: all 0.2s;
-                border-left: 4px solid transparent;
-            }
+        /* --- WIDGETS --- */
+        .widget-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .widget-title { margin: 0; font-size: 1rem; font-weight: 600; color: white; }
+        
+        .list-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center;
+            transition: background 0.2s;
+        }
+        .list-item:hover { background-color: rgba(255,255,255,0.02); }
+        .avatar-circle {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #334155; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: bold;
+            margin-right: 15px;
+        }
 
-            .list-group-item:hover {
-                background-color: rgba(255,255,255,0.1);
-                color: #fff;
-                border-left-color: #fff;
-            }
+        /* --- TABLE --- */
+        .table-dark-custom {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--text-muted);
+            --bs-table-border-color: var(--border-color);
+        }
+        .table-dark-custom th {
+            color: white; font-weight: 600; text-transform: uppercase; font-size: 0.8rem;
+            border-bottom-width: 1px;
+        }
+        .table-dark-custom td { vertical-align: middle; color: #e2e8f0; }
 
-            .list-group-item.active {
-                background-color: rgba(255,255,255,0.2);
-                color: #fff;
-                font-weight: 600;
-                border-left-color: #fff;
-            }
+        /* Mobile Toggle */
+        body.sidebar-toggled #sidebar-wrapper { margin-left: -260px; }
+        body.sidebar-toggled #page-content-wrapper { margin-left: 0; width: 100%; }
+        
+        @media (max-width: 768px) {
+            #sidebar-wrapper { margin-left: -260px; }
+            #page-content-wrapper { margin-left: 0; width: 100%; }
+            body.sidebar-toggled #sidebar-wrapper { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
 
-            .sidebar-divider {
-                margin: 1rem 1.5rem 0.5rem;
-                color: rgba(255,255,255,0.4);
-                font-size: 0.75rem;
-                font-weight: 700;
-                text-transform: uppercase;
-            }
+<div class="d-flex" id="wrapper">
+    <div id="sidebar-wrapper">
+        <div class="sidebar-brand">
+            <i class="fas fa-film text-primary me-2"></i> THEATER ADMIN
+        </div>
 
-            /* --- MAIN CONTENT --- */
-            #page-content-wrapper {
-                margin-left: var(--sidebar-width);
-                width: calc(100% - var(--sidebar-width));
-                transition: margin .25s ease-out;
-            }
+        <div class="list-group list-group-flush mt-2">
+            <a href="<%=contextPath%>/admin/dashboard" class="list-group-item list-group-item-action active">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
 
-            /* --- TOP NAVBAR --- */
-            .top-navbar {
-                background: #fff;
-                box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15);
-                padding: 1rem 2rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
+            <div class="sidebar-heading">Quản lý Show</div>
+            <a href="<%=contextPath%>/admin/show" class="list-group-item list-group-item-action">
+                <i class="fas fa-theater-masks"></i> Danh sách Show
+            </a>
+            <a href="<%=contextPath%>/admin/artist" class="list-group-item list-group-item-action">
+                <i class="fas fa-microphone-alt"></i> Nghệ sĩ
+            </a>
+            <a href="<%=contextPath%>/admin/schedule" class="list-group-item list-group-item-action">
+                <i class="fas fa-calendar-alt"></i> Lịch diễn
+            </a>
+            <a href="<%=contextPath%>/admin/seats" class="list-group-item list-group-item-action">
+                <i class="fas fa-chair"></i> Sơ đồ ghế
+            </a>
 
-            /* --- DASHBOARD CARDS (MODERN STYLE) --- */
-            .dash-card {
-                border: none;
-                border-radius: 15px;
-                background: #fff;
-                box-shadow: 0 0.15rem 1.75rem 0 rgba(58,59,69,0.05);
-                transition: transform 0.3s ease;
-                position: relative;
-                overflow: hidden;
-                height: 100%;
-            }
+            <div class="sidebar-heading">Kinh Doanh</div>
+            <a href="<%=contextPath%>/admin/revenue" class="list-group-item list-group-item-action">
+                <i class="fas fa-chart-line"></i> Thống kê doanh thu
+            </a>
+            <a href="<%=contextPath%>/admin/promotions" class="list-group-item list-group-item-action">
+                <i class="fas fa-tags"></i> Khuyến mãi
+            </a>
+            <a href="<%=contextPath%>/admin/tickets" class="list-group-item list-group-item-action">
+                <i class="fas fa-ticket-alt"></i> Vé bán
+            </a>
+            <a href="<%=contextPath%>/admin/ticket-checkin" class="list-group-item list-group-item-action text-warning fw-bold">
+                <i class="fas fa-qrcode"></i> Check-in Vé
+            </a>
+            <a href="<%=contextPath%>/admin/orders" class="list-group-item list-group-item-action">
+                <i class="fas fa-shopping-cart"></i> Đơn hàng <span class="badge bg-danger ms-auto">New</span>
+            </a>
 
-            .dash-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 0.5rem 2rem 0 rgba(58,59,69,0.15);
-            }
+            <div class="sidebar-heading">Hệ Thống & Nội Dung</div>
+            <a href="<%=contextPath%>/admin/user" class="list-group-item list-group-item-action">
+                <i class="fas fa-users"></i> Thành viên
+            </a>
+            <a href="#" class="list-group-item list-group-item-action">
+                <i class="fas fa-newspaper"></i> Tin tức
+            </a>
+            <a href="#" class="list-group-item list-group-item-action">
+                <i class="fas fa-briefcase"></i> Tuyển dụng
+            </a>
+            <a href="#" class="list-group-item list-group-item-action">
+                <i class="fas fa-comment-dots"></i> Feedback
+            </a>
+        </div>
+    </div>
 
-            .card-left-border-primary {
-                border-left: 5px solid var(--primary-color);
-            }
-            .card-left-border-success {
-                border-left: 5px solid var(--success-color);
-            }
-            .card-left-border-warning {
-                border-left: 5px solid var(--warning-color);
-            }
-            .card-left-border-info {
-                border-left: 5px solid #6f42c1;
-            } /* Màu Tím mới */
-
-            .text-xs {
-                font-size: .7rem;
-                font-weight: 700;
-                text-transform: uppercase;
-                margin-bottom: 0.25rem;
-            }
-
-            .h5-number {
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: #5a5c69;
-            }
-
-            .icon-circle {
-                height: 50px;
-                width: 50px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.5rem;
-            }
-
-            .bg-blue-soft {
-                background: rgba(78, 115, 223, 0.1);
-                color: var(--primary-color);
-            }
-            .bg-green-soft {
-                background: rgba(28, 200, 138, 0.1);
-                color: var(--success-color);
-            }
-            .bg-yellow-soft {
-                background: rgba(246, 194, 62, 0.1);
-                color: var(--warning-color);
-            }
-            .bg-purple-soft {
-                background: rgba(111, 66, 193, 0.1);
-                color: #6f42c1;
-            }
-
-            /* --- TABLE & GENERAL --- */
-            .card-modern {
-                border: none;
-                border-radius: 12px;
-                box-shadow: 0 0.15rem 1.75rem 0 rgba(58,59,69,0.05);
-            }
-            .card-header-modern {
-                background-color: #fff;
-                border-bottom: 1px solid #e3e6f0;
-                padding: 1rem 1.5rem;
-                font-weight: 700;
-                color: var(--primary-color);
-                border-top-left-radius: 12px;
-                border-top-right-radius: 12px;
-            }
-
-            /* Mobile Responsive */
-            @media (max-width: 768px) {
-                #sidebar-wrapper {
-                    margin-left: -260px;
-                }
-                #page-content-wrapper {
-                    margin-left: 0;
-                    width: 100%;
-                }
-                body.sidebar-toggled #sidebar-wrapper {
-                    margin-left: 0;
-                }
-            }
-        </style>
-    </head>
-    <body>
-
-        <div class="d-flex" id="wrapper">
-
-            <div id="sidebar-wrapper">
-                <div class="sidebar-heading text-center">
-                    <i class="fas fa-laugh-wink me-2"></i> Dashboard Admin
-                </div>
-
-                <div class="list-group list-group-flush mt-3">
-                    <a href="<%=contextPath%>/admin/dashboard" class="list-group-item list-group-item-action active">
-                        <i class="fas fa-fw fa-tachometer-alt me-2"></i> Dashboard
+    <div id="page-content-wrapper">
+        <nav class="top-navbar d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary border-0 text-white" id="menu-toggle">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <a class="text-white text-decoration-none dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <span class="me-2 d-none d-lg-inline small text-muted">Xin chào,</span>
+                        <span class="fw-bold"><%= fullName %></span>
                     </a>
-
-                    <div class="sidebar-divider">Quản lý Show</div>
-                    <a href="<%=contextPath%>/admin/show" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-theater-masks me-2"></i> Danh sách Show
-                    </a>
-                    <a href="<%=contextPath%>/admin/artist" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-microphone-alt me-2"></i> Nghệ sĩ (Artists)
-                    </a>
-                    <a href="<%=contextPath%>/admin/schedule" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-theater-masks me-2"></i> Lịch diễn
-                    </a>
-                    <a href="<%=contextPath%>/admin/seats" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-chair me-2"></i> Sơ đồ ghế (Seats)
-                    </a>
-
-                    <div class="sidebar-divider">Kinh doanh</div>
-                    <a href="<%=contextPath%>/admin/promotions" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-tags me-2"></i> Khuyến mãi
-                    </a>
-
-                    <a href="<%=contextPath%>/admin/tickets" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-ticket-alt me-2"></i> Vé bán
-                    </a>
-                    <!-- 🔥 THÊM CÁI NÀY -->
-                    <a href="<%=contextPath%>/admin/ticket-checkin" 
-                       class="list-group-item list-group-item-action fw-bold"
-                       style="background: rgba(255,255,255,0.15);">
-                        <i class="fas fa-qrcode me-2"></i> CHECK-IN VÉ
-                    </a>
-                    <a href="<%=contextPath%>/admin/orders" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-shopping-cart me-2"></i> Đơn hàng <span class="badge bg-danger rounded-pill float-end">New</span>
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-file-invoice-dollar me-2"></i> Báo cáo thu chi
-                    </a>
-
-                    <div class="sidebar-divider">Hệ thống & Nội dung</div>
-                    <a href="<%=contextPath%>/admin/user" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-users me-2"></i> Thành viên (Users)
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-newspaper me-2"></i> Tin tức (News)
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-briefcase me-2"></i> Tuyển dụng
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-comments me-2"></i> Feedback
-                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark shadow">
+                        <li><a class="dropdown-item" href="#">Hồ sơ</a></li>
+                        <li><a class="dropdown-item" href="#">Cài đặt</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="<%=contextPath%>/logout">Đăng xuất</a></li>
+                    </ul>
                 </div>
             </div>
-            <div id="page-content-wrapper">
+        </nav>
 
-                <nav class="top-navbar mb-4">
-                    <button class="btn btn-link text-primary" id="menu-toggle"><i class="fas fa-bars fa-lg"></i></button>
+        <div class="container-fluid px-4 py-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-white mb-0">Tổng quan hệ thống</h3>
+                <button class="btn btn-primary btn-sm"><i class="fas fa-download me-1"></i> Xuất báo cáo</button>
+            </div>
 
-                    <form class="d-none d-sm-inline-block form-inline ms-md-3 my-2 my-md-0 mw-100 navbar-search">
-                        <div class="input-group">
-                            <input type="text" class="form-control bg-light border-0 small" placeholder="Tìm kiếm nhanh..." aria-label="Search">
-                            <button class="btn btn-primary" type="button"><i class="fas fa-search"></i></button>
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card-custom stat-card">
+                        <div>
+                            <div class="stat-title">Tổng Doanh thu</div>
+                            <div class="stat-value text-success">
+                                <fmt:formatNumber value="${TOTAL_REVENUE}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                            </div>
                         </div>
-                    </form>
-
-                    <div class="dropdown">
-                        <a class="nav-link dropdown-toggle text-dark d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                            <span class="me-2 d-none d-lg-inline text-gray-600 small">Xin chào, <strong><%= (user != null) ? user.getFullName() : "Admin"%></strong></span>
-                            <img class="img-profile rounded-circle" src="https://ui-avatars.com/api/?name=Admin&background=random" width="32" height="32">
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow animated--grow-in">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i> Hồ sơ</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i> Cài đặt</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="<%=contextPath%>/logout"><i class="fas fa-sign-out-alt fa-sm fa-fw me-2"></i> Đăng xuất</a></li>
-                        </ul>
+                        <div class="stat-icon-box icon-blue"><i class="fas fa-dollar-sign"></i></div>
                     </div>
-                </nav>
+                </div>
 
-                <div class="container-fluid px-4">
-
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800 fw-bold">Tổng quan hệ thống</h1>
-                        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                            <i class="fas fa-download fa-sm text-white-50"></i> Xuất báo cáo
-                        </a>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card-custom stat-card">
+                        <div>
+                            <div class="stat-title">Thành viên</div>
+                            <div class="stat-value">${COUNT_USER}</div>
+                        </div>
+                        <div class="stat-icon-box icon-green"><i class="fas fa-users"></i></div>
                     </div>
+                </div>
 
-                    <div class="row g-4 mb-4">
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card dash-card card-left-border-primary py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs text-primary mb-1">DOANH THU (THÁNG)</div>
-                                            <div class="h5-number mb-0 text-gray-800">
-                                                <fmt:formatNumber value="${monthlyRevenue}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <div class="icon-circle bg-blue-soft"><i class="fas fa-dollar-sign"></i></div>
-                                        </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card-custom stat-card">
+                        <div>
+                            <div class="stat-title">Show hiện có</div>
+                            <div class="stat-value">${COUNT_SHOW}</div>
+                        </div>
+                        <div class="stat-icon-box icon-orange"><i class="fas fa-theater-masks"></i></div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card-custom stat-card">
+                        <div>
+                            <div class="stat-title">Tổng Đơn hàng</div>
+                            <div class="stat-value">${COUNT_ORDER}</div>
+                        </div>
+                        <div class="stat-icon-box icon-purple"><i class="fas fa-receipt"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="card-custom h-100">
+                        <div class="widget-header">
+                            <h5 class="widget-title">Biểu đồ doanh thu (Minh họa)</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenueChart" style="height: 300px; width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card-custom h-100">
+                        <div class="widget-header">
+                            <h5 class="widget-title">Nguồn vé bán (Minh họa)</h5>
+                        </div>
+                        <div class="card-body d-flex justify-content-center align-items-center">
+                            <canvas id="pieChart" style="max-height: 250px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card-custom h-100">
+                        <div class="widget-header">
+                            <h5 class="widget-title"><i class="fas fa-comments text-warning me-2"></i> Phản hồi mới nhất</h5>
+                            <a href="#" class="text-muted small text-decoration-none">Xem tất cả</a>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            <div class="list-item">
+                                <div class="avatar-circle bg-primary">A</div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-white fw-bold">Nguyễn Văn A</span>
+                                        <span class="text-warning small"><i class="fas fa-star"></i> 5.0</span>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card dash-card card-left-border-success py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs text-success mb-1">TỔNG THÀNH VIÊN</div>
-                                            <div class="h5-number mb-0 text-gray-800">${totalUsers}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <div class="icon-circle bg-green-soft"><i class="fas fa-users"></i></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card dash-card card-left-border-warning py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs text-warning mb-1">SHOW ĐANG MỞ BÁN</div>
-                                            <div class="h5-number mb-0 text-gray-800">${activeShows}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <div class="icon-circle bg-yellow-soft"><i class="fas fa-theater-masks"></i></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card dash-card card-left-border-info py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs mb-1" style="color: #6f42c1;">VÉ BÁN HÔM NAY</div>
-                                            <div class="h5-number mb-0 text-gray-800">${ticketsSoldToday}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <div class="icon-circle bg-purple-soft"><i class="fas fa-ticket-alt"></i></div>
-                                        </div>
-                                    </div>
+                                    <small class="text-muted">Rạp rất đẹp, âm thanh sống động...</small>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="row mb-4">
-                        <div class="col-xl-8 col-lg-7">
-                            <div class="card card-modern h-100">
-                                <div class="card-header-modern d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Biểu đồ doanh thu</h6>
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="revenueChart" style="height: 320px; width: 100%;"></canvas>
-                                </div>
-                            </div>
+                <div class="col-md-6">
+                    <div class="card-custom h-100">
+                        <div class="widget-header">
+                            <h5 class="widget-title"><i class="fas fa-bell text-info me-2"></i> Tin tức & Tuyển dụng</h5>
+                            <button class="btn btn-sm btn-outline-light py-0">+ Tạo mới</button>
                         </div>
-
-                        <div class="col-xl-4 col-lg-5">
-                            <div class="card card-modern h-100">
-                                <div class="card-header-modern">
-                                    <h6 class="m-0 font-weight-bold text-primary">Nguồn doanh thu</h6>
+                        <div class="list-group list-group-flush">
+                             <div class="list-item">
+                                <div class="stat-icon-box" style="width: 40px; height: 40px; background: rgba(255,255,255,0.05); font-size: 1rem; margin-right: 15px;">
+                                    <i class="fas fa-briefcase text-info"></i>
                                 </div>
-                                <div class="card-body d-flex align-items-center justify-content-center">
-                                    <canvas id="pieChart" style="max-height: 250px;"></canvas>
+                                <div class="flex-grow-1">
+                                    <div class="text-white fw-bold">Tuyển dụng NV Soát vé</div>
+                                    <small class="text-muted">Hạn nộp: 30/12/2025 • <span class="text-warning">3 hồ sơ chờ duyệt</span></small>
                                 </div>
-                                <div class="card-footer bg-white small text-center text-muted">
-                                    Dữ liệu mẫu phân tích bán vé
-                                </div>
+                                <span class="badge bg-warning text-dark">Pending</span>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="card card-modern mb-4">
-                        <div class="card-header-modern d-flex justify-content-between align-items-center">
-                            <h6 class="m-0 font-weight-bold text-primary">Top Show Bán Chạy</h6>
-                            <a href="<%=contextPath%>/admin/show" class="btn btn-sm btn-outline-primary rounded-pill px-3">Xem tất cả</a>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="bg-light text-secondary small">
-                                        <tr>
-                                            <th class="ps-4 py-3">TÊN SHOW</th>
-                                            <th>ĐỊA ĐIỂM</th>
-                                            <th>TIẾN ĐỘ BÁN</th>
-                                            <th>TRẠNG THÁI</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:choose>
-                                            <c:when test="${not empty topShows}">
-                                                <c:forEach var="show" items="${topShows}">
-                                                    <tr>
-                                                        <td class="ps-4 fw-bold text-dark">${show.showName}</td>
-                                                        <td class="text-muted small">${show.location}</td>
-                                                        <td style="width: 30%">
-                                                            <div class="d-flex align-items-center">
-                                                                <span class="me-2 small fw-bold">${show.soldTickets}/${show.totalTickets}</span>
-                                                                <div class="progress flex-grow-1" style="height: 6px;">
-                                                                    <div class="progress-bar bg-primary" style="width: ${(show.soldTickets/show.totalTickets)*100}%"></div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Active</span></td>
-                                                    </tr>
-                                                </c:forEach>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <tr><td colspan="4" class="text-center py-4 text-muted">Chưa có dữ liệu</td></tr>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                </div> </div>
+            <div class="card-custom">
+                <div class="widget-header">
+                    <h5 class="widget-title">Top Show Bán Chạy (Minh họa)</h5>
+                    <a href="<%=contextPath%>/admin/show" class="btn btn-sm btn-outline-primary rounded-pill px-3">Xem tất cả</a>
+                </div>
+                <div class="table-responsive p-3">
+                    <table class="table table-dark-custom mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tên Show</th>
+                                <th>Địa điểm</th>
+                                <th>Tiến độ bán</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-center py-3 text-muted">
+                                    Dữ liệu thật đang được cập nhật từ Artist: <b>${COUNT_ARTIST}</b> người
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    </div>
+</div>
 
-        <script>
-            // 1. Toggle Sidebar Script
-            document.getElementById("menu-toggle").addEventListener("click", function (e) {
-                e.preventDefault();
-                document.body.classList.toggle("sidebar-toggled");
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-                // Xử lý CSS trực tiếp cho simple toggle
-                const wrapper = document.getElementById("wrapper");
-                const sidebar = document.getElementById("sidebar-wrapper");
+<script>
+    // 1. Sidebar Toggle
+    document.getElementById("menu-toggle").addEventListener("click", function (e) {
+        e.preventDefault();
+        document.body.classList.toggle("sidebar-toggled");
+    });
 
-                if (sidebar.style.marginLeft === "-260px") {
-                    sidebar.style.marginLeft = "0";
-                } else {
-                    sidebar.style.marginLeft = "-260px";
+    // 2. Chart Config (Giữ nguyên)
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+
+    const ctx = document.getElementById('revenueChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ["T1", "T2", "T3", "T4", "T5", "T6", "T7"],
+                datasets: [{
+                    label: 'Doanh thu (Triệu VNĐ)',
+                    data: [50, 80, 60, 120, 90, 150, 180],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#3b82f6'
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    x: { grid: { display: false } }
                 }
-            });
-
-            // 2. Chart Config
-            const ctx = document.getElementById('revenueChart');
-            if (ctx) {
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ["T1", "T2", "T3", "T4", "T5", "T6", "T7"],
-                        datasets: [{
-                                label: 'Doanh thu (Triệu VNĐ)',
-                                data: [50, 80, 60, 120, 90, 150, 180], // Demo data
-                                borderColor: '#4e73df',
-                                backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                                tension: 0.3,
-                                fill: true,
-                                pointRadius: 3,
-                                pointHoverRadius: 5
-                            }]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        plugins: {legend: {display: false}},
-                        scales: {y: {beginAtZero: true, grid: {borderDash: [2]}}, x: {grid: {display: false}}}
-                    }
-                });
             }
+        });
+    }
 
-            // 3. Pie Chart Demo
-            const pieCtx = document.getElementById('pieChart');
-            if (pieCtx) {
-                new Chart(pieCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ["VIP", "Thường", "Early Bird"],
-                        datasets: [{
-                                data: [55, 30, 15],
-                                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
-                                hoverOffset: 4
-                            }]
-                    },
-                    options: {maintainAspectRatio: false, cutout: '70%'}
-                });
+    const pieCtx = document.getElementById('pieChart');
+    if (pieCtx) {
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ["VIP", "Thường", "Early Bird"],
+                datasets: [{
+                    data: [55, 30, 15],
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                }
             }
-        </script>
-    </body>
+        });
+    }
+</script>
+
+</body>
 </html>

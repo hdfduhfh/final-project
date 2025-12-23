@@ -5,6 +5,7 @@
 package mypack;
 
 import jakarta.ejb.Local;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -27,8 +28,18 @@ public interface Order1FacadeLocal {
     List<Order1> findRange(int[] range);
 
     int count();
-    
+
     List<Order1> findByUser(User user);
 
-    
+    BigDecimal getTotalRevenue();
+
+    BigDecimal getTotalDiscount();
+
+    BigDecimal getTotalRefund();
+
+    Long countCancelledOrder();
+
+    List<Order1> findPaidOrders();
+
+    List<Object[]> getRevenueByDate();
 }

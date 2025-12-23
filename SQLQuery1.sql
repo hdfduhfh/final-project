@@ -250,3 +250,9 @@ ADD Price DECIMAL(12,2) NOT NULL DEFAULT 0;
 ALTER TABLE [BookingStageDB].[dbo].[Order]
 ADD CancellationRequested BIT DEFAULT 0,
     CancellationReason NVARCHAR(500);
+
+ALTER TABLE dbo.[Order]
+ADD RefundAmount DECIMAL(12,2) NOT NULL DEFAULT 0;
+
+
+

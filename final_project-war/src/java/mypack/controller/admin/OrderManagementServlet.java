@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import mypack.*;
 
@@ -76,14 +77,14 @@ public class OrderManagementServlet extends HttpServlet {
 
         request.setAttribute("orders", orders);
         request.getRequestDispatcher("/WEB-INF/views/admin/orders/list.jsp")
-               .forward(request, response);
+                .forward(request, response);
     }
 
     // --- XỬ LÝ POST (Form submit: Duyệt hủy) ---
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         request.setCharacterEncoding("UTF-8");
         String action = request.getParameter("action");
 
@@ -96,15 +97,25 @@ public class OrderManagementServlet extends HttpServlet {
                     Order1 order = orderFacade.find(orderId);
 
                     if (order != null) {
-                        // 1. Đổi trạng thái sang Hủy
+
+                        // 1️⃣ Tính tiền hoàn (70%)
+                        BigDecimal refundAmount = order.getFinalAmount()
+                                .multiply(new BigDecimal("0.7"));
+
+                        // 2️⃣ Cập nhật trạng thái
                         order.setStatus("CANCELLED");
-                        // 2. Tắt cờ yêu cầu hủy (đã xử lý xong)
-                        order.setCancellationRequested(false); 
-                        
-                        // 3. Lưu xuống Database
+                        order.setPaymentStatus("REFUNDED");
+
+                        // 3️⃣ LƯU TIỀN HOÀN (QUAN TRỌNG NHẤT)
+                        order.setRefundAmount(refundAmount);
+
+                        // 4️⃣ Tắt cờ yêu cầu hủy
+                        order.setCancellationRequested(false);
+
+                        // 5️⃣ Lưu DB
                         orderFacade.edit(order);
                     }
-                    
+
                     // Xử lý xong thì quay lại trang chi tiết đơn hàng đó
                     response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
                     return;
@@ -122,7 +133,6 @@ public class OrderManagementServlet extends HttpServlet {
     }
 
     // --- CÁC HÀM PHỤ TRỢ (Tách ra cho gọn) ---
-
     private void handleUpdateStatus(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String idParam = request.getParameter("id");
         String status = request.getParameter("status");
@@ -139,7 +149,9 @@ public class OrderManagementServlet extends HttpServlet {
                         createTicketsForOrder(order);
                     }
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         response.sendRedirect(request.getContextPath() + "/admin/orders");
     }
@@ -160,7 +172,9 @@ public class OrderManagementServlet extends HttpServlet {
                         createTicketsForOrder(order);
                     }
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         response.sendRedirect(request.getContextPath() + "/admin/orders");
     }
@@ -178,7 +192,9 @@ public class OrderManagementServlet extends HttpServlet {
                     }
                     orderFacade.remove(order);
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         response.sendRedirect(request.getContextPath() + "/admin/orders");
     }

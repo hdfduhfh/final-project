@@ -95,6 +95,8 @@ public class Order1 implements Serializable {
 
     @Column(name = "CancellationReason", length = 500)
     private String cancellationReason; // Lưu lý do khách viết
+    @Column(name = "RefundAmount", precision = 12, scale = 2)
+    private BigDecimal refundAmount = BigDecimal.ZERO;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "orderID")
     private Collection<OrderDetail> orderDetailCollection;
 
@@ -113,6 +115,14 @@ public class Order1 implements Serializable {
         this.paymentStatus = paymentStatus;
         this.status = status;
         this.createdAt = createdAt;
+    }
+
+    public BigDecimal getRefundAmount() {
+        return refundAmount;
+    }
+
+    public void setRefundAmount(BigDecimal refundAmount) {
+        this.refundAmount = refundAmount;
     }
 
     public Boolean getCancellationRequested() {
