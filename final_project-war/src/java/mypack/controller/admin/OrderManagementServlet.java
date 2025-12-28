@@ -116,7 +116,6 @@ public class OrderManagementServlet extends HttpServlet {
 
                         // 2️⃣ Cập nhật trạng thái
                         order.setStatus("CANCELLED");
-                        order.setPaymentStatus("REFUNDED");
 
                         // 3️⃣ LƯU TIỀN HOÀN (QUAN TRỌNG NHẤT)
                         order.setRefundAmount(refundAmount);

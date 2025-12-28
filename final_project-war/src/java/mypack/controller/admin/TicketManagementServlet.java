@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack.controller.admin;
 
 import jakarta.ejb.EJB;
@@ -27,23 +23,33 @@ public class TicketManagementServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User admin = (User) session.getAttribute("user");
 
-        // 🔒 Check đăng nhập
-        if (admin == null /* || !admin.getRole().equals("ADMIN") */) {
+        // Bảo vệ route
+        if (admin == null) {
             response.sendRedirect(request.getContextPath() + "/");
             return;
         }
 
-        // Lấy tất cả vé
-        List<Ticket> tickets = ticketFacade.findAll();
+        int page = 1;
+        int pageSize = 10;
+
+        String pageParam = request.getParameter("page");
+        if (pageParam != null) {
+            try {
+                page = Integer.parseInt(pageParam);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        int offset = (page - 1) * pageSize;
+
+        List<Ticket> tickets = ticketFacade.findWithPaging(offset, pageSize);
+        int totalTickets = ticketFacade.countAll();
+        int totalPages = (int) Math.ceil((double) totalTickets / pageSize);
 
         request.setAttribute("tickets", tickets);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+
         request.getRequestDispatcher("/WEB-INF/views/admin/tickets/list.jsp")
                .forward(request, response);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        doGet(request, response);
     }
 }

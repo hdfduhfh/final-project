@@ -121,4 +121,16 @@ public class TicketFacade extends AbstractFacade<Ticket> implements TicketFacade
         return "SUCCESS";
     }
 
+    @Override
+    public List<Ticket> findWithPaging(int offset, int limit) {
+        return em.createQuery("SELECT t FROM Ticket t ORDER BY t.ticketID DESC", Ticket.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
+    @Override
+    public int countAll() {
+        return ((Long) em.createQuery("SELECT COUNT(t) FROM Ticket t").getSingleResult()).intValue();
+    }
 }

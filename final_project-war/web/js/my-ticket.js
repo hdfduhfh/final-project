@@ -1,7 +1,3 @@
-/* 
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/JavaScript.js to edit this template
- */
 // ===== MY-TICKET.JS =====
 // Vị trí: js/my-ticket.js
 
@@ -99,12 +95,24 @@ function closeViewTicketModal() {
 }
 
 // ===== CANCEL MODAL =====
-function openCancelModal(orderId, showTimeMillis, originalTotal, finalPaid) {
+function openCancelModal(orderId, showTimeMillis, originalTotal, finalPaid, hasDiscount) {
     const modal = document.getElementById('cancelModal');
     const modalBody = document.getElementById('modalBody');
     const cancelForm = document.getElementById('cancelForm');
     
     document.getElementById('modalOrderId').value = orderId;
+    
+    // ===== 🔥 KIỂM TRA VOUCHER TRƯỚC =====
+    if (hasDiscount && hasDiscount > 0) {
+        modalBody.innerHTML = '<div style="background:rgba(245,158,11,0.15); padding:20px; border-radius:8px; text-align:center; color:#f59e0b; border: 1px solid rgba(245,158,11,0.3);">' +
+            '<i class="fa-solid fa-ticket" style="font-size: 2em; margin-bottom: 10px;"></i><br>' +
+            '<strong>Không thể hủy vé có voucher</strong><br>' +
+            '<span style="font-size:0.9em; opacity:0.8;">Vé này đã sử dụng mã giảm giá. Vui lòng liên hệ hotline 1900-xxxx để được hỗ trợ.</span>' +
+            '</div>';
+        cancelForm.style.display = 'none';
+        modal.style.display = 'flex';
+        return;
+    }
     
     const now = new Date().getTime();
     const diffHours = (showTimeMillis - now) / (1000 * 60 * 60);
@@ -282,4 +290,3 @@ window.addEventListener('click', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     updateStarRating(5);
 });
-

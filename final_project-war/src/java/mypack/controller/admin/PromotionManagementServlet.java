@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import mypack.Order1;
 import mypack.Promotion;
 import mypack.PromotionFacadeLocal;
 
@@ -22,7 +23,6 @@ public class PromotionManagementServlet extends HttpServlet {
     @EJB
     private PromotionFacadeLocal promotionFacade;
 
-    // Format ngày giờ khớp với input type="datetime-local" của HTML5
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm";
 
     @Override
@@ -30,6 +30,7 @@ public class PromotionManagementServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
+        
         String action = request.getParameter("action");
         if (action == null) {
             action = "list";
@@ -44,6 +45,10 @@ public class PromotionManagementServlet extends HttpServlet {
                 break;
             case "delete":
                 deletePromotion(request, response);
+                break;
+            case "usage":
+                // ✅ THÊM ACTION MỚI - Trả về JSON
+                getUsageData(request, response);
                 break;
             default:
                 listPromotions(request, response);
@@ -92,10 +97,8 @@ public class PromotionManagementServlet extends HttpServlet {
                 return;
             }
 
-            // Gửi object qua JSP để điền sẵn vào form
             request.setAttribute("promotion", existingPromo);
 
-            // Format ngày tháng ra String để hiển thị đúng trong input datetime-local
             SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
             if (existingPromo.getStartDate() != null) {
                 request.setAttribute("formattedStartDate", sdf.format(existingPromo.getStartDate()));
@@ -126,25 +129,144 @@ public class PromotionManagementServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/admin/promotions?msg=deleted");
     }
 
+    // ===================== ✅ API: GET USAGE DATA (KHÔNG DÙNG GSON) =====================
+    private void getUsageData(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        
+        String promotionIdStr = request.getParameter("id");
+        
+        if (promotionIdStr == null || promotionIdStr.isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"error\": \"Missing promotion ID\"}");
+            return;
+        }
+        
+        try {
+            int promotionId = Integer.parseInt(promotionIdStr);
+            Promotion promotion = promotionFacade.find(promotionId);
+            
+            if (promotion == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                response.getWriter().write("{\"error\": \"Promotion not found\"}");
+                return;
+            }
+            
+            // ===== TẠO JSON BẰTAY BẰNG StringBuilder =====
+            StringBuilder json = new StringBuilder();
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            
+            json.append("{");
+            json.append("\"success\": true,");
+            
+            // Đếm số lượng
+            int count = (promotion.getOrder1Collection() != null) 
+                ? promotion.getOrder1Collection().size() 
+                : 0;
+            json.append("\"total\": ").append(count).append(",");
+            
+            // Mảng usages
+            json.append("\"usages\": [");
+            
+            if (promotion.getOrder1Collection() != null && !promotion.getOrder1Collection().isEmpty()) {
+                int index = 0;
+                for (Order1 order : promotion.getOrder1Collection()) {
+                    if (index > 0) {
+                        json.append(",");
+                    }
+                    
+                    json.append("{");
+                    
+                    // Thông tin khách hàng
+                    json.append("\"userName\": \"")
+                        .append(escapeJson(order.getUserID().getFullName()))
+                        .append("\",");
+                    json.append("\"userEmail\": \"")
+                        .append(escapeJson(order.getUserID().getEmail()))
+                        .append("\",");
+                    
+                    // Thông tin đơn hàng
+                    json.append("\"orderId\": ")
+                        .append(order.getOrderID())
+                        .append(",");
+                    json.append("\"createdAt\": \"")
+                        .append(escapeJson(sdf.format(order.getCreatedAt())))
+                        .append("\",");
+                    json.append("\"status\": \"")
+                        .append(escapeJson(order.getStatus()))
+                        .append("\",");
+                    
+                    // Thông tin giảm giá
+                    String discountAmount = (order.getDiscountAmount() != null) 
+                        ? order.getDiscountAmount().toString() 
+                        : "0";
+                    String finalAmount = (order.getFinalAmount() != null) 
+                        ? order.getFinalAmount().toString() 
+                        : "0";
+                    
+                    json.append("\"discountAmount\": \"")
+                        .append(escapeJson(discountAmount))
+                        .append("\",");
+                    json.append("\"finalAmount\": \"")
+                        .append(escapeJson(finalAmount))
+                        .append("\"");
+                    
+                    json.append("}");
+                    index++;
+                }
+            }
+            
+            json.append("]");
+            json.append("}");
+            
+            // Trả về JSON
+            response.getWriter().write(json.toString());
+            
+            System.out.println("✅ API Usage called for Promotion #" + promotionId);
+            System.out.println("   Total usages: " + count);
+            
+        } catch (NumberFormatException e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"error\": \"Invalid promotion ID\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"error\": \"" + e.getMessage().replace("\"", "\\\"") + "\"}");
+        }
+    }
+    
+    /**
+     * ✅ HELPER: Escape ký tự đặc biệt trong JSON
+     */
+    private String escapeJson(String str) {
+        if (str == null) {
+            return "";
+        }
+        return str.replace("\\", "\\\\")   // Backslash
+                  .replace("\"", "\\\"")   // Double quote
+                  .replace("\n", "\\n")    // Newline
+                  .replace("\r", "\\r")    // Carriage return
+                  .replace("\t", "\\t");   // Tab
+    }
+
     // ===================== INSERT & UPDATE LOGIC =====================
     private void insertPromotion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // 1. Validate dữ liệu
         List<String> errors = validateInput(request);
 
         if (!errors.isEmpty()) {
-            // Có lỗi -> Quay lại trang Add và báo lỗi
             request.setAttribute("errors", errors);
-            keepOldInputData(request); // Giữ lại dữ liệu đã nhập
+            keepOldInputData(request);
             request.getRequestDispatcher("/WEB-INF/views/admin/promotions/add.jsp").forward(request, response);
             return;
         }
 
-        // 2. Không lỗi -> Insert
         try {
             Promotion p = new Promotion();
-            populatePromotionFromRequest(p, request); // Hàm helper để đổ dữ liệu
+            populatePromotionFromRequest(p, request);
             promotionFacade.create(p);
             response.sendRedirect(request.getContextPath() + "/admin/promotions?msg=created");
         } catch (Exception e) {
@@ -157,17 +279,13 @@ public class PromotionManagementServlet extends HttpServlet {
     private void updatePromotion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // 1. Validate dữ liệu
         List<String> errors = validateInput(request);
-
-        // Lấy ID để nếu lỗi thì còn biết đường quay về trang edit của ID đó
         String idStr = request.getParameter("id");
 
         if (!errors.isEmpty()) {
             request.setAttribute("errors", errors);
             keepOldInputData(request);
 
-            // Vì đang edit dở nên cần load lại object gốc để tránh null pointer ở JSP nếu cần
             if (idStr != null) {
                 Promotion p = promotionFacade.find(Integer.parseInt(idStr));
                 request.setAttribute("promotion", p);
@@ -177,7 +295,6 @@ public class PromotionManagementServlet extends HttpServlet {
             return;
         }
 
-        // 2. Không lỗi -> Update
         try {
             int id = Integer.parseInt(idStr);
             Promotion p = promotionFacade.find(id);
@@ -193,7 +310,7 @@ public class PromotionManagementServlet extends HttpServlet {
         }
     }
 
-    // ===================== HELPER: VALIDATION (QUAN TRỌNG NHẤT) =====================
+    // ===================== VALIDATION =====================
     private List<String> validateInput(HttpServletRequest request) {
         List<String> errors = new ArrayList<>();
 
@@ -204,7 +321,6 @@ public class PromotionManagementServlet extends HttpServlet {
         String startStr = request.getParameter("startDate");
         String endStr = request.getParameter("endDate");
 
-        // 1. Check Empty
         if (name == null || name.trim().isEmpty()) {
             errors.add("Tên khuyến mãi không được để trống.");
         }
@@ -212,13 +328,11 @@ public class PromotionManagementServlet extends HttpServlet {
             errors.add("Mã code không được để trống.");
         }
 
-        // 2. Check Discount Value
         try {
             BigDecimal val = new BigDecimal(valStr);
             if (val.compareTo(BigDecimal.ZERO) < 0) {
                 errors.add("Giá trị giảm không được là số âm.");
             }
-            // 🔥 CHẶN LỖI NGƯỜI DÙNG NHẬP 100000%
             if ("PERCENT".equals(type) && val.compareTo(new BigDecimal("100")) > 0) {
                 errors.add("Giảm giá theo phần trăm (%) không được vượt quá 100.");
             }
@@ -226,7 +340,6 @@ public class PromotionManagementServlet extends HttpServlet {
             errors.add("Giá trị giảm phải là số hợp lệ.");
         }
 
-        // 3. Check Date Logic
         SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
         try {
             Date start = sdf.parse(startStr);
@@ -238,7 +351,6 @@ public class PromotionManagementServlet extends HttpServlet {
             errors.add("Định dạng ngày tháng không hợp lệ.");
         }
 
-        // 4. Check các số khác (Min order, Max discount...)
         checkPositiveNumber(request.getParameter("minOrderAmount"), "Đơn hàng tối thiểu", errors);
         checkPositiveNumber(request.getParameter("maxDiscount"), "Giảm tối đa", errors);
         checkPositiveInteger(request.getParameter("maxUsage"), "Số lượt dùng tối đa", errors);
@@ -246,7 +358,6 @@ public class PromotionManagementServlet extends HttpServlet {
         return errors;
     }
 
-    // Helper kiểm tra số dương (BigDecimal)
     private void checkPositiveNumber(String numStr, String fieldName, List<String> errors) {
         if (numStr != null && !numStr.isEmpty()) {
             try {
@@ -260,7 +371,6 @@ public class PromotionManagementServlet extends HttpServlet {
         }
     }
 
-    // Helper kiểm tra số nguyên dương
     private void checkPositiveInteger(String numStr, String fieldName, List<String> errors) {
         if (numStr != null && !numStr.isEmpty()) {
             try {
@@ -274,11 +384,10 @@ public class PromotionManagementServlet extends HttpServlet {
         }
     }
 
-    // ===================== HELPER: POPULATE DATA & KEEP OLD INPUT =====================
-    // Đổ dữ liệu từ request vào Object Promotion
+    // ===================== HELPERS =====================
     private void populatePromotionFromRequest(Promotion p, HttpServletRequest request) throws ParseException {
         p.setName(request.getParameter("name"));
-        p.setCode(request.getParameter("code").toUpperCase()); // Tự động viết hoa code
+        p.setCode(request.getParameter("code").toUpperCase());
         p.setDiscountType(request.getParameter("discountType"));
         p.setDiscountValue(new BigDecimal(request.getParameter("discountValue")));
 
@@ -312,7 +421,6 @@ public class PromotionManagementServlet extends HttpServlet {
         }
     }
 
-    // Giữ lại dữ liệu cũ để hiển thị lại form khi lỗi
     private void keepOldInputData(HttpServletRequest request) {
         request.setAttribute("oldName", request.getParameter("name"));
         request.setAttribute("oldCode", request.getParameter("code"));

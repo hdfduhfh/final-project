@@ -32,7 +32,7 @@ public class NewsPublicServlet extends HttpServlet {
                 News news = newsFacade.find(id);
                 if (news != null && !news.isIsDeleted() && "Published".equalsIgnoreCase(news.getStatus())) {
                     req.setAttribute("news", news);
-                    req.getRequestDispatcher("/WEB-INF/views/new/viewnew.jsp").forward(req, resp);
+                    req.getRequestDispatcher("/WEB-INF/views/user/new/viewnew.jsp").forward(req, resp);
                 } else {
                     resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Tin tức không tồn tại hoặc chưa được public");
                 }
@@ -71,7 +71,7 @@ public class NewsPublicServlet extends HttpServlet {
             req.setAttribute("currentPage", page);
             req.setAttribute("totalPages", totalPages);
 
-            req.getRequestDispatcher("/WEB-INF/views/new/listnew.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/views/user/new/listnew.jsp").forward(req, resp);
         }
     }
 }

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack.controller.admin;
 
 import jakarta.ejb.EJB;
@@ -11,11 +7,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
-import mypack.Order1;
 import mypack.Order1FacadeLocal;
 
-@WebServlet("/admin/revenue")
+@WebServlet(name = "AdminRevenueServlet", urlPatterns = {"/admin/revenue"})
 public class AdminRevenueServlet extends HttpServlet {
 
     @EJB
@@ -25,25 +21,48 @@ public class AdminRevenueServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // 1. Các thống kê tổng số (Giữ nguyên code cũ)
-        request.setAttribute("totalRevenue", orderFacade.getTotalRevenue());
-        request.setAttribute("totalDiscount", orderFacade.getTotalDiscount());
-        request.setAttribute("totalRefund", orderFacade.getTotalRefund());
-        request.setAttribute("totalCancelledOrder", orderFacade.countCancelledOrder());
+        try {
+            // ===== 1. TỔNG DOANH THU (ĐÃ TRỪ HOÀN TIỀN) =====
+            BigDecimal totalRevenue = orderFacade.getTotalRevenue();
+            
+            // ===== 2. TỔNG KHUYẾN MÃI =====
+            BigDecimal totalDiscount = orderFacade.getTotalDiscount();
+            
+            // ===== 3. TỔNG TIỀN ĐÃ HOÀN LẠI =====
+            BigDecimal totalRefund = orderFacade.getTotalRefund();
+            
+            // ===== 4. SỐ ĐƠN BỊ HỦY =====
+            Long totalCancelledOrder = orderFacade.countCancelledOrder();
+            
+            // ===== 5. CHI TIẾT THEO NGÀY (7 NGÀY GẦN NHẤT) =====
+            List<Object[]> revenueByDate = orderFacade.getRevenueByDate();
+            
+            // ===== 6. BÁO CÁO THEO THÁNG =====
+            List<Object[]> revenueByMonth = orderFacade.getRevenueByMonth();
 
-        // 2. Danh sách đơn hàng chi tiết (Giữ nguyên)
-        List<Order1> paidOrders = orderFacade.findPaidOrders();
-        request.setAttribute("paidOrders", paidOrders);
+            // ===== GỬI DỮ LIỆU ĐẾN JSP =====
+            request.setAttribute("totalRevenue", totalRevenue);
+            request.setAttribute("totalDiscount", totalDiscount);
+            request.setAttribute("totalRefund", totalRefund);
+            request.setAttribute("totalCancelledOrder", totalCancelledOrder);
+            request.setAttribute("revenueByDate", revenueByDate);
+            request.setAttribute("revenueByMonth", revenueByMonth);
 
-        // --- PHẦN THÊM MỚI QUAN TRỌNG ---
-        // 3. Gọi hàm thống kê theo ngày (SQL Server) mà bạn vừa thêm vào Facade
-        // Hàm này trả về List<Object[]> gồm [Ngày, Tổng tiền]
-        List<Object[]> revenueByDate = orderFacade.getRevenueByDate();
-        
-        // Đẩy biến này sang JSP với tên "revenueByDate" để biểu đồ vẽ được
-        request.setAttribute("revenueByDate", revenueByDate); 
+            // ===== LOG ĐỂ DEBUG =====
+            System.out.println("=== ADMIN REVENUE PAGE ===");
+            System.out.println("Total Revenue: " + totalRevenue);
+            System.out.println("Total Refund: " + totalRefund);
+            System.out.println("Cancelled Orders: " + totalCancelledOrder);
+            System.out.println("Daily Records: " + revenueByDate.size());
 
-        // 4. Chuyển hướng về trang JSP
-        request.getRequestDispatcher("/WEB-INF/views/admin/revenue/list.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/admin/revenue/list.jsp")
+                    .forward(request, response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error in AdminRevenueServlet:");
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                "Không thể tải dữ liệu thống kê");
+        }
     }
 }

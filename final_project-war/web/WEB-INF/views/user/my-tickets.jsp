@@ -114,54 +114,76 @@
                                     </c:if>
                                 </div>
 
-                                <div class="ticket-actions">
-                                    <div class="price-tag">
-                                        <fmt:formatNumber value="${order.finalAmount}" type="number" maxFractionDigits="0"/> đ
-                                    </div>
-                                    
-                                    <c:choose>
-                                        <c:when test="${order.status == 'CANCELLED'}">
-                                            <span class="status-badge st-cancel">Đã hủy</span>
-                                        </c:when>
-                                        <c:when test="${order.cancellationRequested}">
-                                            <span class="status-badge st-pending">Chờ hủy</span>
-                                        </c:when>
-                                        <c:when test="${order.status == 'CONFIRMED'}">
-                                            <button class="btn-view-ticket" 
-                                                    onclick="openViewTicketModal(
-                                                        '${firstDetail.scheduleID.showID.showName}',
-                                                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="dd/MM/yyyy"/>',
-                                                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="HH:mm"/>',
-                                                        '${seatListString}',
-                                                        '${order.orderDetailCollection.size()}',
-                                                        '${encodedQrUrl}',
-                                                        '${isoShowTime}'
-                                                    )">
-                                                <i class="fa-solid fa-ticket"></i> Xem vé
-                                            </button>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="status-badge st-pending">Chờ xử lý</span>
-                                        </c:otherwise>
-                                    </c:choose>
+<div class="ticket-actions">
+    <!-- ✅ HIỂN THỊ GIÁ THEO TRẠNG THÁI -->
+    <c:choose>
+        <c:when test="${order.status == 'CANCELLED' && order.refundAmount != null && order.refundAmount > 0}">
+            <!-- Vé đã hủy → Hiện tiền hoàn -->
+            <div class="price-tag" style="color: #2ecc71;">
+                <i class="fa-solid fa-money-bill-wave"></i>
+                <fmt:formatNumber value="${order.refundAmount}" type="number" maxFractionDigits="0"/> đ
+            </div>
+            <small style="color: #2ecc71; font-size: 0.75rem; margin-top: -5px;">
+                Tiền hoàn
+            </small>
+        </c:when>
+        <c:otherwise>
+            <!-- Vé bình thường → Hiện giá gốc -->
+            <div class="price-tag">
+                <fmt:formatNumber value="${order.finalAmount}" type="number" maxFractionDigits="0"/> đ
+            </div>
+        </c:otherwise>
+    </c:choose>
+    
+    <c:choose>
+        <c:when test="${order.status == 'CANCELLED'}">
+            <span class="status-badge st-cancel">Đã hủy</span>
+        </c:when>
+        <c:when test="${order.cancellationRequested}">
+            <span class="status-badge st-pending">Chờ hủy</span>
+        </c:when>
+        <c:when test="${order.status == 'CONFIRMED'}">
+            <button class="btn-view-ticket" 
+                    onclick="openViewTicketModal(
+                        '${firstDetail.scheduleID.showID.showName}',
+                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="dd/MM/yyyy"/>',
+                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="HH:mm"/>',
+                        '${seatListString}',
+                        '${order.orderDetailCollection.size()}',
+                        '${encodedQrUrl}',
+                        '${isoShowTime}'
+                    )">
+                <i class="fa-solid fa-ticket"></i> Xem vé
+            </button>
+        </c:when>
+        <c:otherwise>
+            <span class="status-badge st-pending">Chờ xử lý</span>
+        </c:otherwise>
+    </c:choose>
 
-                                    <!-- ✅ CÁC NÚT THAO TÁC -->
-                                    <c:if test="${order.status == 'CONFIRMED'}">
-                                        <!-- Nút Hủy vé -->
-                                        <button class="btn-action btn-cancel-req" 
-                                                onclick="openCancelModal(${order.orderID}, ${showTimeMillis}, ${originalTotal}, ${order.finalAmount})">
-                                            Hủy
-                                        </button>
-                                        
-                                        <!-- ✅ NÚT ĐÁNH GIÁ - Chỉ hiện SAU KHI XEM XONG -->
-                                        <c:if test="${diffMinutes < 0}">
-                                            <button class="btn-action btn-feedback" 
-                                                    onclick="openFeedbackModal(${firstDetail.scheduleID.scheduleID}, '${firstDetail.scheduleID.showID.showName}')">
-                                                <i class="fa-solid fa-star"></i> Đánh giá
-                                            </button>
-                                        </c:if>
-                                    </c:if>
-                                </div>
+    <!-- ✅ CÁC NÚT THAO TÁC -->
+    <c:if test="${order.status == 'CONFIRMED'}">
+        <!-- Nút Hủy vé -->
+<button class="btn-action btn-cancel-req" 
+        onclick="openCancelModal(
+            ${order.orderID}, 
+            ${showTimeMillis}, 
+            ${originalTotal}, 
+            ${order.finalAmount},
+            ${order.discountAmount != null ? order.discountAmount : 0}
+        )">
+    Hủy
+</button>
+        
+        <!-- ✅ NÚT ĐÁNH GIÁ - Chỉ hiện SAU KHI XEM XONG -->
+        <c:if test="${diffMinutes < 0}">
+            <button class="btn-action btn-feedback" 
+                    onclick="openFeedbackModal(${firstDetail.scheduleID.scheduleID}, '${firstDetail.scheduleID.showID.showName}')">
+                <i class="fa-solid fa-star"></i> Đánh giá
+            </button>
+        </c:if>
+    </c:if>
+</div>
                             </div>
                         </div>
                     </c:forEach>

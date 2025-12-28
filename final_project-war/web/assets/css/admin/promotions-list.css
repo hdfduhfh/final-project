@@ -1,0 +1,299 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : Dec 28, 2025, 8:41:45 PM
+    Author     : DANG KHOA
+*/
+
+/* ===== PROMOTIONS LIST STYLES ===== */
+/* File: assets/css/admin/promotions-list.css */
+
+:root {
+    --bg: #0b1220;
+    --panel: #0f1b33;
+    --muted: #8ea0c4;
+    --line: rgba(255, 255, 255, .08);
+}
+
+body {
+    background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(79, 70, 229, .28), transparent 55%),
+        radial-gradient(900px 500px at 80% 0%, rgba(6, 182, 212, .22), transparent 60%),
+        linear-gradient(180deg, var(--bg), #070b14);
+    min-height: 100vh;
+    color: #e6ecff;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+}
+
+/* ===== LAYOUT ===== */
+.admin-wrap {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 270px;
+    background: rgba(15, 27, 51, .86);
+    border-right: 1px solid var(--line);
+    backdrop-filter: blur(10px);
+    padding: 18px 14px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid var(--line);
+}
+
+.brand .logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(79, 70, 229, .9), rgba(6, 182, 212, .9));
+    box-shadow: 0 14px 35px rgba(0, 0, 0, .35);
+}
+
+.brand .title {
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: .2px;
+}
+
+.brand small {
+    color: var(--muted);
+    font-weight: 650;
+}
+
+.nav-group {
+    margin-top: 14px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: #dbe5ff;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, .06);
+    border-color: var(--line);
+}
+
+.nav-item.active {
+    background: rgba(6, 182, 212, .16);
+    border-color: rgba(6, 182, 212, .35);
+}
+
+.nav-item i {
+    width: 20px;
+    text-align: center;
+    color: #bcd0ff;
+}
+
+.content {
+    flex: 1;
+    padding: 22px 22px 28px;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 18px 55px rgba(0, 0, 0, .35);
+}
+
+.page-h {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.page-h h1 {
+    font-size: 18px;
+    margin: 0;
+    font-weight: 950;
+    letter-spacing: .2px;
+}
+
+.page-h .crumb {
+    color: var(--muted);
+    font-weight: 650;
+    font-size: 12px;
+}
+
+/* ===== PANEL ===== */
+.panel {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(10px);
+}
+
+/* ===== TABLE ===== */
+.table-wrap {
+    margin-top: 12px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 22px 70px rgba(0, 0, 0, .35);
+}
+
+table thead th {
+    background: #0f1b33 !important;
+    color: #e8efff !important;
+    border: none !important;
+    white-space: nowrap;
+    font-size: 13px;
+    letter-spacing: .2px;
+}
+
+table tbody td {
+    color: #0b1220;
+    vertical-align: middle;
+}
+
+/* ===== BADGES ===== */
+.code-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(214, 51, 132, .10);
+    border: 1px solid rgba(214, 51, 132, .18);
+    color: #8b1e4d;
+    font-weight: 900;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 12px;
+    border: 1px solid rgba(0, 0, 0, .08);
+}
+
+.status-active {
+    background: rgba(34, 197, 94, .16);
+    color: #14532d;
+    border-color: rgba(34, 197, 94, .28);
+}
+
+.status-inactive {
+    background: rgba(239, 68, 68, .14);
+    color: #7f1d1d;
+    border-color: rgba(239, 68, 68, .24);
+}
+
+/* ===== TEXT HELPERS ===== */
+.mini {
+    font-size: 12px;
+    color: #4b5563;
+    font-weight: 650;
+}
+
+.limit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 900;
+}
+
+.limit .inf {
+    color: #0f172a;
+    background: rgba(2, 132, 199, .10);
+    border: 1px solid rgba(2, 132, 199, .18);
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-weight: 950;
+}
+
+/* ===== BUTTONS ===== */
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 12px;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty {
+    padding: 48px 16px;
+    text-align: center;
+    color: #6b7280;
+}
+
+/* ===== MODALS ===== */
+.modal-content {
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.modal-header.theme {
+    background: #0f1b33;
+    color: #e8efff;
+    border: none;
+}
+
+/* ===== USAGE MODAL SPECIFIC ===== */
+#usageModal .modal-body {
+    max-height: 70vh;
+}
+
+#usageModal table {
+    font-size: 0.9rem;
+}
+
+#usageModal table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #212529 !important;
+    color: white !important;
+}
+
+#usageModal tbody tr:hover {
+    background: #f8f9fa;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+    .sidebar {
+        display: none;
+    }
+}
+.status-expired {
+    background: rgba(156, 163, 175, .16);
+    color: #374151;
+    border-color: rgba(156, 163, 175, .28);
+}

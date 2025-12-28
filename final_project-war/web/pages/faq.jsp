@@ -1,9 +1,3 @@
-<%-- 
-    Document   : faq
-    Created on : Dec 11, 2025, 2:23:13 PM
-    Author     : DANG KHOA
---%>
-
 <%@ page pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
@@ -11,498 +5,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Câu hỏi thường gặp - BookingStage</title>
+    <title>Hỗ Trợ - BookingStage Elite</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --bg-color: #080808; /* Đen sâu hơn */
+            --gold-primary: #d4af37;
+            --gold-light: #f3e5ab;
+            --text-primary: #e0e0e0;
+            --text-muted: #999;
+            --glass-bg: rgba(255, 255, 255, 0.02);
+        }
+
         body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Montserrat', sans-serif; /* Font mặc định cho toàn trang */
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             padding-top: 80px;
+            min-height: 100vh;
+            /* Hiệu ứng nền noise nhẹ tạo cảm giác chất liệu giấy cao cấp */
+            background-image: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #080808 60%);
         }
-        
-        .container {
-            max-width: 1000px;
+
+        .luxury-container {
+            max-width: 900px; /* Gọn gàng, dễ đọc */
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 60px 20px 100px;
         }
-        
+
+        /* --- HEADER SECTION --- */
         .page-header {
             text-align: center;
-            margin-bottom: 50px;
-            animation: fadeInDown 0.8s ease;
+            margin-bottom: 70px;
         }
-        
+
         .page-header h1 {
-            font-size: 3rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Playfair Display', serif; /* Font Tiêu Đề Sang Trọng */
+            font-size: 3.8rem;
+            font-weight: 700;
+            font-style: italic; /* Chữ nghiêng nhẹ tạo nét điệu đà */
+            background: linear-gradient(135deg, #fff 0%, #d4af37 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 15px;
+            letter-spacing: -1px;
         }
-        
+
         .page-header p {
-            font-size: 1.2rem;
-            color: #64748b;
-        }
-        
-        .search-box {
-            max-width: 600px;
-            margin: 0 auto 40px;
-        }
-        
-        .search-box input {
-            width: 100%;
-            padding: 15px 20px;
             font-size: 1.1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 50px;
+            color: var(--text-muted);
+            font-weight: 300;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* --- SEARCH BAR (Minimalist Line) --- */
+        .search-wrapper {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto 60px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #333;
+            color: #fff;
+            font-size: 1.5rem;
+            font-family: 'Playfair Display', serif; /* Dùng font tiêu đề cho input để lạ mắt */
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+
+        .search-input:focus {
             outline: none;
-            transition: all 0.3s ease;
+            border-bottom-color: var(--gold-primary);
         }
-        
-        .search-box input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+
+        .search-input::placeholder {
+            color: #444;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            font-weight: 300;
+            font-style: normal;
         }
-        
+
+        /* --- CATEGORIES --- */
         .categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
         }
-        
+
         .category-btn {
-            padding: 15px 20px;
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 15px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-muted);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 10px 25px;
+            border-radius: 50px; /* Bo tròn viên thuốc */
             cursor: pointer;
             transition: all 0.3s ease;
-            text-align: center;
-            font-size: 1.1rem;
         }
-        
+
         .category-btn:hover, .category-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            border-color: var(--gold-primary);
+            color: var(--gold-primary);
+            background: rgba(212, 175, 55, 0.05);
         }
-        
-        .faq-section {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            animation: fadeInUp 0.8s ease;
+
+        /* --- FAQ LIST --- */
+        .faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0; /* Liền mạch */
         }
-        
+
         .faq-item {
-            border-bottom: 1px solid #e2e8f0;
-            padding: 20px 0;
+            padding: 35px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            position: relative;
         }
         
-        .faq-item:last-child {
-            border-bottom: none;
+        /* Hiệu ứng hover cho cả dòng */
+        .faq-item:hover .faq-question h3 {
+            color: #fff;
+            padding-left: 10px; /* Dịch nhẹ chữ */
         }
-        
+
         .faq-question {
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            user-select: none;
         }
-        
+
         .faq-question h3 {
-            font-size: 1.3rem;
-            color: #1e293b;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 400;
+            color: #ccc;
             margin: 0;
-            flex: 1;
+            transition: all 0.3s ease;
+            line-height: 1.4;
         }
-        
+
+        /* Icon mũi tên tinh tế */
         .faq-icon {
-            font-size: 1.5rem;
-            color: #667eea;
-            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+            color: var(--gold-primary);
+            transition: transform 0.4s ease;
+            font-family: 'Montserrat', sans-serif; /* Đảm bảo icon là ký tự text */
         }
-        
-        .faq-question:hover .faq-icon {
-            transform: scale(1.2);
+
+        .faq-item.active .faq-icon {
+            transform: rotate(45deg); /* Xoay dấu + thành x, hoặc mũi tên */
         }
         
         .faq-answer {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease;
-            padding-top: 0;
+            transition: max-height 0.5s ease, opacity 0.5s ease, padding-top 0.5s ease;
+            opacity: 0;
         }
-        
-        .faq-answer.active {
+
+        .faq-item.active .faq-answer {
             max-height: 500px;
+            opacity: 1;
             padding-top: 20px;
         }
-        
-        .faq-answer p {
-            font-size: 1.1rem;
-            color: #64748b;
+
+        .faq-answer-content {
+            font-size: 1rem;
             line-height: 1.8;
-            margin-bottom: 10px;
+            color: #888;
+            width: 90%; /* Nội dung ngắn hơn tiêu đề 1 chút cho đẹp */
         }
         
-        .faq-answer ul {
-            margin: 15px 0;
-            padding-left: 25px;
+        /* Dropcap cho chữ cái đầu câu trả lời - rất Luxury */
+        .faq-answer-content p::first-letter {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            float: left;
+            margin-right: 10px;
+            line-height: 0.8;
+            color: var(--gold-primary);
         }
-        
-        .faq-answer li {
-            color: #64748b;
-            margin-bottom: 8px;
-            line-height: 1.6;
-        }
-        
-        .contact-section {
+
+        /* --- FOOTER LINK --- */
+        .support-link {
+            margin-top: 80px;
             text-align: center;
-            margin-top: 50px;
-            padding: 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            color: white;
+            font-size: 0.9rem;
+            color: #555;
         }
         
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .support-link a {
+            color: var(--gold-primary);
+            text-decoration: none;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.1rem;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s;
         }
         
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .support-link a:hover {
+            border-bottom-color: var(--gold-primary);
         }
         
         @media (max-width: 768px) {
-            .page-header h1 {
-                font-size: 2rem;
-            }
-            
-            .categories {
-                grid-template-columns: 1fr;
-            }
+            .page-header h1 { font-size: 2.5rem; }
+            .search-input { font-size: 1.2rem; }
+            .faq-question h3 { font-size: 1.3rem; }
         }
     </style>
 </head>
 <body>
     <%@ include file="/WEB-INF/views/layout/header.jsp" %>
     
-    <div class="container">
+    <div class="luxury-container">
+        
         <div class="page-header">
-            <h1>❓ Câu Hỏi Thường Gặp</h1>
-            <p>Tìm câu trả lời nhanh chóng cho các thắc mắc của bạn</p>
+            <h1>Câu Hỏi Thường Gặp</h1>
+            <p>BookingStage Elite Support</p>
         </div>
-        
-        <div class="search-box">
-            <input type="text" id="searchFAQ" placeholder="🔍 Tìm kiếm câu hỏi...">
+
+        <div class="search-wrapper">
+            <input type="text" id="searchFAQ" class="search-input" placeholder="Nhập từ khóa tìm kiếm...">
         </div>
-        
+
         <div class="categories">
-            <button class="category-btn active" onclick="filterFAQ('all')">📋 Tất cả</button>
-            <button class="category-btn" onclick="filterFAQ('booking')">🎟️ Đặt vé</button>
-            <button class="category-btn" onclick="filterFAQ('payment')">💳 Thanh toán</button>
-            <button class="category-btn" onclick="filterFAQ('ticket')">🎫 Vé điện tử</button>
-            <button class="category-btn" onclick="filterFAQ('refund')">🔄 Đổi/Hoàn</button>
+            <button class="category-btn active" onclick="filterFAQ('all')">Tất cả</button>
+            <button class="category-btn" onclick="filterFAQ('booking')">Đặt vé</button>
+            <button class="category-btn" onclick="filterFAQ('payment')">Thanh toán</button>
+            <button class="category-btn" onclick="filterFAQ('refund')">Hoàn hủy</button>
         </div>
-        
-        <div class="faq-section" id="faqContainer">
-            <!-- Booking Questions -->
-            <div class="faq-item" data-category="booking">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>🎟️ Làm thế nào để đặt vé?</h3>
-                    <span class="faq-icon">+</span>
-                </div>
-                <div class="faq-answer">
-                    <p>Đặt vé rất đơn giản với 3 bước:</p>
-                    <ul>
-                        <li><strong>Bước 1:</strong> Chọn show bạn muốn xem từ danh sách</li>
-                        <li><strong>Bước 2:</strong> Chọn ghế và số lượng vé</li>
-                        <li><strong>Bước 3:</strong> Điền thông tin và thanh toán</li>
-                    </ul>
-                    <p>Vé điện tử sẽ được gửi đến email của bạn trong vòng 2-5 phút.</p>
-                </div>
-            </div>
+
+        <div class="faq-list" id="faqContainer">
             
             <div class="faq-item" data-category="booking">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>📅 Có thể đặt vé trước bao lâu?</h3>
-                    <span class="faq-icon">+</span>
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <h3>Quy trình đặt vé như thế nào?</h3>
+                    <div class="faq-icon">＋</div>
                 </div>
                 <div class="faq-answer">
-                    <p>Bạn có thể đặt vé ngay khi show được công bố bán vé trên website. Thông thường, vé được mở bán từ <strong>1-3 tháng trước</strong> ngày diễn ra show.</p>
-                    <p>Chúng tôi khuyên bạn nên đặt sớm để có vị trí ghế đẹp nhất!</p>
+                    <div class="faq-answer-content">
+                        <p>Việc đặt vé được tối giản hóa. Quý khách chỉ cần chọn show diễn trên lịch, chọn vị trí ghế mong muốn và tiến hành thanh toán. Vé điện tử QR-Code sẽ được gửi ngay lập tức.</p>
+                    </div>
                 </div>
             </div>
-            
-            <div class="faq-item" data-category="booking">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>👥 Có thể đặt vé cho nhiều người cùng lúc không?</h3>
-                    <span class="faq-icon">+</span>
-                </div>
-                <div class="faq-answer">
-                    <p>Có! Bạn có thể chọn nhiều ghế trong cùng một đơn hàng. Tối đa <strong>10 vé/giao dịch</strong>.</p>
-                    <p>Nếu cần đặt nhiều hơn cho nhóm lớn, vui lòng liên hệ hotline <strong>1900-xxxx</strong> để được hỗ trợ đặt vé nhóm với giá ưu đãi.</p>
-                </div>
-            </div>
-            
-            <!-- Payment Questions -->
+
             <div class="faq-item" data-category="payment">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>💳 Có những phương thức thanh toán nào?</h3>
-                    <span class="faq-icon">+</span>
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <h3>Các phương thức thanh toán được chấp nhận?</h3>
+                    <div class="faq-icon">＋</div>
                 </div>
                 <div class="faq-answer">
-                    <p>Chúng tôi hỗ trợ nhiều phương thức thanh toán:</p>
-                    <ul>
-                        <li>💳 Thẻ tín dụng/ghi nợ quốc tế (Visa, Mastercard, JCB)</li>
-                        <li>🏦 Thẻ ATM nội địa (có Internet Banking)</li>
-                        <li>📱 Ví điện tử (Momo, ZaloPay, VNPay)</li>
-                        <li>🔄 Chuyển khoản ngân hàng</li>
-                    </ul>
-                    <p>Tất cả giao dịch đều được mã hóa và bảo mật tuyệt đối.</p>
+                    <div class="faq-answer-content">
+                        <p>Chúng tôi chấp nhận thẻ tín dụng quốc tế (Visa, Master), thẻ nội địa và các loại ví điện tử phổ biến. Mọi giao dịch đều được mã hóa bảo mật tuyệt đối.</p>
+                    </div>
                 </div>
             </div>
-            
-            <div class="faq-item" data-category="payment">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>🔒 Thanh toán online có an toàn không?</h3>
-                    <span class="faq-icon">+</span>
-                </div>
-                <div class="faq-answer">
-                    <p><strong>Hoàn toàn an toàn!</strong> Chúng tôi sử dụng:</p>
-                    <ul>
-                        <li>Mã hóa SSL 256-bit</li>
-                        <li>Cổng thanh toán quốc tế uy tín</li>
-                        <li>Không lưu trữ thông tin thẻ</li>
-                        <li>Xác thực 3D Secure</li>
-                    </ul>
-                    <p>Thông tin thanh toán của bạn được bảo vệ tuyệt đối!</p>
-                </div>
-            </div>
-            
-            <div class="faq-item" data-category="payment">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>💸 Có phải trả thêm phí giao dịch không?</h3>
-                    <span class="faq-icon">+</span>
-                </div>
-                <div class="faq-answer">
-                    <p>Phí giao dịch tùy theo phương thức:</p>
-                    <ul>
-                        <li>Thẻ tín dụng/ATM: <strong>Miễn phí</strong></li>
-                        <li>Ví điện tử: <strong>Miễn phí</strong></li>
-                        <li>Chuyển khoản: <strong>Miễn phí</strong></li>
-                    </ul>
-                    <p>Giá vé đã bao gồm VAT. Không có phí ẩn!</p>
-                </div>
-            </div>
-            
-            <!-- Ticket Questions -->
-            <div class="faq-item" data-category="ticket">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>🎫 Vé điện tử là gì?</h3>
-                    <span class="faq-icon">+</span>
-                </div>
-                <div class="faq-answer">
-                    <p>Vé điện tử là vé dạng file PDF có mã QR code, được gửi qua email ngay sau khi thanh toán thành công.</p>
-                    <p>Bạn có thể:</p>
-                    <ul>
-                        <li>Lưu vào điện thoại</li>
-                        <li>In ra giấy</li>
-                        <li>Xuất trình khi vào cửa</li>
-                    </ul>
-                    <p><strong>Không cần đổi vé giấy</strong>, quét QR code là vào!</p>
-                </div>
-            </div>
-            
-            <div class="faq-item" data-category="ticket">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>📧 Không nhận được vé qua email?</h3>
-                    <span class="faq-icon">+</span>
-                </div>
-                <div class="faq-answer">
-                    <p>Nếu sau 10 phút vẫn chưa nhận được vé:</p>
-                    <ul>
-                        <li>Kiểm tra hộp thư <strong>Spam/Junk</strong></li>
-                        <li>Kiểm tra lại email đã nhập đúng chưa</li>
-                        <li>Vào <strong>"Tài khoản"</strong> → <strong>"Lịch sử vé"</strong> để tải lại</li>
-                        <li>Liên hệ hotline <strong>1900-xxxx</strong> để được gửi lại</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="faq-item" data-category="ticket">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>🔄 Có thể chuyển vé cho người khác không?</h3>
-                    <span class="faq-icon">+</span>
-                </div>
-                <div class="faq-answer">
-                    <p><strong>Có!</strong> Vé điện tử có thể chuyển giao:</p>
-                    <ul>
-                        <li>Forward email vé cho người nhận</li>
-                        <li>Hoặc in/chụp vé gửi qua Zalo, Messenger</li>
-                        <li>Người nhận xuất trình vé khi vào cửa là được</li>
-                    </ul>
-                    <p><strong>Lưu ý:</strong> Mỗi vé chỉ sử dụng được <strong>1 lần duy nhất</strong>!</p>
-                </div>
-            </div>
-            
-            <!-- Refund Questions -->
+
             <div class="faq-item" data-category="refund">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>🔄 Có thể hoàn vé không?</h3>
-                    <span class="faq-icon">+</span>
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <h3>Chính sách hoàn tiền khi hủy vé?</h3>
+                    <div class="faq-icon">＋</div>
                 </div>
                 <div class="faq-answer">
-                    <p><strong>Có!</strong> Tùy theo thời điểm hoàn:</p>
-                    <ul>
-                        <li>≥ 7 ngày trước show: Hoàn <strong>100%</strong></li>
-                        <li>3-7 ngày trước: Hoàn <strong>70%</strong></li>
-                        <li>1-3 ngày trước: Hoàn <strong>50%</strong></li>
-                        <li>< 24 giờ: <strong>Không hoàn</strong></li>
-                    </ul>
-                    <p>Xem chi tiết tại <a href="${pageContext.request.contextPath}/policy" style="color: #667eea;">Chính sách đổi/trả vé</a></p>
+                    <div class="faq-answer-content">
+                        <p>Quý khách được hoàn tiền 100% nếu hủy trước 48h. Trong khoảng 24h-48h hoàn 30%. Rất tiếc chúng tôi không hỗ trợ hoàn tiền nếu hủy sát giờ diễn.</p>
+                    </div>
                 </div>
             </div>
-            
-            <div class="faq-item" data-category="refund">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>⏰ Hoàn tiền mất bao lâu?</h3>
-                    <span class="faq-icon">+</span>
+
+            <div class="faq-item" data-category="booking">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <h3>Tôi có thể chọn chỗ ngồi cụ thể không?</h3>
+                    <div class="faq-icon">＋</div>
                 </div>
                 <div class="faq-answer">
-                    <p>Thời gian hoàn tiền tùy phương thức thanh toán:</p>
-                    <ul>
-                        <li>Thẻ tín dụng/ATM: <strong>7-14 ngày làm việc</strong></li>
-                        <li>Ví điện tử: <strong>3-5 ngày làm việc</strong></li>
-                        <li>Chuyển khoản: <strong>5-7 ngày làm việc</strong></li>
-                    </ul>
-                    <p>Bạn sẽ nhận email xác nhận khi tiền được hoàn về.</p>
+                    <div class="faq-answer-content">
+                        <p>Tất nhiên. Hệ thống sơ đồ trực quan cho phép quý khách nhìn thấy view sân khấu từ vị trí ghế chọn trước khi quyết định đặt chỗ.</p>
+                    </div>
                 </div>
             </div>
-            
-            <!-- General Questions -->
-            <div class="faq-item" data-category="all">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>🕐 Nên đến trước bao lâu?</h3>
-                    <span class="faq-icon">+</span>
-                </div>
-                <div class="faq-answer">
-                    <p>Chúng tôi khuyến khích bạn đến trước <strong>30-45 phút</strong> để:</p>
-                    <ul>
-                        <li>Check-in và quét vé</li>
-                        <li>Gửi đồ (nếu cần)</li>
-                        <li>Mua đồ ăn/nước uống</li>
-                        <li>Tìm chỗ ngồi</li>
-                        <li>Tránh bỏ lỡ phần mở đầu</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="faq-item" data-category="all">
-                <div class="faq-question" onclick="toggleAnswer(this)">
-                    <h3>👔 Có quy định về trang phục không?</h3>
-                    <span class="faq-icon">+</span>
-                </div>
-                <div class="faq-answer">
-                    <p>Trang phục lịch sự, gọn gàng. <strong>Không được:</strong></p>
-                    <ul>
-                        <li>Mặc áo ba lỗ, quần đùi, dép lê</li>
-                        <li>Trang phục quá hở hang</li>
-                        <li>Mũ cao, phụ kiện che tầm nhìn</li>
-                    </ul>
-                    <p>Một số show cao cấp yêu cầu <strong>Smart Casual</strong> hoặc <strong>Formal</strong>.</p>
-                </div>
-            </div>
+
         </div>
-        
-        <div class="contact-section">
-            <h3>Không Tìm Thấy Câu Trả Lời?</h3>
-            <p style="margin-bottom: 30px; opacity: 0.9;">Liên hệ ngay với chúng tôi, đội ngũ hỗ trợ luôn sẵn sàng!</p>
-            <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
-                <div>📞 <strong>1900-xxxx</strong></div>
-                <div>✉️ <strong>support@bookingstage.vn</strong></div>
-                <div>💬 <strong>Live Chat</strong></div>
-            </div>
+
+        <div class="support-link">
+            Vẫn chưa tìm thấy câu trả lời? <a href="#">Liên hệ Đội ngũ hỗ trợ</a>
         </div>
+
     </div>
-    
+
     <%@ include file="/WEB-INF/views/layout/footer.jsp" %>
-    
+
     <script>
-        // Toggle FAQ Answer
-        function toggleAnswer(element) {
-            const answer = element.nextElementSibling;
+        function toggleFAQ(element) {
+            const item = element.parentElement;
             const icon = element.querySelector('.faq-icon');
+            const isActive = item.classList.contains('active');
             
-            // Close all other answers
-            document.querySelectorAll('.faq-answer').forEach(item => {
-                if (item !== answer) {
-                    item.classList.remove('active');
-                    item.previousElementSibling.querySelector('.faq-icon').textContent = '+';
-                }
+            // Đóng các tab khác
+            document.querySelectorAll('.faq-item').forEach(i => {
+                i.classList.remove('active');
+                // Reset icon về dấu +
+                const iIcon = i.querySelector('.faq-icon');
+                if(iIcon) iIcon.textContent = '＋'; 
             });
-            
-            // Toggle current answer
-            answer.classList.toggle('active');
-            icon.textContent = answer.classList.contains('active') ? '−' : '+';
+
+            if (!isActive) {
+                item.classList.add('active');
+                // Đổi icon thành dấu x (xoay 45 độ bằng CSS rồi, nên vẫn dùng dấu + hoặc đổi text đều được)
+                // Ở đây mình dùng CSS rotate cho mượt, text giữ nguyên hoặc đổi tùy ý
+            }
         }
-        
-        // Filter FAQs by category
+
         function filterFAQ(category) {
-            const items = document.querySelectorAll('.faq-item');
-            const buttons = document.querySelectorAll('.category-btn');
-            
-            // Update active button
-            buttons.forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             
-            // Filter items
+            const items = document.querySelectorAll('.faq-item');
             items.forEach(item => {
-                if (category === 'all' || item.dataset.category === category) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
+                item.style.display = (category === 'all' || item.dataset.category === category) 
+                    ? 'block' : 'none';
             });
         }
         
-        // Search FAQs
         document.getElementById('searchFAQ').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const items = document.querySelectorAll('.faq-item');
-            
-            items.forEach(item => {
-                const question = item.querySelector('h3').textContent.toLowerCase();
-                const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
-                
-                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.faq-item').forEach(item => {
+                const text = item.innerText.toLowerCase();
+                item.style.display = text.includes(term) ? 'block' : 'none';
             });
         });
     </script>

@@ -14,194 +14,7 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
         <!-- Font Awesome 6 -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-        <style>
-            :root{
-                --bg:#0b1220;
-                --panel:#0f1b33;
-                --muted:#8ea0c4;
-                --line:rgba(255,255,255,.08);
-            }
-
-            body{
-                background:
-                    radial-gradient(1200px 700px at 20% -10%, rgba(79,70,229,.28), transparent 55%),
-                    radial-gradient(900px 500px at 80% 0%, rgba(6,182,212,.22), transparent 60%),
-                    linear-gradient(180deg, var(--bg), #070b14);
-                min-height:100vh;
-                color:#e6ecff;
-                font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
-            }
-
-            /* Layout */
-            .admin-wrap{ display:flex; min-height:100vh; }
-            .sidebar{
-                width:270px;
-                background: rgba(15,27,51,.86);
-                border-right: 1px solid var(--line);
-                backdrop-filter: blur(10px);
-                padding: 18px 14px;
-                position: sticky;
-                top:0;
-                height:100vh;
-            }
-            .brand{
-                display:flex; align-items:center; gap:10px;
-                padding:10px 12px;
-                border-radius:14px;
-                background: rgba(255,255,255,.06);
-                border: 1px solid var(--line);
-            }
-            .brand .logo{
-                width:38px;height:38px;border-radius:12px;
-                display:grid;place-items:center;
-                background: linear-gradient(135deg, rgba(79,70,229,.9), rgba(6,182,212,.9));
-                box-shadow: 0 14px 35px rgba(0,0,0,.35);
-            }
-            .brand .title{ line-height:1.1; font-weight:800; letter-spacing:.2px; }
-            .brand small{ color:var(--muted); font-weight:600; }
-
-            .nav-group{ margin-top: 14px; }
-            .nav-item{
-                display:flex; align-items:center; gap:10px;
-                padding:10px 12px;
-                border-radius:12px;
-                color:#dbe5ff;
-                text-decoration:none;
-                border:1px solid transparent;
-            }
-            .nav-item:hover{ background: rgba(255,255,255,.06); border-color: var(--line); }
-            .nav-item.active{
-                background: rgba(6,182,212,.16);
-                border-color: rgba(6,182,212,.35);
-            }
-            .nav-item i{ width:20px; text-align:center; color:#bcd0ff; }
-
-            .content{ flex:1; padding: 22px 22px 28px; }
-
-            .topbar{
-                display:flex; gap:12px; align-items:center; justify-content:space-between;
-                padding:14px 16px;
-                border-radius:18px;
-                background: rgba(255,255,255,.06);
-                border: 1px solid var(--line);
-                backdrop-filter: blur(10px);
-                box-shadow: 0 18px 55px rgba(0,0,0,.35);
-            }
-            .page-h{ display:flex; gap:12px; align-items:center; }
-            .page-h h1{ font-size:18px; margin:0; font-weight:900; letter-spacing:.2px; }
-            .page-h .crumb{ color: var(--muted); font-weight:600; font-size:12px; }
-
-            .panel{
-                margin-top:14px;
-                padding:14px;
-                border-radius:18px;
-                background: rgba(255,255,255,.06);
-                border: 1px solid var(--line);
-                backdrop-filter: blur(10px);
-            }
-
-            .table-wrap{
-                margin-top:12px;
-                border-radius:18px;
-                overflow:hidden;
-                background: rgba(255,255,255,.96);
-                box-shadow: 0 22px 70px rgba(0,0,0,.35);
-            }
-            table thead th{
-                background: #0f1b33 !important;
-                color: #e8efff !important;
-                border:none !important;
-                white-space: nowrap;
-                font-size: 13px;
-                letter-spacing:.2px;
-            }
-            table tbody td{ color:#0b1220; vertical-align: middle; }
-
-            .btn-icon{
-                width:36px;height:36px;
-                display:inline-grid; place-items:center;
-                border-radius:12px;
-            }
-
-            /* QR code pill (clear text) */
-            .code-pill{
-                display:inline-flex;
-                align-items:center;
-                gap:8px;
-                padding: 6px 12px;
-                border-radius: 999px;
-                background: rgba(15,23,42,.10);
-                border: 1px solid rgba(15,23,42,.16);
-
-                color:#0f172a;
-                font-weight: 950;
-                letter-spacing:.5px;
-                text-transform: uppercase;
-                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-
-                text-shadow: none;
-                -webkit-text-fill-color:#0f172a;
-            }
-            .code-pill i{ color:#334155; opacity:1; filter:none; }
-
-            /* Status badges */
-            .status-badge{
-                display:inline-flex;
-                align-items:center;
-                gap:7px;
-                padding: 6px 10px;
-                border-radius: 999px;
-                font-weight: 900;
-                font-size: 12px;
-                border: 1px solid rgba(0,0,0,.08);
-                background: rgba(255,255,255,.9);
-            }
-            .st-valid{ color:#166534; background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.25); }
-            .st-used{ color:#334155; background: rgba(148,163,184,.18); border-color: rgba(148,163,184,.28); }
-            .st-cancelled{ color:#991b1b; background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.25); }
-
-            /* empty */
-            .empty{
-                padding: 48px 16px;
-                text-align:center;
-                color:#6b7280;
-            }
-
-            @media (max-width: 992px){
-                .sidebar{ display:none; }
-            }
-
-            /* Modal style (tối giản, hợp theme) */
-            .modal-content{
-                border-radius: 18px;
-                overflow: hidden;
-                border: none;
-                box-shadow: 0 30px 120px rgba(0,0,0,0.45);
-            }
-            .modal-header{
-                background: #0f1b33;
-                color: #e8efff;
-                border: none;
-            }
-            .modal-title{ font-weight: 900; }
-            .modal-body{ background:#fff; color:#0b1220; }
-            .modal-footer{ background:#f8fafc; border:none; }
-
-            /* Table inside modal */
-            .modal table th{
-                width: 180px;
-                background:#f1f5f9;
-                color:#0f172a;
-                border-color:#e5e7eb;
-                font-weight:900;
-            }
-            .modal table td{
-                border-color:#e5e7eb;
-                color:#0b1220;
-                font-weight:600;
-            }
-        </style>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin/tickets-list.css">
     </head>
 
     <body>
@@ -345,6 +158,40 @@
                         </table>
                     </div>
                 </div>
+<!-- PAGINATION -->
+<c:if test="${totalPages > 1}">
+    <nav class="mt-4 d-flex justify-content-center">
+        <ul class="pagination">
+
+            <!-- Previous -->
+            <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                <a class="page-link"
+                   href="${pageContext.request.contextPath}/admin/tickets?page=${currentPage - 1}">
+                    &laquo;
+                </a>
+            </li>
+
+            <!-- Page numbers -->
+            <c:forEach begin="1" end="${totalPages}" var="i">
+                <li class="page-item ${i == currentPage ? 'active' : ''}">
+                    <a class="page-link"
+                       href="${pageContext.request.contextPath}/admin/tickets?page=${i}">
+                        ${i}
+                    </a>
+                </li>
+            </c:forEach>
+
+            <!-- Next -->
+            <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                <a class="page-link"
+                   href="${pageContext.request.contextPath}/admin/tickets?page=${currentPage + 1}">
+                    &raquo;
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+</c:if>
 
             </main>
         </div>

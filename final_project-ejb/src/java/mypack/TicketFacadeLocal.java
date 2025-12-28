@@ -31,9 +31,12 @@ public interface TicketFacadeLocal {
     List<Ticket> findByOrderDetailId(int orderDetailId);
 
     List<Ticket> findByOrderId(int orderId);
-    
+
     Ticket findByQRCode(String qrCode);
 
     String checkInTicket(String qrCode);
 
+    List<Ticket> findWithPaging(int offset, int limit);
+
+    int countAll();
 }

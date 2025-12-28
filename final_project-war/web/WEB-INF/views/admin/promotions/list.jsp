@@ -1,9 +1,3 @@
-<%--
-    Document   : list
-    Created on : Dec 19, 2025
-    Updated    : UI upgraded (Bootstrap 5 + FA + Glass theme) + Delete confirm modal
---%>
-
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -19,243 +13,8 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
         <!-- Font Awesome 6 -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-        <style>
-            :root{
-                --bg:#0b1220;
-                --panel:#0f1b33;
-                --muted:#8ea0c4;
-                --line:rgba(255,255,255,.08);
-            }
-
-            body{
-                background:
-                    radial-gradient(1200px 700px at 20% -10%, rgba(79,70,229,.28), transparent 55%),
-                    radial-gradient(900px 500px at 80% 0%, rgba(6,182,212,.22), transparent 60%),
-                    linear-gradient(180deg, var(--bg), #070b14);
-                min-height:100vh;
-                color:#e6ecff;
-                font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
-            }
-
-            /* Layout */
-            .admin-wrap{
-                display:flex;
-                min-height:100vh;
-            }
-            .sidebar{
-                width:270px;
-                background: rgba(15,27,51,.86);
-                border-right:1px solid var(--line);
-                backdrop-filter: blur(10px);
-                padding:18px 14px;
-                position:sticky;
-                top:0;
-                height:100vh;
-            }
-            .brand{
-                display:flex;
-                align-items:center;
-                gap:10px;
-                padding:10px 12px;
-                border-radius:14px;
-                background: rgba(255,255,255,.06);
-                border:1px solid var(--line);
-            }
-            .brand .logo{
-                width:38px;
-                height:38px;
-                border-radius:12px;
-                display:grid;
-                place-items:center;
-                background: linear-gradient(135deg, rgba(79,70,229,.9), rgba(6,182,212,.9));
-                box-shadow: 0 14px 35px rgba(0,0,0,.35);
-            }
-            .brand .title{
-                line-height:1.1;
-                font-weight:900;
-                letter-spacing:.2px;
-            }
-            .brand small{
-                color:var(--muted);
-                font-weight:650;
-            }
-
-            .nav-group{
-                margin-top:14px;
-            }
-            .nav-item{
-                display:flex;
-                align-items:center;
-                gap:10px;
-                padding:10px 12px;
-                border-radius:12px;
-                color:#dbe5ff;
-                text-decoration:none;
-                border:1px solid transparent;
-            }
-            .nav-item:hover{
-                background: rgba(255,255,255,.06);
-                border-color: var(--line);
-            }
-            .nav-item.active{
-                background: rgba(6,182,212,.16);
-                border-color: rgba(6,182,212,.35);
-            }
-            .nav-item i{
-                width:20px;
-                text-align:center;
-                color:#bcd0ff;
-            }
-
-            .content{
-                flex:1;
-                padding:22px 22px 28px;
-            }
-
-            .topbar{
-                display:flex;
-                gap:12px;
-                align-items:center;
-                justify-content:space-between;
-                padding:14px 16px;
-                border-radius:18px;
-                background: rgba(255,255,255,.06);
-                border:1px solid var(--line);
-                backdrop-filter: blur(10px);
-                box-shadow: 0 18px 55px rgba(0,0,0,.35);
-            }
-            .page-h{
-                display:flex;
-                gap:12px;
-                align-items:center;
-            }
-            .page-h h1{
-                font-size:18px;
-                margin:0;
-                font-weight:950;
-                letter-spacing:.2px;
-            }
-            .page-h .crumb{
-                color:var(--muted);
-                font-weight:650;
-                font-size:12px;
-            }
-
-            .panel{
-                margin-top:14px;
-                padding:14px;
-                border-radius:18px;
-                background: rgba(255,255,255,.06);
-                border:1px solid var(--line);
-                backdrop-filter: blur(10px);
-            }
-
-            .table-wrap{
-                margin-top:12px;
-                border-radius:18px;
-                overflow:hidden;
-                background: rgba(255,255,255,.96);
-                box-shadow: 0 22px 70px rgba(0,0,0,.35);
-            }
-            table thead th{
-                background:#0f1b33 !important;
-                color:#e8efff !important;
-                border:none !important;
-                white-space:nowrap;
-                font-size:13px;
-                letter-spacing:.2px;
-            }
-            table tbody td{
-                color:#0b1220;
-                vertical-align:middle;
-            }
-
-            .code-badge{
-                display:inline-flex;
-                align-items:center;
-                gap:8px;
-                padding:6px 10px;
-                border-radius:999px;
-                background: rgba(214,51,132,.10);
-                border: 1px solid rgba(214,51,132,.18);
-                color:#8b1e4d;
-                font-weight:900;
-                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            }
-
-            .status-pill{
-                display:inline-flex;
-                align-items:center;
-                gap:8px;
-                padding:6px 10px;
-                border-radius:999px;
-                font-weight:900;
-                font-size:12px;
-                border:1px solid rgba(0,0,0,.08);
-            }
-            .status-active{
-                background: rgba(34,197,94,.16);
-                color:#14532d;
-                border-color: rgba(34,197,94,.28);
-            }
-            .status-inactive{
-                background: rgba(239,68,68,.14);
-                color:#7f1d1d;
-                border-color: rgba(239,68,68,.24);
-            }
-
-            .mini{
-                font-size:12px;
-                color:#4b5563;
-                font-weight:650;
-            }
-            .limit{
-                display:inline-flex;
-                align-items:center;
-                gap:8px;
-                font-weight:900;
-            }
-            .limit .inf{
-                color:#0f172a;
-                background: rgba(2,132,199,.10);
-                border: 1px solid rgba(2,132,199,.18);
-                padding: 4px 8px;
-                border-radius: 999px;
-                font-weight:950;
-            }
-
-            .btn-icon{
-                width:36px;
-                height:36px;
-                display:inline-grid;
-                place-items:center;
-                border-radius:12px;
-            }
-
-            .empty{
-                padding:48px 16px;
-                text-align:center;
-                color:#6b7280;
-            }
-
-            /* Modal theme */
-            .modal-content{
-                border-radius:18px;
-                overflow:hidden;
-            }
-            .modal-header.theme{
-                background:#0f1b33;
-                color:#e8efff;
-                border:none;
-            }
-
-            @media (max-width: 992px){
-                .sidebar{
-                    display:none;
-                }
-            }
-        </style>
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin/promotions-list.css">
     </head>
 
     <body>
@@ -304,7 +63,7 @@
                     </div>
                 </div>
 
-                <!-- Alerts (từ param.msg) -->
+                <!-- Alerts -->
                 <c:if test="${not empty param.msg}">
                     <div class="alert alert-success mt-3 mb-0 d-flex align-items-center gap-2">
                         <i class="fa-solid fa-circle-check"></i>
@@ -331,14 +90,14 @@
                                     <th style="min-width:220px;">Giới hạn dùng</th>
                                     <th style="min-width:240px;">Thời gian hiệu lực</th>
                                     <th style="width:140px; text-align:center;">Trạng thái</th>
-                                    <th style="width:180px;">Hành động</th>
+                                    <th style="width:240px;">Hành động</th>
                                 </tr>
                             </thead>
 
                             <tbody>
                                 <c:forEach var="p" items="${promotions}">
                                     <tr>
-
+                                        <!-- Thông tin mã -->
                                         <td>
                                             <div class="fw-bold text-dark">
                                                 <i class="fa-solid fa-ticket text-primary"></i>
@@ -351,6 +110,7 @@
                                             </div>
                                         </td>
 
+                                        <!-- Giá trị giảm -->
                                         <td>
                                             <c:choose>
                                                 <c:when test="${p.discountType == 'PERCENT'}">
@@ -379,6 +139,7 @@
                                             </div>
                                         </td>
 
+                                        <!-- Giới hạn dùng -->
                                         <td>
                                             <div class="limit">
                                                 <i class="fa-solid fa-globe text-info"></i>
@@ -412,6 +173,7 @@
                                             </div>
                                         </td>
 
+                                        <!-- Thời gian -->
                                         <td class="mini">
                                             <div>
                                                 <i class="fa-regular fa-clock"></i>
@@ -425,38 +187,63 @@
                                             </div>
                                         </td>
 
-                                        <td style="text-align:center;">
-                                            <c:choose>
-                                                <c:when test="${p.status == 'ACTIVE'}">
-                                                    <span class="status-pill status-active">
-                                                        <i class="fa-solid fa-circle-play"></i> Đang chạy
-                                                    </span>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <span class="status-pill status-inactive">
-                                                        <i class="fa-solid fa-circle-stop"></i> Đã tắt
-                                                    </span>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </td>
+                                        <!-- Trạng thái -->
+                                       <!-- Trạng thái -->
+<td style="text-align:center;">
+    <%-- ✅ THÊM LOGIC KIỂM TRA HẾT HẠN --%>
+    <jsp:useBean id="now" class="java.util.Date" />
+    
+    <c:choose>
+        <%-- Kiểm tra đã hết hạn chưa --%>
+        <c:when test="${p.endDate.time < now.time}">
+            <span class="status-pill status-expired">
+                <i class="fa-solid fa-clock-rotate-left"></i> Đã hết hạn
+            </span>
+        </c:when>
+        
+        <%-- Kiểm tra đang chạy --%>
+        <c:when test="${p.status == 'ACTIVE'}">
+            <span class="status-pill status-active">
+                <i class="fa-solid fa-circle-play"></i> Đang chạy
+            </span>
+        </c:when>
+        
+        <%-- Đã tắt --%>
+        <c:otherwise>
+            <span class="status-pill status-inactive">
+                <i class="fa-solid fa-circle-stop"></i> Đã tắt
+            </span>
+        </c:otherwise>
+    </c:choose>
+</td>
 
+                                        <!-- Hành động -->
                                         <td class="text-nowrap">
+                                            <!-- Sửa -->
                                             <a class="btn btn-primary btn-icon" title="Sửa"
                                                href="${pageContext.request.contextPath}/admin/promotions?action=edit&id=${p.promotionID}">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
 
+                                            <!-- Xem người dùng -->
+                                            <button type="button"
+                                                    class="btn btn-info btn-icon text-white"
+                                                    title="Xem người dùng"
+                                                    onclick="openUsageModal(${p.promotionID}, '${fn:escapeXml(p.code)}', '${fn:escapeXml(p.name)}')">
+                                                <i class="fa-solid fa-users"></i>
+                                            </button>
+
+                                            <!-- Xóa -->
                                             <c:choose>
                                                 <c:when test="${fn:length(p.order1Collection) == 0}">
-                                                    <!-- Delete dùng modal (không confirm mặc định) -->
                                                     <button type="button"
                                                             class="btn btn-danger btn-icon"
                                                             title="Xóa"
                                                             onclick="openDeletePromotionModal(
-                                                                            '${pageContext.request.contextPath}/admin/promotions?action=delete&id=${p.promotionID}',
-                                                                                            '${fn:escapeXml(p.code)}',
-                                                                                            '${fn:escapeXml(p.name)}'
-                                                                                            )">
+                                                                    '${pageContext.request.contextPath}/admin/promotions?action=delete&id=${p.promotionID}',
+                                                                                    '${fn:escapeXml(p.code)}',
+                                                                                    '${fn:escapeXml(p.name)}'
+                                                                                    )">
                                                         <i class="fa-solid fa-trash"></i>
                                                     </button>
                                                 </c:when>
@@ -490,7 +277,7 @@
             </main>
         </div>
 
-        <!-- ===== DELETE CONFIRM MODAL (Bootstrap) ===== -->
+        <!-- ===== DELETE MODAL ===== -->
         <div class="modal fade" id="deletePromotionModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
@@ -498,7 +285,7 @@
                         <h5 class="modal-title fw-bold">
                             <i class="fa-solid fa-triangle-exclamation text-warning"></i> Xác nhận xóa
                         </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
 
                     <div class="modal-body text-dark">
@@ -521,7 +308,6 @@
                         <button type="button" class="btn btn-outline-dark fw-bold" data-bs-dismiss="modal">
                             <i class="fa-solid fa-xmark"></i> Hủy
                         </button>
-
                         <a href="#" id="deletePromotionConfirmBtn" class="btn btn-danger fw-bold">
                             <i class="fa-solid fa-trash"></i> Xóa
                         </a>
@@ -530,27 +316,84 @@
             </div>
         </div>
 
+        <!-- ===== USAGE MODAL ===== -->
+        <div class="modal fade" id="usageModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header theme">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fa-solid fa-users text-info"></i> 
+                            Chi tiết sử dụng mã: <span id="usagePromoCode"></span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body" style="background:#f8f9fa;">
+                        <!-- Loading -->
+                        <div id="usageLoading" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2 text-muted">Đang tải dữ liệu...</div>
+                        </div>
+
+                        <!-- Error -->
+                        <div id="usageError" class="alert alert-danger d-none">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span id="usageErrorText"></span>
+                        </div>
+
+                        <!-- Content -->
+                        <div id="usageContent" class="d-none">
+                            <div class="alert alert-info mb-3">
+                                <strong id="usagePromoName"></strong> - 
+                                Tổng: <strong id="usageTotalCount">0</strong> lượt sử dụng
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered bg-white mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th style="width:50px;">#</th>
+                                            <th>Khách hàng</th>
+                                            <th>Email</th>
+                                            <th>Đơn hàng</th>
+                                            <th>Ngày sử dụng</th>
+                                            <th>Giảm giá</th>
+                                            <th>Thành tiền</th>
+                                            <th>Trạng thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usageTableBody">
+                                        <!-- Data inserted by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="usageEmpty" class="text-center py-5 d-none">
+                                <i class="fa-regular fa-face-frown fa-3x text-muted"></i>
+                                <div class="mt-3 text-muted fw-bold">Chưa có ai sử dụng mã này</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-xmark"></i> Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-
+        <!-- Custom JS -->
         <script>
-                                                                                function openDeletePromotionModal(deleteUrl, code, name) {
-                                                                                    const codeEl = document.getElementById('delPromoCode');
-                                                                                    const nameEl = document.getElementById('delPromoName');
-                                                                                    const confirmBtn = document.getElementById('deletePromotionConfirmBtn');
-
-                                                                                    if (codeEl)
-                                                                                        codeEl.textContent = code || '';
-                                                                                    if (nameEl)
-                                                                                        nameEl.textContent = name || '';
-                                                                                    if (confirmBtn)
-                                                                                        confirmBtn.setAttribute('href', deleteUrl || '#');
-
-                                                                                    const modalEl = document.getElementById('deletePromotionModal');
-                                                                                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                                                                                    modal.show();
-                                                                                }
+            // Pass context path to JS
+            window.APP_CONTEXT_PATH = '${pageContext.request.contextPath}';
         </script>
+        <script src="${pageContext.request.contextPath}/js/admin/promotions-list.js"></script>
 
     </body>
 </html>

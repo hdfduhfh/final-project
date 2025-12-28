@@ -19,12 +19,12 @@
 
         <style>
             :root {
-                --bg-dark: #0f172a;       /* Nền chính tối thẫm */
-                --panel-dark: #1e293b;    /* Nền các khối (card) */
-                --sidebar-dark: #111827;  /* Nền sidebar */
-                --text-main: #f8fafc;     /* Màu chữ chính */
-                --text-muted: #94a3b8;    /* Màu chữ phụ */
-                --accent: #3b82f6;        /* Màu điểm nhấn */
+                --bg-dark: #0f172a;
+                --panel-dark: #1e293b;
+                --sidebar-dark: #111827;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --accent: #3b82f6;
                 --border-color: #334155;
             }
 
@@ -34,7 +34,6 @@
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             }
 
-            /* --- SIDEBAR --- */
             .admin-wrap {
                 display: flex;
                 min-height: 100vh;
@@ -74,14 +73,12 @@
                 font-size: 0.85rem;
             }
 
-            /* --- CONTENT MAIN --- */
             .content {
                 flex-grow: 1;
                 padding: 30px;
                 overflow-y: auto;
             }
 
-            /* --- CARDS --- */
             .stat-card-box {
                 border-radius: 16px;
                 padding: 24px;
@@ -119,21 +116,25 @@
                 margin-top: 10px;
             }
 
-            /* Gradients giống hình mẫu */
             .bg-gradient-success {
                 background: linear-gradient(135deg, #059669, #34d399);
-            } /* Green */
+            }
             .bg-gradient-primary {
                 background: linear-gradient(135deg, #2563eb, #60a5fa);
-            } /* Blue */
+            }
             .bg-gradient-danger {
                 background: linear-gradient(135deg, #db2777, #f472b6);
-            }  /* Pink/Red */
+            }
+            .bg-gradient-warning {
+                background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            }
             .bg-gradient-secondary {
                 background: linear-gradient(135deg, #4b5563, #9ca3af);
-            } /* Grey */
+            }
+            .bg-gradient-info {
+                background: linear-gradient(135deg, #0891b2, #22d3ee);
+            }
 
-            /* --- TABLES & PANELS --- */
             .panel-box {
                 background-color: var(--panel-dark);
                 border-radius: 16px;
@@ -151,8 +152,6 @@
                 gap: 10px;
             }
 
-            /* --- FIX LỖI TABLE (QUAN TRỌNG) --- */
-            /* Reset biến màu của Bootstrap table để nó không lấy màu đen mặc định */
             .table {
                 --bs-table-color: var(--text-main);
                 --bs-table-bg: transparent;
@@ -163,35 +162,25 @@
                 margin-bottom: 0;
             }
 
-            /* Ép cứng màu chữ và nền cho các ô */
             .table > :not(caption) > * > * {
-                color: var(--text-main) !important; /* Chữ luôn sáng */
-                background-color: transparent !important; /* Nền trong suốt để lộ panel */
+                color: var(--text-main) !important;
+                background-color: transparent !important;
                 border-bottom-width: 1px;
                 vertical-align: middle;
-                opacity: 1 !important; /* Đảm bảo không bị mờ */
+                opacity: 1 !important;
             }
 
-            /* Header bảng */
             .table thead th {
-                color: #60a5fa !important; /* Màu xanh sáng cho tiêu đề cột */
+                color: #60a5fa !important;
                 font-weight: 600;
                 border-bottom: 2px solid rgba(255,255,255,0.1) !important;
             }
 
-            /* Hiệu ứng Hover nhẹ (nhưng chữ vẫn giữ màu trắng) */
             .table-hover > tbody > tr:hover > * {
                 background-color: rgba(255, 255, 255, 0.08) !important;
                 color: #ffffff !important;
             }
-            
-            /* Xóa shadow nếu có của bootstrap striped */
-            .table-striped > tbody > tr:nth-of-type(odd) > * {
-                color: var(--text-main) !important;
-                box-shadow: none !important;
-            }
 
-            /* Buttons */
             .btn-glass {
                 background: rgba(255,255,255,0.05);
                 border: 1px solid var(--border-color);
@@ -215,7 +204,6 @@
                 background: #e2e8f0;
             }
 
-            /* Breadcrumb area */
             .topbar {
                 margin-bottom: 30px;
                 display: flex;
@@ -232,6 +220,24 @@
                 font-size: 0.9rem;
             }
 
+            /* ✅ BADGE CHO SỐ ÂM (VÉ HỦY) */
+            .refund-badge {
+                background: rgba(239, 68, 68, 0.2);
+                color: #f87171;
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
+
+            .profit-badge {
+                background: rgba(34, 197, 94, 0.2);
+                color: #4ade80;
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
         </style>
     </head>
 
@@ -276,7 +282,12 @@
                     </div>
                 </div>
 
+                <%-- ✅ TÍNH TOÁN PHÍ HỦY & LỢI NHUẬN --%>
+                <c:set var="cancellationFee" value="${totalRevenue + totalRefund - (totalRevenue)}" />
+                <c:set var="actualProfit" value="${totalRevenue - totalDiscount}" />
+
                 <div class="row g-4 mb-5">
+                    <%-- TỔNG DOANH THU --%>
                     <div class="col-md-3">
                         <div class="stat-card-box bg-gradient-success position-relative overflow-hidden">
                             <i class="fa-solid fa-sack-dollar stat-icon"></i>
@@ -285,10 +296,40 @@
                                 <div class="card-value">
                                     <fmt:formatNumber value="${totalRevenue}" pattern="#,###"/> đ
                                 </div>
+                                <small style="opacity: 0.8; font-size: 0.75rem;">Đã trừ tiền hoàn lại</small>
                             </div>
                         </div>
                     </div>
 
+                    <%-- TỔNG TIỀN HOÀN LẠI --%>
+                    <div class="col-md-3">
+                        <div class="stat-card-box bg-gradient-danger position-relative overflow-hidden">
+                            <i class="fa-solid fa-arrow-rotate-left stat-icon"></i>
+                            <div>
+                                <div class="card-title-sm">Tiền hoàn khách</div>
+                                <div class="card-value">
+                                    <fmt:formatNumber value="${totalRefund}" pattern="#,###"/> đ
+                                </div>
+                                <small style="opacity: 0.8; font-size: 0.75rem;">Từ vé bị hủy</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <%-- PHÍ HỦY VÉ (LỢI NHUẬN TỪ HỦY) --%>
+                    <div class="col-md-3">
+                        <div class="stat-card-box bg-gradient-warning position-relative overflow-hidden">
+                            <i class="fa-solid fa-percent stat-icon"></i>
+                            <div>
+                                <div class="card-title-sm">Phí hủy vé (30%)</div>
+                                <div class="card-value">
+                                    <fmt:formatNumber value="${totalRefund * 0.30 / 0.70}" pattern="#,###"/> đ
+                                </div>
+                                <small style="opacity: 0.8; font-size: 0.75rem;">Giữ lại khi hủy vé</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <%-- TỔNG KHUYẾN MÃI --%>
                     <div class="col-md-3">
                         <div class="stat-card-box bg-gradient-primary position-relative overflow-hidden">
                             <i class="fa-solid fa-tags stat-icon"></i>
@@ -297,22 +338,12 @@
                                 <div class="card-value">
                                     <fmt:formatNumber value="${totalDiscount}" pattern="#,###"/> đ
                                 </div>
+                                <small style="opacity: 0.8; font-size: 0.75rem;">Giảm giá đã áp dụng</small>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-md-3">
-                        <div class="stat-card-box bg-gradient-danger position-relative overflow-hidden">
-                            <i class="fa-solid fa-arrow-rotate-left stat-icon"></i>
-                            <div>
-                                <div class="card-title-sm">Tổng hoàn tiền</div>
-                                <div class="card-value">
-                                    <fmt:formatNumber value="${totalRefund}" pattern="#,###"/> đ
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                    <%-- ĐƠN BỊ HỦY --%>
                     <div class="col-md-3">
                         <div class="stat-card-box bg-gradient-secondary position-relative overflow-hidden">
                             <i class="fa-solid fa-ban stat-icon"></i>
@@ -321,6 +352,20 @@
                                 <div class="card-value">
                                     ${totalCancelledOrder} <small class="fs-6 fw-normal">đơn</small>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <%-- LỢI NHUẬN THỰC --%>
+                    <div class="col-md-3">
+                        <div class="stat-card-box bg-gradient-info position-relative overflow-hidden">
+                            <i class="fa-solid fa-chart-line stat-icon"></i>
+                            <div>
+                                <div class="card-title-sm">Lợi nhuận thực</div>
+                                <div class="card-value">
+                                    <fmt:formatNumber value="${actualProfit}" pattern="#,###"/> đ
+                                </div>
+                                <small style="opacity: 0.8; font-size: 0.75rem;">Doanh thu - Khuyến mãi</small>
                             </div>
                         </div>
                     </div>
@@ -345,17 +390,20 @@
                         </div>
                     </div>
 
+                    <%-- ✅ CHI TIẾT THEO NGÀY (CÓ VÉ HỦY) --%>
                     <div class="col-lg-4 mb-4">
                         <div class="panel-box h-100">
                             <div class="section-title">
                                 <i class="fa-regular fa-calendar-days text-warning"></i> Chi tiết theo ngày
                             </div>
-                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                                <table class="table table-hover mb-0">
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-hover mb-0" style="font-size: 0.9rem;">
                                     <thead>
                                         <tr>
                                             <th>Ngày</th>
-                                            <th class="text-end">Doanh thu</th>
+                                            <th class="text-end">Thu</th>
+                                            <th class="text-end">Hoàn</th>
+                                            <th class="text-end">Thực</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -363,16 +411,31 @@
                                             <tr>
                                                 <td>
                                                     <i class="fa-regular fa-calendar me-2 text-muted"></i>
-                                                    <span class="fw-bold"><fmt:formatDate value="${row[0]}" pattern="dd/MM/yyyy"/></span>
+                                                    <span class="fw-bold"><fmt:formatDate value="${row[0]}" pattern="dd/MM"/></span>
                                                 </td>
-                                                <td class="text-end fw-bold text-success">
-                                                    + <fmt:formatNumber value="${row[1]}" pattern="#,###"/> đ
+                                                <td class="text-end text-success">
+                                                    +<fmt:formatNumber value="${row[1]}" pattern="#,###"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <c:if test="${row[2] > 0}">
+                                                        <span class="refund-badge">
+                                                            -<fmt:formatNumber value="${row[2]}" pattern="#,###"/>
+                                                        </span>
+                                                    </c:if>
+                                                    <c:if test="${row[2] == 0}">
+                                                        <span class="text-muted">0</span>
+                                                    </c:if>
+                                                </td>
+                                                <td class="text-end fw-bold">
+                                                    <span class="profit-badge">
+                                                        <fmt:formatNumber value="${row[3]}" pattern="#,###"/>
+                                                    </span>
                                                 </td>
                                             </tr>
                                         </c:forEach>
                                         <c:if test="${empty revenueByDate}">
                                             <tr>
-                                                <td colspan="2" class="text-center py-4 text-muted">Không có dữ liệu</td>
+                                                <td colspan="4" class="text-center py-4 text-muted">Không có dữ liệu</td>
                                             </tr>
                                         </c:if>
                                     </tbody>
@@ -432,56 +495,53 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
-            // Lấy dữ liệu từ JSTL đổ vào mảng JavaScript
             const dates = [];
             const revenues = [];
 
             <c:forEach items="${revenueByDate}" var="row">
-        dates.push('<fmt:formatDate value="${row[0]}" pattern="dd/MM"/>'); // Chỉ lấy ngày/tháng cho gọn
-        revenues.push(${row[1]}); // Số tiền (không có dấu phẩy)
+                dates.push('<fmt:formatDate value="${row[0]}" pattern="dd/MM"/>');
+                revenues.push(${row[3]}); // ✅ Lấy cột 3 (Doanh thu thực = Thu - Hoàn)
             </c:forEach>
 
-            // Kiểm tra xem có dữ liệu không, nếu có thì vẽ
             if (dates.length > 0) {
                 const ctx = document.getElementById('revenueChart');
 
-                // Cấu hình Gradient cho biểu đồ đẹp hơn
                 const gradientFill = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-                gradientFill.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); // Màu xanh đậm ở trên
-                gradientFill.addColorStop(1, 'rgba(59, 130, 246, 0.0)'); // Mờ dần xuống dưới
+                gradientFill.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
+                gradientFill.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
                 new Chart(ctx, {
-                    type: 'line', // Loại biểu đồ đường
+                    type: 'line',
                     data: {
-                        labels: dates.reverse(), // Đảo ngược để ngày gần nhất nằm bên phải (nếu query SQL sắp xếp DESC)
+                        labels: dates.reverse(),
                         datasets: [{
-                                label: 'Doanh thu (VNĐ)',
+                                label: 'Doanh thu thực (VNĐ)',
                                 data: revenues.reverse(),
-                                borderColor: '#60a5fa', // Màu đường kẻ
-                                backgroundColor: gradientFill, // Màu nền gradient
+                                borderColor: '#60a5fa',
+                                backgroundColor: gradientFill,
                                 borderWidth: 2,
                                 pointBackgroundColor: '#ffffff',
                                 pointBorderColor: '#60a5fa',
                                 pointRadius: 4,
-                                fill: true, // Tô màu dưới đường kẻ
-                                tension: 0.4 // Độ cong mềm mại của đường
+                                fill: true,
+                                tension: 0.4
                             }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {display: false} // Ẩn chú thích nếu không cần
+                            legend: {display: false}
                         },
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                grid: {color: '#334155'}, // Màu lưới ngang tối
-                                ticks: {color: '#94a3b8'} // Màu chữ trục Y
+                                grid: {color: '#334155'},
+                                ticks: {color: '#94a3b8'}
                             },
                             x: {
-                                grid: {display: false}, // Ẩn lưới dọc
-                                ticks: {color: '#94a3b8'} // Màu chữ trục X
+                                grid: {display: false},
+                                ticks: {color: '#94a3b8'}
                             }
                         }
                     }

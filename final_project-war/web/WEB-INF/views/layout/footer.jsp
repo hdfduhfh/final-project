@@ -29,11 +29,19 @@
         <div class="footer-section">
             <h3 class="footer-heading">LIÊN KẾT NHANH</h3>
             <ul class="footer-links list-unstyled">
-                <li><a href="${pageContext.request.contextPath}/about">Về chúng tôi</a></li>
+                <li>
+                    <a href="${pageContext.request.contextPath}/pages/about.jsp">
+                        Về chúng tôi
+                    </a>
+                </li>
                 <li><a href="${pageContext.request.contextPath}/shows">Chương trình</a></li>
-                <li><a href="${pageContext.request.contextPath}/schedule">Lịch diễn</a></li>
-                <li><a href="${pageContext.request.contextPath}/news">Tin tức & Sự kiện</a></li>
-                <li><a href="${pageContext.request.contextPath}/contact">Liên hệ</a></li>
+                <li><a href="${pageContext.request.contextPath}/showSchedule">Lịch diễn</a></li>
+                <li><a href="${pageContext.request.contextPath}/new">Tin tức & Sự kiện</a></li>
+                <li>
+                    <a href="${pageContext.request.contextPath}/pages/contact.jsp">
+                        Liên hệ
+                    </a>
+                </li>
             </ul>
         </div>
 
