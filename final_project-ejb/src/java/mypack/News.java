@@ -6,143 +6,135 @@ package mypack;
 
 import java.io.Serializable;
 import java.util.Date;
-import jakarta.persistence.Basic;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.NamedQueries;
-import jakarta.persistence.NamedQuery;
-import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
+import jakarta.persistence.*;
 
-/**
- *
- * @author DANG KHOA
- */
 @Entity
 @Table(name = "News", catalog = "BookingStageDB", schema = "dbo")
 @NamedQueries({
-    @NamedQuery(name = "News.findAll", query = "SELECT n FROM News n"),
-    @NamedQuery(name = "News.findByNewsID", query = "SELECT n FROM News n WHERE n.newsID = :newsID"),
-    @NamedQuery(name = "News.findByTitle", query = "SELECT n FROM News n WHERE n.title = :title"),
-    @NamedQuery(name = "News.findByContent", query = "SELECT n FROM News n WHERE n.content = :content"),
-    @NamedQuery(name = "News.findByCreatedAt", query = "SELECT n FROM News n WHERE n.createdAt = :createdAt"),
-    @NamedQuery(name = "News.findByUpdatedAt", query = "SELECT n FROM News n WHERE n.updatedAt = :updatedAt")})
+    @NamedQuery(name = "News.findAll", query = "SELECT n FROM News n WHERE n.isDeleted = false ORDER BY n.createdAt DESC"),
+    @NamedQuery(name = "News.findBySlug", query = "SELECT n FROM News n WHERE n.slug = :slug AND n.isDeleted = false")
+})
 public class News implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
     @Column(name = "NewsID", nullable = false)
     private Integer newsID;
+
     @Basic(optional = false)
     @Column(name = "Title", nullable = false, length = 200)
     private String title;
+
     @Basic(optional = false)
-    @Column(name = "Content", nullable = false, length = 2147483647)
+    @Column(name = "Content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String content;
+
     @Basic(optional = false)
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "CreatedAt", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
-    @Column(name = "UpdatedAt")
+
     @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "UpdatedAt")
     private Date updatedAt;
+
+      @ManyToOne(optional = false)
     @JoinColumn(name = "UserID", referencedColumnName = "UserID", nullable = false)
-    @ManyToOne(optional = false)
     private User userID;
 
-    public News() {
+    // New fields
+    @Column(name = "ThumbnailUrl", length = 500)
+    private String thumbnailUrl;
+
+    @Column(name = "Summary", length = 500)
+    private String summary;
+
+    @Column(name = "Status", nullable = false, length = 50)
+    private String status = "Draft"; // Default
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "PublishDate")
+    private Date publishDate;
+
+    @Column(name = "Slug", length = 200, unique = true)
+    private String slug;
+
+    @Column(name = "IsDeleted", nullable = false)
+    private boolean isDeleted = false;
+
+    public News() {}
+
+    // getters/setters…
+
+    public Integer getNewsID() { return newsID; }
+    public void setNewsID(Integer newsID) { this.newsID = newsID; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+
+    public Date getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    public Date getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Date updatedAt) { this.updatedAt = updatedAt; }
+
+    public User getUserID() { return userID; }
+    public void setUserID(User userID) { this.userID = userID; }
+
+    public String getThumbnailUrl() { return thumbnailUrl; }
+    public void setThumbnailUrl(String thumbnailUrl) { this.thumbnailUrl = thumbnailUrl; }
+
+    public String getSummary() { return summary; }
+    public void setSummary(String summary) { this.summary = summary; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Date getPublishDate() { return publishDate; }
+    public void setPublishDate(Date publishDate) { this.publishDate = publishDate; }
+
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
+
+    public boolean isIsDeleted() { return isDeleted; }
+    public void setIsDeleted(boolean isDeleted) { this.isDeleted = isDeleted; }
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = new Date();
+        applyPublishRules();
     }
 
-    public News(Integer newsID) {
-        this.newsID = newsID;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = new Date();
+        applyPublishRules();
     }
 
-    public News(Integer newsID, String title, String content, Date createdAt) {
-        this.newsID = newsID;
-        this.title = title;
-        this.content = content;
-        this.createdAt = createdAt;
-    }
-
-    public Integer getNewsID() {
-        return newsID;
-    }
-
-    public void setNewsID(Integer newsID) {
-        this.newsID = newsID;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public User getUserID() {
-        return userID;
-    }
-
-    public void setUserID(User userID) {
-        this.userID = userID;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (newsID != null ? newsID.hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof News)) {
-            return false;
+    private void applyPublishRules() {
+        if ("Published".equalsIgnoreCase(status) && publishDate == null) {
+            publishDate = new Date();
         }
-        News other = (News) object;
-        if ((this.newsID == null && other.newsID != null) || (this.newsID != null && !this.newsID.equals(other.newsID))) {
-            return false;
+        if (!"Published".equalsIgnoreCase(status)) {
+            // Optional: clear publishDate if unpublish
+            // publishDate = null;
         }
-        return true;
     }
 
     @Override
-    public String toString() {
-        return "mypack.News[ newsID=" + newsID + " ]";
+    public int hashCode() { return newsID != null ? newsID.hashCode() : 0; }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof News)) return false;
+        News other = (News) obj;
+        return (this.newsID != null && this.newsID.equals(other.newsID));
     }
-    
+
+    @Override
+    public String toString() { return "mypack.News[ newsID=" + newsID + " ]"; }
 }

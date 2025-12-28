@@ -17,6 +17,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.Comparator;
 
 @WebServlet("/admin/user")
 public class UserManagementServlet extends HttpServlet {
@@ -167,7 +169,6 @@ public class UserManagementServlet extends HttpServlet {
             return;
         }
 
-        // ✅ Kiểm tra user đã có đơn hàng chưa
         Long orderCount = userFacade.countOrdersByUser(id);
         if (orderCount != null && orderCount > 0) {
             request.setAttribute("error", "❌ Không thể xóa người dùng này vì đã có "
@@ -175,7 +176,6 @@ public class UserManagementServlet extends HttpServlet {
             return;
         }
 
-        // Chỉ xóa nếu không có đơn hàng
         try {
             userFacade.remove(user);
             request.setAttribute("message", "✅ Xóa người dùng thành công!");
@@ -188,7 +188,40 @@ public class UserManagementServlet extends HttpServlet {
     private void loadList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
+        // 🔥 LẤY THAM SỐ LỌC
+        String roleFilter = request.getParameter("roleFilter");
+        String dateSort = request.getParameter("dateSort");
+        String keyword = request.getParameter("keyword");
+        
+        // Lấy toàn bộ users
         List<User> users = userFacade.findAll();
+        
+        // 🔥 LỌC THEO VAI TRÒ
+        if (roleFilter != null && !roleFilter.trim().isEmpty()) {
+            users = users.stream()
+                    .filter(u -> u.getRoleID().getRoleName().equalsIgnoreCase(roleFilter))
+                    .collect(Collectors.toList());
+        }
+        
+        // 🔥 TÌM KIẾM THEO TÊN HOẶC EMAIL
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String keywordLower = keyword.trim().toLowerCase();
+            users = users.stream()
+                    .filter(u -> u.getFullName().toLowerCase().contains(keywordLower)
+                            || u.getEmail().toLowerCase().contains(keywordLower))
+                    .collect(Collectors.toList());
+        }
+        
+        // 🔥 SẮP XẾP THEO NGÀY TẠO
+        if (dateSort != null && !dateSort.trim().isEmpty()) {
+            if (dateSort.equals("newest")) {
+                // Mới nhất trước
+                users.sort(Comparator.comparing(User::getCreatedAt).reversed());
+            } else if (dateSort.equals("oldest")) {
+                // Cũ nhất trước
+                users.sort(Comparator.comparing(User::getCreatedAt));
+            }
+        }
         
         // 🔥 TẠO MAP ĐẾM SỐ ĐƠN HÀNG CHO MỖI USER
         Map<Integer, Long> orderCountMap = new HashMap<>();

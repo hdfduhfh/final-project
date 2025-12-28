@@ -1,123 +1,101 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack;
 
 import java.io.Serializable;
 import java.util.Date;
-import jakarta.persistence.Basic;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.NamedQueries;
-import jakarta.persistence.NamedQuery;
-import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
-/**
- *
- * @author DANG KHOA
- */
 @Entity
 @Table(name = "Recruitment", catalog = "BookingStageDB", schema = "dbo")
-@NamedQueries({
-    @NamedQuery(name = "Recruitment.findAll", query = "SELECT r FROM Recruitment r"),
-    @NamedQuery(name = "Recruitment.findByJobID", query = "SELECT r FROM Recruitment r WHERE r.jobID = :jobID"),
-    @NamedQuery(name = "Recruitment.findByDescription", query = "SELECT r FROM Recruitment r WHERE r.description = :description"),
-    @NamedQuery(name = "Recruitment.findByPostedAt", query = "SELECT r FROM Recruitment r WHERE r.postedAt = :postedAt")})
 public class Recruitment implements Serializable {
 
-    private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Basic(optional = false)
     @Column(name = "JobID", nullable = false)
     private Integer jobID;
-    @Basic(optional = false)
-    @Column(name = "Description", nullable = false, length = 2147483647)
-    private String description;
-    @Basic(optional = false)
-    @Column(name = "PostedAt", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date postedAt;
-    @JoinColumn(name = "UserID", referencedColumnName = "UserID", nullable = false)
+
     @ManyToOne(optional = false)
+    @JoinColumn(name = "UserID", referencedColumnName = "UserID", nullable = false)
     private User userID;
 
-    public Recruitment() {
-    }
+    @Basic(optional = false)
+    @NotNull
+    @Column(name = "IsDeleted", nullable = false)
+    private boolean isDeleted;
 
-    public Recruitment(Integer jobID) {
-        this.jobID = jobID;
-    }
+    @Column(name = "Title", length = 200)
+    private String title;
 
-    public Recruitment(Integer jobID, String description, Date postedAt) {
-        this.jobID = jobID;
-        this.description = description;
-        this.postedAt = postedAt;
-    }
+    @Column(name = "Description", nullable = false)
+    private String description;
 
-    public Integer getJobID() {
-        return jobID;
-    }
+    @Column(name = "Requirement")
+    private String requirement;
 
-    public void setJobID(Integer jobID) {
-        this.jobID = jobID;
-    }
+    @Column(name = "Location", length = 200)
+    private String location;
 
-    public String getDescription() {
-        return description;
-    }
+    @Column(name = "Salary", length = 100)
+    private String salary;
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    @Column(name = "Status", length = 50)
+    private String status; // Open/Closed
 
-    public Date getPostedAt() {
-        return postedAt;
-    }
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "PostedAt", nullable = false)
+    private Date postedAt;
 
-    public void setPostedAt(Date postedAt) {
-        this.postedAt = postedAt;
-    }
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "UpdatedAt")
+    private Date updatedAt;
 
-    public User getUserID() {
-        return userID;
-    }
+    @Temporal(TemporalType.DATE)
+    @Column(name = "Deadline")
+    private Date deadline;
 
-    public void setUserID(User userID) {
-        this.userID = userID;
-    }
+    @Column(name = "LogoUrl", length = 255)
+    private String logoUrl;
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (jobID != null ? jobID.hashCode() : 0);
-        return hash;
-    }
+    // Constructor
+    public Recruitment() {}
 
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof Recruitment)) {
-            return false;
-        }
-        Recruitment other = (Recruitment) object;
-        if ((this.jobID == null && other.jobID != null) || (this.jobID != null && !this.jobID.equals(other.jobID))) {
-            return false;
-        }
-        return true;
-    }
+    // Getter & Setter
+    public Integer getJobID() { return jobID; }
+    public void setJobID(Integer jobID) { this.jobID = jobID; }
 
-    @Override
-    public String toString() {
-        return "mypack.Recruitment[ jobID=" + jobID + " ]";
-    }
-    
+    public User getUserID() { return userID; }
+    public void setUserID(User userID) { this.userID = userID; }
+
+    public boolean getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(boolean isDeleted) { this.isDeleted = isDeleted; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getRequirement() { return requirement; }
+    public void setRequirement(String requirement) { this.requirement = requirement; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public String getSalary() { return salary; }
+    public void setSalary(String salary) { this.salary = salary; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Date getPostedAt() { return postedAt; }
+    public void setPostedAt(Date postedAt) { this.postedAt = postedAt; }
+
+    public Date getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Date updatedAt) { this.updatedAt = updatedAt; }
+
+    public Date getDeadline() { return deadline; }
+    public void setDeadline(Date deadline) { this.deadline = deadline; }
+
+    public String getLogoUrl() { return logoUrl; }
+    public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }
 }

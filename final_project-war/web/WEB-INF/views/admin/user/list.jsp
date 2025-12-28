@@ -13,8 +13,160 @@
         <!-- Font Awesome 6 -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
-        <!-- CSS riêng -->
-        <link href="${pageContext.request.contextPath}/assets/css/user-admin.css" rel="stylesheet">
+        <style>
+            :root{
+                --bg:#0b1220;
+                --panel:#0f1b33;
+                --card:#ffffff;
+                --muted:#8ea0c4;
+                --line:rgba(255,255,255,.08);
+                --primary:#4f46e5;
+                --danger:#ef4444;
+                --success:#22c55e;
+                --warning:#f59e0b;
+                --info:#06b6d4;
+            }
+
+            body{
+                background:
+                    radial-gradient(1200px 700px at 20% -10%, rgba(79,70,229,.28), transparent 55%),
+                    radial-gradient(900px 500px at 80% 0%, rgba(6,182,212,.22), transparent 60%),
+                    linear-gradient(180deg, var(--bg), #070b14);
+                min-height:100vh;
+                color:#e6ecff;
+                font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            }
+
+            .admin-wrap{
+                display:flex;
+                min-height:100vh;
+            }
+            
+            .sidebar{
+                width: 270px;
+                background: rgba(15,27,51,.86);
+                border-right: 1px solid var(--line);
+                backdrop-filter: blur(10px);
+                padding: 18px 14px;
+                position: sticky;
+                top:0;
+                height:100vh;
+            }
+            
+            .brand{
+                display:flex;
+                align-items:center;
+                gap:10px;
+                padding:10px 12px;
+                border-radius:14px;
+                background: rgba(255,255,255,.06);
+                border: 1px solid var(--line);
+            }
+            
+            .brand .logo{
+                width: 38px;
+                height: 38px;
+                border-radius: 12px;
+                display:grid;
+                place-items:center;
+                background: linear-gradient(135deg, rgba(79,70,229,.9), rgba(6,182,212,.9));
+                box-shadow: 0 14px 35px rgba(0,0,0,.35);
+            }
+            
+            .brand .title{
+                line-height: 1.1;
+                font-weight: 800;
+                letter-spacing: .2px;
+            }
+            
+            .brand small{
+                color: var(--muted);
+                font-weight: 600;
+            }
+
+            .content{
+                flex:1;
+                padding: 22px 22px 28px;
+            }
+
+            .topbar{
+                display:flex;
+                gap:12px;
+                align-items:center;
+                justify-content:space-between;
+                padding: 14px 16px;
+                border-radius: 18px;
+                background: rgba(255,255,255,.06);
+                border: 1px solid var(--line);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 18px 55px rgba(0,0,0,.35);
+            }
+            
+            .page-h h1{
+                font-size: 18px;
+                margin:0;
+                font-weight: 900;
+                letter-spacing:.2px;
+            }
+            
+            .page-h .crumb{
+                color: var(--muted);
+                font-weight: 600;
+                font-size: 12px;
+            }
+
+            .panel{
+                margin-top: 14px;
+                padding: 14px;
+                border-radius: 18px;
+                background: rgba(255,255,255,.06);
+                border: 1px solid var(--line);
+                backdrop-filter: blur(10px);
+            }
+
+            .table-wrap{
+                margin-top: 12px;
+                border-radius: 18px;
+                overflow: hidden;
+                background: rgba(255,255,255,.96);
+                box-shadow: 0 22px 70px rgba(0,0,0,.35);
+            }
+
+            table thead th{
+                background: #0f1b33 !important;
+                color: #e8efff !important;
+                border: none !important;
+                white-space: nowrap;
+                font-size: 13px;
+                letter-spacing: .2px;
+            }
+            
+            table tbody td{
+                color: #0b1220;
+                vertical-align: middle;
+            }
+
+            .badge-status{
+                font-weight: 800;
+                border-radius: 999px;
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .btn-icon{
+                width: 36px;
+                height: 36px;
+                display:inline-grid;
+                place-items:center;
+                border-radius: 12px;
+            }
+
+            @media (max-width: 992px){
+                .sidebar{
+                    display:none;
+                }
+            }
+        </style>
     </head>
 
     <body>
@@ -23,9 +175,9 @@
             <!-- SIDEBAR -->
             <aside class="sidebar">
                 <div class="brand">
-                    <div class="logo"><i class="fa-solid fa-masks-theater"></i></div>
+                    <div class="logo"><i class="fa-solid fa-users"></i></div>
                     <div>
-                        <div class="title">Theater Admin</div>
+                        <div class="title">User Admin</div>
                         <small>Quản lý người dùng</small>
                     </div>
                 </div>
@@ -72,7 +224,73 @@
                     </div>
                 </c:if>
 
-                <!-- PANEL -->
+                <!-- PANEL FILTERS -->
+                <div class="panel">
+                    <form method="get" action="${pageContext.request.contextPath}/admin/user">
+                        <div class="row g-3 align-items-end">
+                            <!-- Lọc theo vai trò -->
+                            <div class="col-md-3">
+                                <label class="form-label text-white fw-bold mb-2">
+                                    <i class="fa-solid fa-filter"></i> Vai trò
+                                </label>
+                                <select name="roleFilter" class="form-select">
+                                    <option value="">-- Tất cả vai trò --</option>
+                                    <option value="USER" ${param.roleFilter == 'USER' ? 'selected' : ''}>USER</option>
+                                    <option value="ADMIN" ${param.roleFilter == 'ADMIN' ? 'selected' : ''}>ADMIN</option>
+                                </select>
+                            </div>
+
+                            <!-- Lọc theo ngày tạo -->
+                            <div class="col-md-3">
+                                <label class="form-label text-white fw-bold mb-2">
+                                    <i class="fa-solid fa-sort"></i> Sắp xếp ngày tạo
+                                </label>
+                                <select name="dateSort" class="form-select">
+                                    <option value="">-- Mặc định --</option>
+                                    <option value="newest" ${param.dateSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                                    <option value="oldest" ${param.dateSort == 'oldest' ? 'selected' : ''}>Cũ nhất</option>
+                                </select>
+                            </div>
+
+                            <!-- Tìm kiếm theo tên/email -->
+                            <div class="col-md-4">
+                                <label class="form-label text-white fw-bold mb-2">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+                                </label>
+                                <input type="text" name="keyword" class="form-control" 
+                                       placeholder="Tên hoặc email..." 
+                                       value="${param.keyword}">
+                            </div>
+
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-warning w-100 fw-bold">
+                                    <i class="fa-solid fa-search"></i> Lọc
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hiển thị kết quả lọc -->
+                        <c:if test="${not empty param.roleFilter or not empty param.dateSort or not empty param.keyword}">
+                            <div class="mt-3 d-flex gap-2 align-items-center flex-wrap">
+                                <span class="text-white-50">Đang lọc:</span>
+                                <c:if test="${not empty param.roleFilter}">
+                                    <span class="badge bg-info">Vai trò: ${param.roleFilter}</span>
+                                </c:if>
+                                <c:if test="${not empty param.dateSort}">
+                                    <span class="badge bg-info">Ngày: ${param.dateSort == 'newest' ? 'Mới nhất' : 'Cũ nhất'}</span>
+                                </c:if>
+                                <c:if test="${not empty param.keyword}">
+                                    <span class="badge bg-info">Từ khóa: "${param.keyword}"</span>
+                                </c:if>
+                                <a href="${pageContext.request.contextPath}/admin/user" class="badge bg-danger text-decoration-none">
+                                    <i class="fa-solid fa-xmark"></i> Xóa bộ lọc
+                                </a>
+                            </div>
+                        </c:if>
+                    </form>
+                </div>
+
+                <!-- Thống kê -->
                 <div class="panel">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div class="fw-bold text-white-50">
@@ -88,33 +306,40 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead>
                                 <tr>
+                                    <th style="width:60px;">#</th>
                                     <th>Người dùng</th>
                                     <th>Email</th>
                                     <th>Vai trò</th>
-                                    <th>Đơn hàng</th> <!-- 🔥 CỘT MỚI -->
+                                    <th>Đơn hàng</th>
                                     <th>Ngày tạo</th>
-                                    <th style="width:220px;">Tác vụ</th>
+                                    <th style="width:170px;">Tác vụ</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <c:choose>
                                     <c:when test="${not empty users}">
-                                        <c:forEach var="u" items="${users}">
+                                        <c:forEach var="u" items="${users}" varStatus="loop">
                                             <c:set var="orderCount" value="${orderCountMap[u.userID]}" />
                                             <tr>
+                                                <td class="fw-bold">${loop.index + 1}</td>
+                                                
                                                 <td class="fw-bold">
-                                                    <i class="fa-solid fa-user text-secondary"></i> ${u.fullName}
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <i class="fa-solid fa-user-tie text-primary"></i>
+                                                        <span>${u.fullName}</span>
+                                                    </div>
                                                 </td>
+                                                
                                                 <td>
                                                     <i class="fa-regular fa-envelope text-secondary"></i> ${u.email}
                                                 </td>
+                                                
                                                 <td>
-                                                    <span class="badge text-bg-light border fw-bold">
+                                                    <span class="badge badge-status text-bg-light border">
                                                         <i class="fa-solid fa-id-badge"></i> ${u.roleID.roleName}
                                                     </span>
                                                 </td>
                                                 
-                                                <!-- 🔥 HIỂN THỊ SỐ ĐƠN HÀNG -->
                                                 <td>
                                                     <c:choose>
                                                         <c:when test="${orderCount > 0}">
@@ -134,6 +359,7 @@
                                                     <i class="fa-regular fa-clock text-secondary"></i>
                                                     <fmt:formatDate value="${u.createdAt}" pattern="dd/MM/yyyy"/>
                                                 </td>
+                                                
                                                 <td class="text-nowrap">
                                                     <!-- DETAIL -->
                                                     <button class="btn btn-info btn-icon"
@@ -169,9 +395,9 @@
                                     </c:when>
                                     <c:otherwise>
                                         <tr>
-                                            <td colspan="6" class="text-center py-5 text-secondary">
+                                            <td colspan="7" class="text-center py-5 text-secondary">
                                                 <i class="fa-regular fa-folder-open fa-lg"></i>
-                                                <div class="mt-2 fw-bold">Chưa có dữ liệu người dùng</div>
+                                                <div class="mt-2 fw-bold">Không tìm thấy người dùng nào.</div>
                                             </td>
                                         </tr>
                                     </c:otherwise>
@@ -251,7 +477,7 @@
                                 <h5 class="modal-title fw-bold">
                                     <i class="fa-solid fa-id-card text-info me-2"></i>Hồ sơ chi tiết
                                 </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
 
                             <div class="modal-body p-4">
@@ -263,7 +489,7 @@
 
                                 <div class="bg-light p-3 rounded-3">
                                     <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dee2e6;">
-                                        <span style="color: #6c757d;">ID Hệ thống:</span>
+                                        <span style="color: #6c757d;">ID:</span>
                                         <span class="text-secondary">#<span id="detailUserID"></span></span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dee2e6;">
@@ -274,18 +500,15 @@
                                         <span style="color: #6c757d;"><i class="fa-solid fa-phone me-2"></i>SĐT:</span>
                                         <span id="detailPhone">...</span>
                                     </div>
-                                    
-                                    <!-- 🔥 DÒNG ĐƠN HÀNG -->
                                     <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dee2e6;">
                                         <span style="color: #6c757d;"><i class="fa-solid fa-shopping-cart me-2"></i>Đơn hàng:</span>
                                         <span id="detailOrderCount" class="fw-bold">0 đơn</span>
                                     </div>
-                                    
                                     <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dee2e6;">
                                         <span style="color: #6c757d;"><i class="fa-regular fa-clock me-2"></i>Ngày tạo:</span>
                                         <span id="detailCreatedAt">...</span>
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: none;">
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0;">
                                         <span style="color: #6c757d;"><i class="fa-solid fa-right-to-bracket me-2"></i>Login cuối:</span>
                                         <span class="text-success fw-bold" id="detailLastLogin">...</span>
                                     </div>
@@ -363,8 +586,15 @@
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body text-dark">
-                                <p class="mb-2 fw-bold">Bạn có chắc muốn xóa người dùng này không?</p>
-                                <div class="alert alert-warning text-center fw-bold mb-0" id="deleteUserNameDisplay">...</div>
+                                <div class="d-flex align-items-start gap-3">
+                                    <div style="width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:rgba(239,68,68,.12);">
+                                        <i class="fa-solid fa-trash-can text-danger fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <p class="mb-2 fw-bold">Bạn có chắc muốn xóa người dùng này không?</p>
+                                        <div class="alert alert-warning text-center fw-bold mb-0" id="deleteUserNameDisplay">...</div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="modal-footer" style="border:none;">
                                 <button class="btn btn-outline-dark fw-bold" data-bs-dismiss="modal">
@@ -379,39 +609,74 @@
                 </div>
 
                 <form id="deleteUserForm" method="post" action="${pageContext.request.contextPath}/admin/user">
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="userID" id="inputDeleteUserId">
-                </form>
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="userID" id="inputDeleteUserId">
+            </form>
 
-                <!-- AUTO SHOW MODAL NẾU CÓ LỖI TỪ SERVER -->
-                <c:if test="${showCreateModal}">
-                    <script>
-                        window.addEventListener("load", function () {
-                            new bootstrap.Modal(document.getElementById('userCreateModal')).show();
-                        });
-                    </script>
-                </c:if>
+            <!-- AUTO SHOW MODAL NẾU CÓ LỖI TỪ SERVER -->
+            <c:if test="${showCreateModal}">
+                <script>
+                    window.addEventListener("load", function () {
+                        new bootstrap.Modal(document.getElementById('userCreateModal')).show();
+                    });
+                </script>
+            </c:if>
 
-                <c:if test="${showEditModal}">
-                    <script>
-                        window.addEventListener("load", function () {
-                            new bootstrap.Modal(document.getElementById('userEditModal')).show();
-                            document.getElementById("editUserID").value = '${editUserId}';
-                            document.getElementById("editFullName").value = '${editFullName}';
-                            document.getElementById("editEmail").value = '${editEmail}';
-                            document.getElementById("editPhone").value = '${editPhone}';
-                        });
-                    </script>
-                </c:if>
+            <c:if test="${showEditModal}">
+                <script>
+                    window.addEventListener("load", function () {
+                        new bootstrap.Modal(document.getElementById('userEditModal')).show();
+                        document.getElementById("editUserID").value = '${editUserId}';
+                        document.getElementById("editFullName").value = '${editFullName}';
+                        document.getElementById("editEmail").value = '${editEmail}';
+                        document.getElementById("editPhone").value = '${editPhone}';
+                    });
+                </script>
+            </c:if>
 
-            </main>
-        </div>
+        </main>
+    </div>
 
-        <!-- Bootstrap JS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
-        <!-- JS của bạn -->
-        <script src="${pageContext.request.contextPath}/js/user-admin.js"></script>
+    <script>
+        function showUserDetail(btn) {
+            document.getElementById('detailUserID').textContent = btn.getAttribute('data-id');
+            document.getElementById('detailFullName').textContent = btn.getAttribute('data-fullname');
+            document.getElementById('detailEmail').textContent = btn.getAttribute('data-email');
+            document.getElementById('detailPhone').textContent = btn.getAttribute('data-phone') || 'Chưa cập nhật';
+            document.getElementById('detailRole').textContent = btn.getAttribute('data-role');
+            document.getElementById('detailOrderCount').textContent = btn.getAttribute('data-ordercount') + ' đơn';
+            document.getElementById('detailCreatedAt').textContent = btn.getAttribute('data-created');
+            document.getElementById('detailLastLogin').textContent = btn.getAttribute('data-lastlogin');
+            
+            const name = btn.getAttribute('data-fullname');
+            document.getElementById('modalAvatar').textContent = name.charAt(0).toUpperCase();
+            
+            new bootstrap.Modal(document.getElementById('userDetailModal')).show();
+        }
 
-    </body>
+        function showUserEdit(id, name, email, phone) {
+            document.getElementById('editUserID').value = id;
+            document.getElementById('editFullName').value = name;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editPhone').value = phone || '';
+            new bootstrap.Modal(document.getElementById('userEditModal')).show();
+        }
+
+        function confirmDelete(userId, userName, role, orderCount) {
+            document.getElementById('inputDeleteUserId').value = userId;
+            document.getElementById('deleteUserNameDisplay').innerHTML = 
+                '<i class="fa-solid fa-user"></i> ' + userName + 
+                '<br><small>Vai trò: ' + role + ' | Đơn hàng: ' + orderCount + '</small>';
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+
+        function submitDeleteForm() {
+            document.getElementById('deleteUserForm').submit();
+        }
+    </script>
+
+</body>
 </html

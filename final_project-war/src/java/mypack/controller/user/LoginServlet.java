@@ -22,7 +22,7 @@ import mypack.ShowScheduleFacadeLocal;
 public class LoginServlet extends HttpServlet {
 
     @EJB
-    private Order1FacadeLocal orderFacade; 
+    private Order1FacadeLocal orderFacade;
 
     @EJB
     private UserFacadeLocal userFacade;
@@ -53,6 +53,9 @@ public class LoginServlet extends HttpServlet {
             out.print("{\"success\":false, \"message\":\"Sai thông tin đăng nhập!\"}");
             return;
         }
+        //CẬP NHẬT LAST LOGIN
+        user.setLastLogin(new java.util.Date());
+        userFacade.edit(user);
 
         // Lưu session
         HttpSession session = request.getSession();

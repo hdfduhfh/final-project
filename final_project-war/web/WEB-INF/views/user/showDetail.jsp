@@ -48,7 +48,7 @@
         border-radius: 16px;
         box-shadow: 0 15px 35px rgba(0,0,0,0.8);
         border: 1px solid rgba(212, 175, 55, 0.3);
-        cursor: none; 
+        cursor: none;
     }
 
     .poster-img {
@@ -103,7 +103,7 @@
         align-items: center;
         gap: 8px;
         border: 1px solid rgba(255,255,255,0.1);
-        
+
         /* --- BỔ SUNG FONT --- */
         font-family: 'Playfair Display', serif;
     }
@@ -177,7 +177,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        
+
         /* --- BẮT BUỘC PHẢI CÓ --- */
         font-family: 'Playfair Display', serif;
     }
@@ -199,6 +199,25 @@
             display: none !important;
         }
     }
+    .btn-view-reviews {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: transparent;
+    border: 2px solid var(--gold-primary);
+    color: var(--gold-primary);
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-view-reviews:hover {
+    background: var(--gold-primary);
+    color: #000;
+    transform: translateY(-2px);
+}
 </style>
 
 <c:if test="${not empty show}">
@@ -241,7 +260,7 @@
                 <div class="tag-item"><span>📅</span> <fmt:formatDate value="${show.createdAt}" pattern="dd/MM/yyyy" /></div>
             </div>
             <div class="description-box">${show.description}</div>
-            
+
             <div style="margin-top: 40px;">
                 <h3 style="color:#d4af37; margin-bottom:15px; font-family: 'Playfair Display', serif;">
                     🎭 Suất chiếu
@@ -255,7 +274,7 @@
 
                 <c:forEach items="${schedules}" var="sc">
                     <div class="tag-item" style="margin-bottom:10px;">
-                         🕒 
+                        🕒 
                         <fmt:formatDate value="${sc.showTime}" pattern="dd/MM/yyyy HH:mm"/>
                         &nbsp; | &nbsp;
 
@@ -273,7 +292,11 @@
                     </div>
                 </c:forEach>
             </div>
-
+            <a href="${pageContext.request.contextPath}/show-feedback?showId=${show.showID}" 
+               class="btn-view-reviews">
+                <i class="fa-solid fa-star"></i>
+                Xem đánh giá (${totalFeedback})
+            </a>
             <div class="action-bar">
                 <a href="${pageContext.request.contextPath}/seats/layout" class="btn-book">ĐẶT VÉ NGAY</a>
                 <a href="${pageContext.request.contextPath}/shows" class="btn-back">← Quay lại danh sách</a>
@@ -309,10 +332,14 @@
                 let lensX = x - (lens.offsetWidth / 2);
                 let lensY = y - (lens.offsetHeight / 2);
 
-                if (lensX > img.width - lens.offsetWidth) lensX = img.width - lens.offsetWidth;
-                if (lensX < 0) lensX = 0;
-                if (lensY > img.height - lens.offsetHeight) lensY = img.height - lens.offsetHeight;
-                if (lensY < 0) lensY = 0;
+                if (lensX > img.width - lens.offsetWidth)
+                    lensX = img.width - lens.offsetWidth;
+                if (lensX < 0)
+                    lensX = 0;
+                if (lensY > img.height - lens.offsetHeight)
+                    lensY = img.height - lens.offsetHeight;
+                if (lensY < 0)
+                    lensY = 0;
 
                 lens.style.left = lensX + 'px';
                 lens.style.top = lensY + 'px';

@@ -539,16 +539,23 @@
                                                     </a>
 
                                                     <c:if test="${order.status != 'CANCELLED' && order.cancellationRequested}">
-                                                        <form action="${pageContext.request.contextPath}/admin/orders"
-                                                              method="post" style="display:inline;">
+                                                        <button type="button"
+                                                                class="btn btn-danger btn-icon"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#confirmApproveCancelModal"
+                                                                data-order-id="${order.orderID}">
+                                                            <i class="fa-solid fa-check"></i> Duyệt hủy
+                                                        </button>
+
+                                                        <!-- form thật (ẩn) để submit bằng JS -->
+                                                        <form id="approveCancelForm-${order.orderID}"
+                                                              action="${pageContext.request.contextPath}/admin/orders"
+                                                              method="post" style="display:none;">
                                                             <input type="hidden" name="action" value="approveCancel">
                                                             <input type="hidden" name="orderId" value="${order.orderID}">
-                                                            <button type="submit" class="btn btn-danger btn-icon"
-                                                                    onclick="return confirm('Xác nhận duyệt yêu cầu hủy đơn hàng này?');">
-                                                                <i class="fa-solid fa-check"></i> Duyệt hủy
-                                                            </button>
                                                         </form>
                                                     </c:if>
+
                                                 </td>
                                             </tr>
                                         </c:forEach>
@@ -566,21 +573,79 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
-                                                                        function filterOrders() {
-                                                                            const statusFilter = document.getElementById('filterStatus').value;
-                                                                            const paymentFilter = document.getElementById('filterPayment').value;
-                                                                            const rows = document.querySelectorAll('#ordersTable tbody tr');
+                                function filterOrders() {
+                                    const statusFilter = document.getElementById('filterStatus').value;
+                                    const paymentFilter = document.getElementById('filterPayment').value;
+                                    const rows = document.querySelectorAll('#ordersTable tbody tr');
 
-                                                                            rows.forEach(row => {
-                                                                                const status = row.getAttribute('data-status');
-                                                                                const payment = row.getAttribute('data-payment');
+                                    rows.forEach(row => {
+                                        const status = row.getAttribute('data-status');
+                                        const payment = row.getAttribute('data-payment');
 
-                                                                                const statusMatch = !statusFilter || status === statusFilter;
-                                                                                const paymentMatch = !paymentFilter || payment === paymentFilter;
+                                        const statusMatch = !statusFilter || status === statusFilter;
+                                        const paymentMatch = !paymentFilter || payment === paymentFilter;
 
-                                                                                row.style.display = (statusMatch && paymentMatch) ? '' : 'none';
-                                                                            });
-                                                                        }
+                                        row.style.display = (statusMatch && paymentMatch) ? '' : 'none';
+                                    });
+                                }
         </script>
+        <!-- ====================== CONFIRM APPROVE CANCEL MODAL ====================== -->
+        <div class="modal fade" id="confirmApproveCancelModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>
+                            Duyệt yêu cầu hủy đơn hàng
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="alert alert-danger mb-0">
+                            Bạn có chắc chắn muốn <b>DUYỆT HỦY</b> đơn hàng
+                            <b id="cancelOrderIdText">#</b> không?
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-xmark me-1"></i> Hủy
+                        </button>
+                        <button type="button" id="btnConfirmApproveCancel" class="btn btn-danger">
+                            <i class="fa-solid fa-ban me-1"></i> Xác nhận duyệt hủy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            let selectedCancelOrderId = null;
+
+            const cancelModalEl = document.getElementById('confirmApproveCancelModal');
+            if (cancelModalEl) {
+                cancelModalEl.addEventListener('show.bs.modal', function (event) {
+                    const trigger = event.relatedTarget;
+                    selectedCancelOrderId = trigger.getAttribute('data-order-id');
+
+                    const txt = document.getElementById('cancelOrderIdText');
+                    if (txt)
+                        txt.textContent = '#' + selectedCancelOrderId;
+                });
+            }
+
+            const btnConfirm = document.getElementById('btnConfirmApproveCancel');
+            if (btnConfirm) {
+                btnConfirm.addEventListener('click', function () {
+                    if (!selectedCancelOrderId)
+                        return;
+
+                    const form = document.getElementById('approveCancelForm-' + selectedCancelOrderId);
+                    if (form)
+                        form.submit();
+                });
+            }
+        </script>
+
     </body>
 </html>

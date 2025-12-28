@@ -38,8 +38,20 @@ public class OrderManagementServlet extends HttpServlet {
 
                     if (order != null) {
                         List<OrderDetail> orderDetails = orderDetailFacade.findByOrderId(orderId);
+                        
+                        // ✅ CHECK: Đã có vé chưa?
+                        boolean hasTickets = false;
+                        for (OrderDetail detail : orderDetails) {
+                            List<Ticket> tickets = ticketFacade.findByOrderDetailId(detail.getOrderDetailID());
+                            if (!tickets.isEmpty()) {
+                                hasTickets = true;
+                                break;
+                            }
+                        }
+                        
                         request.setAttribute("order", order);
                         request.setAttribute("orderDetails", orderDetails);
+                        request.setAttribute("hasTickets", hasTickets); // ✅ THÊM FLAG
                         request.getRequestDispatcher("/WEB-INF/views/admin/orders/view.jsp")
                                 .forward(request, response);
                         return;
@@ -111,9 +123,15 @@ public class OrderManagementServlet extends HttpServlet {
 
                         // 4️⃣ Tắt cờ yêu cầu hủy
                         order.setCancellationRequested(false);
+                        
+                        // 5️⃣ Cập nhật thời gian
+                        order.setUpdatedAt(new Date());
 
-                        // 5️⃣ Lưu DB
+                        // 6️⃣ Lưu DB
                         orderFacade.edit(order);
+                        
+                        // 7️⃣ ✅ CẬP NHẬT TRẠNG THÁI VÉ THÀNH "CANCELLED"
+                        updateTicketsStatusToCancelled(orderId);
                     }
 
                     // Xử lý xong thì quay lại trang chi tiết đơn hàng đó
@@ -143,11 +161,11 @@ public class OrderManagementServlet extends HttpServlet {
                 Order1 order = orderFacade.find(orderId);
                 if (order != null) {
                     order.setStatus(status);
+                    order.setUpdatedAt(new Date());
                     orderFacade.edit(order);
-                    // Nếu CONFIRMED và PAID -> Tạo vé
-                    if ("CONFIRMED".equals(status) && "PAID".equals(order.getPaymentStatus())) {
-                        createTicketsForOrder(order);
-                    }
+                    
+                    // ✅ REMOVED: Không còn tạo vé thủ công nữa
+                    // Vé đã được tạo tự động ở CheckoutServlet
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -166,11 +184,10 @@ public class OrderManagementServlet extends HttpServlet {
                 Order1 order = orderFacade.find(orderId);
                 if (order != null) {
                     order.setPaymentStatus(paymentStatus);
+                    order.setUpdatedAt(new Date());
                     orderFacade.edit(order);
-                    // Nếu PAID và CONFIRMED -> Tạo vé
-                    if ("PAID".equals(paymentStatus) && "CONFIRMED".equals(order.getStatus())) {
-                        createTicketsForOrder(order);
-                    }
+                    
+                    // ✅ REMOVED: Không còn tạo vé thủ công nữa
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -186,8 +203,13 @@ public class OrderManagementServlet extends HttpServlet {
                 int orderId = Integer.parseInt(idParam);
                 Order1 order = orderFacade.find(orderId);
                 if (order != null) {
+                    // Xóa tickets trước
                     List<OrderDetail> orderDetails = orderDetailFacade.findByOrderId(orderId);
                     for (OrderDetail detail : orderDetails) {
+                        List<Ticket> tickets = ticketFacade.findByOrderDetailId(detail.getOrderDetailID());
+                        for (Ticket ticket : tickets) {
+                            ticketFacade.remove(ticket);
+                        }
                         orderDetailFacade.remove(detail);
                     }
                     orderFacade.remove(order);
@@ -198,22 +220,30 @@ public class OrderManagementServlet extends HttpServlet {
         }
         response.sendRedirect(request.getContextPath() + "/admin/orders");
     }
-
-    private void createTicketsForOrder(Order1 order) {
-        List<OrderDetail> details = orderDetailFacade.findByOrderId(order.getOrderID());
-        // order.setOrderDetailCollection(details); // Dòng này có thể không cần thiết nếu JPA tự load
-
-        for (OrderDetail detail : details) {
-            List<Ticket> existingTickets = ticketFacade.findByOrderDetailId(detail.getOrderDetailID());
-            if (existingTickets.isEmpty()) {
-                Ticket ticket = new Ticket();
-                ticket.setOrderDetailID(detail);
-                ticket.setQRCode("TK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-                ticket.setStatus("VALID");
-                ticket.setIssuedAt(new Date());
-                ticket.setCreatedAt(new Date());
-                ticketFacade.create(ticket);
+    
+    // ✅ PHƯƠNG THỨC MỚI: Cập nhật trạng thái vé khi đơn bị hủy
+    private void updateTicketsStatusToCancelled(int orderId) {
+        try {
+            List<OrderDetail> details = orderDetailFacade.findByOrderId(orderId);
+            
+            for (OrderDetail detail : details) {
+                List<Ticket> tickets = ticketFacade.findByOrderDetailId(detail.getOrderDetailID());
+                
+                for (Ticket ticket : tickets) {
+                    ticket.setStatus("CANCELLED");
+                    ticket.setUpdatedAt(new Date());
+                    ticketFacade.edit(ticket);
+                }
             }
+            
+            System.out.println("✅ Đã cập nhật trạng thái vé thành CANCELLED cho Order #" + orderId);
+            
+        } catch (Exception e) {
+            System.err.println("❌ LỖI khi cập nhật trạng thái vé: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
+    // ✅ REMOVED: Method createTicketsForOrder() đã không còn cần thiết
+    // Vé được tạo tự động ở CheckoutServlet ngay sau khi thanh toán thành công
 }

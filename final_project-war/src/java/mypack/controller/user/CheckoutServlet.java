@@ -9,10 +9,14 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import mypack.*;
 
 @WebServlet(name = "CheckoutServlet", urlPatterns = {"/checkout"})
 public class CheckoutServlet extends HttpServlet {
+
+    @EJB
+    private TicketFacadeLocal ticketFacade;
 
     @EJB
     private Order1FacadeLocal orderFacade;
@@ -36,11 +40,10 @@ public class CheckoutServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("user");
 
-        // 🔒 Chưa đăng nhập
         if (currentUser == null) {
             String requestedWith = request.getHeader("X-Requested-With");
             if ("XMLHttpRequest".equals(requestedWith)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
             request.setAttribute("showLoginModal", true);
@@ -48,20 +51,17 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        // Lấy giỏ hàng theo user
         List<CartItem> cart = (List<CartItem>) session.getAttribute("cart_user_" + currentUser.getUserID());
         if (cart == null || cart.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/cart");
             return;
         }
 
-        // Tính tổng tiền
         double total = 0;
         for (CartItem item : cart) {
             total += item.getPrice();
         }
 
-        // Lấy khuyến mãi active
         List<Promotion> activePromotions = new ArrayList<>();
         Date now = new Date();
         for (Promotion promo : promotionFacade.findAll()) {
@@ -100,9 +100,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         try {
-            // ---------------------------------------------------------
-            // 🛡️ SECURITY CHECK: KIỂM TRA TRẠNG THÁI GHẾ
-            // ---------------------------------------------------------
+            // SECURITY CHECK
             List<String> errorMessages = new ArrayList<>();
 
             for (CartItem item : cart) {
@@ -116,18 +114,16 @@ public class CheckoutServlet extends HttpServlet {
                 request.setAttribute("error", String.join("<br>", errorMessages));
                 setupCheckoutPageForError(request, cart, currentUser);
                 request.getRequestDispatcher("/WEB-INF/views/user/checkout.jsp").forward(request, response);
-                return; 
+                return;
             }
 
-            // Tổng tiền (Chuyển sang BigDecimal)
+            // Tổng tiền
             BigDecimal totalAmount = BigDecimal.ZERO;
             for (CartItem item : cart) {
                 totalAmount = totalAmount.add(BigDecimal.valueOf(item.getPrice()));
             }
 
-            // ---------------------------------------------------------
-            // 🧧 KHUYẾN MÃI (LOGIC ĐÃ FIX THEO ENTITY PROMOTION)
-            // ---------------------------------------------------------
+            // KHUYẾN MÃI
             BigDecimal discountAmount = BigDecimal.ZERO;
             Promotion appliedPromotion = null;
             String promotionIdStr = request.getParameter("promotionId");
@@ -137,33 +133,25 @@ public class CheckoutServlet extends HttpServlet {
                 appliedPromotion = promotionFacade.find(promoId);
 
                 if (appliedPromotion != null) {
-                    // Kiểm tra tính hợp lệ
                     if (promotionFacade.isPromotionValid(appliedPromotion, totalAmount, currentUser)) {
-                        
-                        // 🔥 [FIX] Sử dụng đúng getDiscountValue() và BigDecimal
-                        
-                        String type = appliedPromotion.getDiscountType(); // FIXED hoặc PERCENT
-                        BigDecimal value = appliedPromotion.getDiscountValue(); // Đã là BigDecimal
-                        BigDecimal maxDiscount = appliedPromotion.getMaxDiscount(); // Đã là BigDecimal (có thể null)
+
+                        String type = appliedPromotion.getDiscountType();
+                        BigDecimal value = appliedPromotion.getDiscountValue();
+                        BigDecimal maxDiscount = appliedPromotion.getMaxDiscount();
 
                         if ("FIXED".equals(type)) {
-                            // Giảm tiền trực tiếp
                             discountAmount = value;
-                        } 
-                        else if ("PERCENT".equals(type)) {
-                            // Giảm theo %: (Total * Value) / 100
+                        } else if ("PERCENT".equals(type)) {
                             discountAmount = totalAmount.multiply(value).divide(BigDecimal.valueOf(100));
 
-                            // Kiểm tra Max Discount (Vì là BigDecimal nên phải dùng compareTo và check null)
                             if (maxDiscount != null && maxDiscount.compareTo(BigDecimal.ZERO) > 0) {
                                 if (discountAmount.compareTo(maxDiscount) > 0) {
                                     discountAmount = maxDiscount;
                                 }
                             }
                         }
-                        
+
                     } else {
-                        // ❌ KHÔNG HỢP LỆ
                         request.setAttribute("error", "Mã giảm giá không hợp lệ, đã hết hạn hoặc bạn đã sử dụng hết lượt!");
                         setupCheckoutPageForError(request, cart, currentUser);
                         request.getRequestDispatcher("/WEB-INF/views/user/checkout.jsp").forward(request, response);
@@ -172,27 +160,30 @@ public class CheckoutServlet extends HttpServlet {
                 }
             }
 
-            // Tính số tiền cuối cùng (Final = Total - Discount)
             BigDecimal finalAmount = totalAmount.subtract(discountAmount);
             if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
                 finalAmount = BigDecimal.ZERO;
             }
 
-            // Phương thức thanh toán
             String paymentMethod = request.getParameter("paymentMethod");
-            if (paymentMethod == null || paymentMethod.isEmpty()) {
-                paymentMethod = "CASH";
+
+            // ✅ CHỈ CHO PHÉP ONLINE PAYMENT
+            if (paymentMethod == null || "CASH".equals(paymentMethod)) {
+                request.setAttribute("error", "Vui lòng chọn phương thức thanh toán online (VNPay/Momo/Banking)!");
+                setupCheckoutPageForError(request, cart, currentUser);
+                request.getRequestDispatcher("/WEB-INF/views/user/checkout.jsp").forward(request, response);
+                return;
             }
 
-            // 📦 Tạo Order
+            // ✅ TẠO ORDER VỚI TRẠNG THÁI PENDING/UNPAID
             Order1 order = new Order1();
             order.setUserID(currentUser);
             order.setTotalAmount(totalAmount);
             order.setDiscountAmount(discountAmount);
             order.setFinalAmount(finalAmount);
             order.setPaymentMethod(paymentMethod);
-            order.setPaymentStatus("PAID"); 
-            order.setStatus("PENDING"); 
+            order.setPaymentStatus("UNPAID");  // ⚡ Chưa thanh toán
+            order.setStatus("PENDING");        // ⚡ Đang chờ
             order.setCreatedAt(new Date());
 
             if (appliedPromotion != null) {
@@ -202,7 +193,7 @@ public class CheckoutServlet extends HttpServlet {
 
             orderFacade.create(order);
 
-            // OrderDetail
+            // ✅ TẠO ORDER DETAIL
             for (CartItem item : cart) {
                 Seat seat = seatFacade.find(item.getSeatID());
                 ShowSchedule schedule = showScheduleFacade.find(item.getScheduleID());
@@ -220,16 +211,37 @@ public class CheckoutServlet extends HttpServlet {
                 detail.setCreatedAt(new Date());
 
                 orderDetailFacade.create(detail);
+
+                Ticket ticket = new Ticket();
+                ticket.setOrderDetailID(detail);
+                ticket.setStatus("VALID");
+
+                String qrCode = "TICKET-"
+                        + order.getOrderID() + "-"
+                        + detail.getOrderDetailID() + "-"
+                        + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+                ticket.setQRCode(qrCode);
+
+                ticket.setIssuedAt(new Date());
+                ticket.setCreatedAt(new Date());
+
+                ticketFacade.create(ticket);
             }
 
-            // Xóa giỏ hàng
+            // ✅ LƯU ORDER ID VÀO SESSION ĐỂ CALLBACK XỬ LÝ
+            session.setAttribute("pending_order_id", order.getOrderID());
+
+            // Đánh dấu đơn đã thanh toán thành công
+            order.setPaymentStatus("PAID");
+            order.setStatus("CONFIRMED");
+            orderFacade.edit(order);
+
+// Xóa giỏ hàng
             session.removeAttribute("cart_user_" + currentUser.getUserID());
 
-            // Chuyển sang OrderConfirmationServlet
-            response.sendRedirect(
-                    request.getContextPath()
-                    + "/order/confirmation?orderId=" + order.getOrderID()
-            );
+// Chuyển sang trang xác nhận
+            response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + order.getOrderID());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -240,7 +252,6 @@ public class CheckoutServlet extends HttpServlet {
         }
     }
 
-    // Helper method
     private void setupCheckoutPageForError(HttpServletRequest request, List<CartItem> cart, User currentUser) {
         request.setAttribute("cartItems", cart);
 
@@ -251,7 +262,6 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("total", total);
         request.setAttribute("user", currentUser);
 
-        // Load lại Promotion
         List<Promotion> activePromotions = new ArrayList<>();
         Date now = new Date();
         for (Promotion promo : promotionFacade.findAll()) {

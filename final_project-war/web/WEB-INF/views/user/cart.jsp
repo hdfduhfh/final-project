@@ -11,314 +11,341 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
     
     <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+<style>
+/* ======================================================================
+   LUXURY CART STYLES (SYNCED WITH CHECKOUT)
+   Updated: Uniform Fonts & Gold Gradient Variables
+====================================================================== */
 
-    <style>
-        /* --- GIỮ NGUYÊN CSS CŨ --- */
-        body {
-            font-family: 'Roboto', sans-serif; 
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            color: #fff;
-            background-color: #050505;
-            background-image:
-                radial-gradient(circle at 50% 0%, rgba(255, 215, 0, 0.15) 0%, transparent 60%),
-                linear-gradient(0deg, #000000 0%, #1a1a1a 100%);
-            background-attachment: fixed;
-        }
+/* 1. ĐỒNG BỘ VARIABLES TỪ TRANG CHECKOUT */
+:root {
+    --gold-primary: #DFBD69;
+    --gold-gradient: linear-gradient(135deg, #DFBD69 0%, #99742E 100%); /* Chuẩn màu Checkout */
+    --gold-hover: #FFE08A;
+    --bg-dark: #0a0a0a;
+    --line-color: rgba(255, 255, 255, 0.15);
+    --font-title: 'Playfair Display', serif; /* Font Tiêu đề (Có chân) */
+    --font-body: 'Montserrat', sans-serif;   /* Font Nội dung (Không chân) */
+}
 
-        .main-wrapper { padding: 20px; }
+/* 2. CẤU TRÚC CƠ BẢN */
+body {
+    font-family: var(--font-body); /* Mặc định là Montserrat */
+    margin: 0; padding: 0;
+    min-height: 100vh;
+    color: #e0e0e0;
+    background-color: var(--bg-dark);
+    /* Đồng bộ background tối mờ ảo như Checkout */
+    background-image: radial-gradient(circle at top center, #1a1500 0%, #000000 70%); 
+    -webkit-font-smoothing: antialiased;
+}
 
-        .cart-container {
-            max-width: 1100px;
-            margin: 40px auto;
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-            animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
+.main-wrapper { 
+    max-width: 1200px; 
+    margin: 60px auto; /* Tăng margin cho thoáng giống checkout */
+    padding: 0 20px; 
+}
 
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+/* 3. HEADER */
+.cart-page-header {
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--line-color);
+    padding-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: end;
+}
+.cart-page-header h2 {
+    font-family: var(--font-title); /* Dùng Playfair cho tiêu đề lớn */
+    color: #fff;
+    font-size: 36px; margin: 0;
+    text-transform: uppercase; letter-spacing: 2px;
+}
+.sub-label {
+    margin:0; color: var(--gold-primary); font-size: 12px; letter-spacing: 2px; font-weight: 600; text-transform: uppercase;
+}
 
-        .cart-page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+/* --- LAYOUT 2 CỘT --- */
+.cart-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px; /* Cột bên phải rộng hơn chút để thoáng */
+    gap: 50px;
+    align-items: start;
+}
 
-        .cart-page-header h2 {
-            font-family: 'Playfair Display', serif; 
-            background: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #FFD700 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 42px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin: 0;
-        }
+/* --- TICKET CARD DESIGN --- */
+.ticket-list { display: flex; flex-direction: column; gap: 20px; }
 
-        .btn {
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Roboto', sans-serif;
-        }
+.ticket-card {
+    background: rgba(255, 255, 255, 0.03); /* Glass effect nhẹ */
+    border: 1px solid var(--line-color);
+    border-left: 4px solid var(--gold-primary);
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px;
+    position: relative;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
 
-        .btn-back {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #aaa;
-        }
-        .btn-back:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border-color: #fff;
-        }
+.ticket-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255,255,255,0.3);
+}
 
-        .btn-checkout {
-            background: linear-gradient(90deg, #FDB931 0%, #FFD700 50%, #FDB931 100%);
-            background-size: 200% auto;
-            color: #000;
-            border: none;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-            font-weight: 800;
-        }
-        .btn-checkout:hover {
-            background-position: right center;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
-            transform: translateY(-2px);
-        }
+/* Đường cắt vé ảo */
+.ticket-card::after {
+    content: '';
+    position: absolute;
+    right: 120px; top: -10px; bottom: -10px;
+    border-right: 2px dashed rgba(255,255,255,0.1);
+}
 
-        .btn-clear {
-            background: transparent;
-            color: #ff6b6b;
-            border: 1px solid rgba(220, 53, 69, 0.3);
-        }
-        .btn-clear:hover {
-            background: rgba(220, 53, 69, 0.1);
-            border-color: #ff6b6b;
-        }
+.ticket-info { flex: 1; padding-right: 20px; }
 
-        .table-responsive { overflow-x: auto; }
+.ticket-seat { 
+    font-family: var(--font-title); /* Ghế là đối tượng VIP -> Dùng Playfair */
+    font-size: 32px; color: #fff; font-weight: 700; margin-bottom: 5px; 
+}
 
-        .cart-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0 10px;
-            margin-bottom: 30px;
-        }
+.ticket-meta { 
+    font-family: var(--font-body);
+    font-size: 13px; color: #999; display: flex; gap: 15px; text-transform: uppercase; letter-spacing: 1px; 
+}
 
-        .cart-table th {
-            color: #FFD700;
-            font-family: 'Playfair Display', serif;
-            font-size: 16px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 15px 20px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-        }
+.ticket-type-badge {
+    display: inline-block; padding: 4px 10px; border-radius: 4px; 
+    font-family: var(--font-body);
+    font-size: 10px; font-weight: 700; text-transform: uppercase; margin-left: 10px; vertical-align: middle;
+    letter-spacing: 1px;
+}
+.ticket-type-badge.vip { background: rgba(223, 189, 105, 0.15); color: var(--gold-primary); border: 1px solid var(--gold-primary); }
+.ticket-type-badge.standard { background: rgba(255,255,255,0.1); color: #aaa; border: 1px solid rgba(255,255,255,0.2); }
 
-        .cart-table tbody tr {
-            background: rgba(255, 255, 255, 0.03);
-            transition: background 0.2s ease;
-        }
-        
-        .cart-table td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
-        .cart-table td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+.ticket-price-action {
+    width: 100px; text-align: right;
+    display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+    z-index: 2;
+}
+.ticket-price { 
+    font-family: var(--font-body); /* Giá tiền dùng Montserrat cho rõ số */
+    font-size: 20px; font-weight: 700; color: var(--gold-primary); margin-bottom: 8px; 
+}
 
-        .cart-table tbody tr:hover { background: rgba(255, 255, 255, 0.08); }
+.btn-remove-text {
+    color: #ff4757; font-size: 11px; text-decoration: none; 
+    text-transform: uppercase; font-weight: 600; padding: 5px 0;
+    transition: color 0.2s; letter-spacing: 0.5px;
+}
+.btn-remove-text:hover { color: #ff6b81; text-decoration: underline; }
 
-        .cart-table td {
-            padding: 20px;
-            color: #fff;
-            vertical-align: middle;
-            border: none;
-            font-size: 15px;
-        }
+/* --- SUMMARY BOX (GIỐNG ORDER SUMMARY BÊN CHECKOUT) --- */
+.cart-summary-box {
+    background: rgba(20, 20, 20, 0.6); /* Đồng bộ background box */
+    border: 1px solid var(--line-color);
+    border-radius: 8px;
+    padding: 30px;
+    position: sticky; top: 30px;
+    backdrop-filter: blur(10px);
+}
 
-        .seat-number {
-            font-family: 'Playfair Display', serif;
-            font-size: 26px;
-            font-weight: 700;
-            color: #FFD700;
-        }
+.summary-title { 
+    font-family: var(--font-title); /* Tiêu đề box dùng Playfair */
+    font-size: 20px; color: #fff; text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 25px; border-bottom: 1px solid var(--line-color); padding-bottom: 15px; 
+}
 
-        .seat-type {
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .seat-type.vip {
-            background: rgba(255, 215, 0, 0.15);
-            color: #FFD700;
-            border: 1px solid rgba(255, 215, 0, 0.4);
-        }
-        .seat-type.normal { background: rgba(255, 255, 255, 0.1); color: #ccc; }
+.summary-row { display: flex; justify-content: space-between; margin-bottom: 18px; font-size: 14px; color: #ccc; }
+.summary-row span:first-child { text-transform: uppercase; font-size: 12px; letter-spacing: 1px; color: #999; }
+.summary-row span:last-child { color: #fff; font-weight: 600; }
 
-        .show-name { font-weight: 500; font-size: 16px; }
-        .price-tag { font-size: 18px; font-weight: 700; color: #fff; font-family: 'Roboto', sans-serif; }
+.summary-total { 
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); 
+}
+.summary-total span:first-child { 
+    font-family: var(--font-title); /* Chữ "TỔNG CỘNG" dùng Playfair cho sang */
+    font-size: 16px; color: #fff; text-transform: uppercase; letter-spacing: 1px;
+}
+.summary-total span:last-child { 
+    font-family: var(--font-body); /* Số tiền dùng Montserrat */
+    font-size: 24px; color: var(--gold-primary); font-weight: 800; 
+}
 
-        .btn-remove-icon {
-            width: 36px; height: 36px; border-radius: 50%;
-            background: rgba(255, 255, 255, 0.08);
-            color: #bbb; display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s; text-decoration: none; border: 1px solid rgba(255, 255, 255, 0.1);
-            cursor: pointer;
-        }
-        .btn-remove-icon:hover { background: #ff4757; color: white; border-color: #ff4757; }
+/* --- BUTTON THANH TOÁN (COPY TỪ CHECKOUT .btn-primary) --- */
+.btn-checkout-full {
+    width: 100%; display: block; text-align: center;
+    background: var(--gold-gradient); /* Gradient chuẩn */
+    color: #000; 
+    font-family: var(--font-body); /* QUAN TRỌNG: Dùng Montserrat để không bị lỗi font */
+    font-weight: 800; font-size: 15px; letter-spacing: 1.5px;
+    padding: 18px; border-radius: 4px; border: none;
+    text-decoration: none; text-transform: uppercase; margin-top: 25px;
+    cursor: pointer;
+    box-shadow: 0 4px 25px rgba(223, 189, 105, 0.4); /* Glow effect */
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.btn-checkout-full:hover { 
+    transform: translateY(-2px); 
+    background: linear-gradient(135deg, #FFE08A 0%, #D4A050 100%);
+    box-shadow: 0 6px 30px rgba(223, 189, 105, 0.6); 
+}
 
-        .cart-summary {
-            background: linear-gradient(to right, rgba(255, 255, 255, 0.02), rgba(255, 215, 0, 0.05));
-            padding: 30px; border-radius: 16px; margin-bottom: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
+.btn-clear-text { 
+    display: block; text-align: center; margin-top: 20px; 
+    color: #666; font-size: 11px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px;
+    transition: color 0.3s;
+}
+.btn-clear-text:hover { color: #999; }
 
-        .summary-row {
-            display: flex; justify-content: space-between; align-items: center; padding: 12px 0; color: #ccc;
-        }
+/* Responsive */
+@media (max-width: 900px) {
+    .cart-layout { grid-template-columns: 1fr; }
+    .ticket-card::after { display: none; }
+    .cart-summary-box { position: static; margin-top: 30px; }
+}
 
-        .summary-row.total {
-            margin-top: 15px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .summary-row.total span:first-child {
-            font-family: 'Playfair Display', serif; font-size: 20px;
-            text-transform: uppercase; letter-spacing: 2px; color: #fff;
-        }
-        .summary-row.total .total-price {
-            font-size: 36px; font-weight: 700; color: #FFD700; font-family: 'Roboto', sans-serif;
-        }
+/* --- PAGINATION (UPDATED TO MATCH VARS) --- */
+.pagination-container {
+    display: flex; justify-content: center; gap: 8px;
+    margin-top: 30px; padding-top: 20px;
+    border-top: 1px dashed var(--line-color);
+}
+.page-btn {
+    min-width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ccc; border-radius: 4px; cursor: pointer;
+    font-family: var(--font-body); font-size: 14px; font-weight: 600;
+    transition: all 0.3s ease;
+}
+.page-btn:hover {
+    border-color: var(--gold-primary); color: var(--gold-primary);
+    background: rgba(223, 189, 105, 0.1);
+}
+.page-btn.active {
+    background: var(--gold-gradient);
+    color: #000; border-color: transparent;
+    box-shadow: 0 0 10px rgba(223, 189, 105, 0.3); font-weight: 800;
+}
+.page-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: transparent; }
 
-        .cart-actions { display: flex; gap: 20px; justify-content: flex-end; align-items: center; }
+/* Animation cho Pagination */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-        /* SweetAlert Style Override */
-        .swal2-popup {
-            background: #1a1a1a !important;
-            border: 1px solid rgba(255, 215, 0, 0.3) !important;
-            border-radius: 16px !important;
-        }
-        .swal2-title { color: #FFD700 !important; font-family: 'Playfair Display', serif !important; }
-        .swal2-html-container { color: #ddd !important; }
-        .swal2-confirm {
-            background: linear-gradient(90deg, #FDB931 0%, #FFD700 100%) !important;
-            color: #000 !important; font-weight: bold !important;
-        }
-
-        @media (max-width: 768px) {
-            .cart-container { padding: 20px; margin: 15px; }
-            .cart-actions { flex-direction: column-reverse; }
-            .btn { width: 100%; justify-content: center; }
-        }
-    </style>
+/* SWEETALERT OVERRIDE (Cho đồng bộ popup) */
+div:where(.swal2-container) div:where(.swal2-popup) {
+    background: #141414 !important;
+    border: 1px solid var(--gold-primary) !important;
+}
+div:where(.swal2-container) h2:where(.swal2-title) {
+    color: var(--gold-primary) !important;
+    font-family: var(--font-title) !important;
+}
+div:where(.swal2-container) button.swal2-confirm {
+    background: var(--gold-gradient) !important;
+    color: #000 !important; font-weight: bold !important;
+}
+</style>
 </head>
 <body>
     <jsp:include page="/WEB-INF/views/layout/header.jsp"/>
 
     <div class="main-wrapper">
-        <div class="cart-container">
-            <div class="cart-page-header">
-                <h2>🛒 Giỏ hàng của bạn</h2>
-                <a href="${pageContext.request.contextPath}/seats/layout<c:if test='${not empty cartItems and cartItems.size() > 0}'>?scheduleId=${cartItems[0].scheduleID}</c:if>" 
-                   class="btn btn-back">
-                        ← Chọn thêm ghế
-                </a>
+        <div class="cart-page-header">
+            <div>
+                <p style="margin:0; color:#888; font-size:12px; letter-spacing:1px;">BOOKING STAGE</p>
+                <h2>Giỏ hàng của bạn</h2>
             </div>
-
-            <c:choose>
-                <c:when test="${empty cartItems or cartItems.size() == 0}">
-                    <div class="empty-cart" style="text-align: center; padding: 60px 0;">
-                        <h3 style="font-family: 'Playfair Display', serif; font-size: 24px;">Giỏ hàng đang trống</h3>
-                        <p style="color: #888; margin-bottom: 30px;">Bạn chưa chọn vị trí nào cho đêm diễn tuyệt vời này.</p>
-                        <a href="${pageContext.request.contextPath}/seats/layout" class="btn btn-checkout">Đặt ghế ngay</a>
-                    </div>
-                </c:when>
-                <c:otherwise>
-                    <div class="table-responsive">
-                        <table class="cart-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Số ghế</th>
-                                    <th>Loại ghế</th>
-                                    <th>Suất diễn</th>
-                                    <th>Giá vé</th>
-                                    <th style="text-align: center;">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach var="item" items="${cartItems}" varStatus="status">
-                                    <tr>
-                                        <td style="color: #666;">${status.index + 1}</td>
-                                        <td><div class="seat-number">${item.seatNumber}</div></td>
-                                        <td>
-                                            <span class="seat-type ${item.seatType == 'VIP' ? 'vip' : 'normal'}">
-                                                ${item.seatType == 'VIP' ? '👑 VIP' : '🪑 Standard'}
-                                            </span>
-                                        </td>
-                                        <td><span class="show-name">${item.showName}</span></td>
-                                        <td><span class="price-tag"><fmt:formatNumber value="${item.price}" type="number" maxFractionDigits="0"/> đ</span></td>
-                                        <td style="text-align: center; display: flex; justify-content: center;">
-                                            <a href="${pageContext.request.contextPath}/cart?action=remove&index=${status.index}" 
-                                               class="btn-remove-icon"
-                                               onclick="confirmDelete(event, this.href, '${item.seatNumber}')">
-                                                ✕
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="cart-summary">
-                        <div class="summary-row">
-                            <span>Số lượng ghế:</span>
-                            <span><strong>${cartItems.size()}</strong> vé</span>
-                        </div>
-                        <div class="summary-row total">
-                            <span>TỔNG CỘNG:</span>
-                            <span><span class="total-price"><fmt:formatNumber value="${total}" type="number" maxFractionDigits="0"/> đ</span></span>
-                        </div>
-                    </div>
-
-                    <div class="cart-actions">
-                        <a href="${pageContext.request.contextPath}/cart?action=clear" 
-                           class="btn btn-clear"
-                           onclick="confirmClear(event, this.href)">
-                            🗑️ Xóa tất cả
-                        </a>
-                        <button class="btn btn-checkout" onclick="goCheckout()">💳 THANH TOÁN NGAY</button>
-                    </div>
-                </c:otherwise>
-            </c:choose>
+            <a href="${pageContext.request.contextPath}/seats/layout<c:if test='${not empty cartItems and cartItems.size() > 0}'>?scheduleId=${cartItems[0].scheduleID}</c:if>" class="btn-back" style="color:#aaa; text-decoration:none; font-size:14px;">
+                + Chọn thêm ghế
+            </a>
         </div>
+
+        <c:choose>
+            <c:when test="${empty cartItems or cartItems.size() == 0}">
+                <div style="text-align: center; padding: 100px 0; color: #555;">
+                    <p style="font-size: 60px; margin:0;">🎫</p>
+                    <h3 style="color: #fff; margin: 20px 0 10px;">Chưa có vé nào</h3>
+                    <p>Hãy chọn cho mình một vị trí đẹp nhất.</p>
+                </div>
+            </c:when>
+            <c:otherwise>
+                
+                <div class="cart-layout">
+                    
+                    <div class="ticket-list">
+                        <c:forEach var="item" items="${cartItems}" varStatus="status">
+                            <div class="ticket-card">                       
+                                <div class="ticket-info">
+                                    <div class="ticket-seat">
+                                        ${item.seatNumber}
+                                        <span class="ticket-type-badge ${item.seatType == 'VIP' ? 'vip' : 'standard'}">
+                                            ${item.seatType}
+                                        </span>
+                                    </div>
+                                    <div class="ticket-meta">
+                                        <span>Show: ${item.showName}</span>
+                                    </div>
+                                    
+                                </div>
+                                    
+                                
+                                <div class="ticket-price-action">
+                                    <div class="ticket-price">
+                                        <fmt:formatNumber value="${item.price}" type="number" maxFractionDigits="0"/> đ
+                                    </div>
+                                    <a href="${pageContext.request.contextPath}/cart?action=remove&index=${status.index}" 
+                                       class="btn-remove-text"
+                                       onclick="confirmDelete(event, this.href, '${item.seatNumber}')">
+                                       Xóa vé
+                                    </a>
+                                </div>
+                            </div>
+                        </c:forEach>
+                        <div id="pagination" class="pagination-container"></div>
+                    </div>
+                    
+
+                    <div class="cart-summary-box">
+                        <div class="summary-title">Thông tin thanh toán</div>
+                        <div class="summary-row">
+                            <span>Số lượng vé</span>
+                            <span>${cartItems.size()} vé</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Tạm tính</span>
+                            <span><fmt:formatNumber value="${total}" type="number" maxFractionDigits="0"/> đ</span>
+                        </div>
+                        <div class="summary-total">
+                            <span>TỔNG CỘNG</span>
+                            <span><fmt:formatNumber value="${total}" type="number" maxFractionDigits="0"/> đ</span>
+                        </div>
+
+                        <button class="btn-checkout-full" onclick="goCheckout()">
+                            TIẾP TỤC THANH TOÁN
+                        </button>
+                        
+                        <a href="${pageContext.request.contextPath}/cart?action=clear" 
+                           class="btn-clear-text"
+                           onclick="confirmClear(event, this.href)">
+                           Xóa toàn bộ giỏ hàng
+                        </a>
+                    </div>
+                </div>
+
+            </c:otherwise>
+        </c:choose>
     </div>
 
     <script>
@@ -413,7 +440,112 @@
             });
         }
     </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // CẤU HÌNH
+        const itemsPerPage = 5; // Số lượng vé hiển thị trên 1 trang
+        const ticketList = document.querySelectorAll('.ticket-card'); // Lấy tất cả thẻ vé
+        const paginationContainer = document.getElementById('pagination');
+        let currentPage = 1;
+        const totalItems = ticketList.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
 
+        // Hàm hiển thị đúng trang
+        function showPage(page) {
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+
+            ticketList.forEach((item, index) => {
+                if (index >= start && index < end) {
+                    item.style.display = 'flex'; // Hiển thị vé (dùng flex vì CSS cũ là flex)
+                    // Thêm animation nhẹ cho mượt
+                    item.style.animation = 'fadeIn 0.5s ease';
+                } else {
+                    item.style.display = 'none'; // Ẩn vé không thuộc trang này
+                }
+            });
+            
+            // Cập nhật trạng thái nút Active
+            updateButtons(page);
+        }
+
+        // Hàm tạo nút bấm
+        function setupPagination() {
+            // Nếu ít vé quá (chỉ 1 trang) thì ẩn luôn thanh phân trang cho đẹp
+            if (totalPages <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+
+            paginationContainer.innerHTML = ""; // Xóa cũ
+
+            // Nút Previous (<)
+            const prevBtn = document.createElement('button');
+            prevBtn.innerText = '❮';
+            prevBtn.classList.add('page-btn');
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    showPage(currentPage);
+                }
+            };
+            paginationContainer.appendChild(prevBtn);
+
+            // Các nút số (1, 2, 3...)
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                btn.classList.add('page-btn');
+                if (i === currentPage) btn.classList.add('active');
+
+                btn.addEventListener('click', function () {
+                    currentPage = i;
+                    showPage(currentPage);
+                });
+                
+                paginationContainer.appendChild(btn);
+            }
+
+            // Nút Next (>)
+            const nextBtn = document.createElement('button');
+            nextBtn.innerText = '❯';
+            nextBtn.classList.add('page-btn');
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    showPage(currentPage);
+                }
+            };
+            paginationContainer.appendChild(nextBtn);
+        }
+
+        function updateButtons(activePage) {
+            const buttons = paginationContainer.querySelectorAll('.page-btn');
+            // Cập nhật class active cho nút số
+            // Nút số bắt đầu từ index 1 (vì index 0 là nút Prev)
+            buttons.forEach((btn, index) => {
+                btn.classList.remove('active');
+                // Logic để tìm đúng nút số và active nó
+                if (btn.innerText == activePage) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // CHẠY LẦN ĐẦU
+        if (totalItems > 0) {
+            setupPagination();
+            showPage(1);
+        }
+    });
+</script>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
     <script src="${pageContext.request.contextPath}/js/main.js"></script>
     <script src="${pageContext.request.contextPath}/js/auth.js"></script>
 </body> 

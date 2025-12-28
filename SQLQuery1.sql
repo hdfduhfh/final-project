@@ -254,5 +254,44 @@ ADD CancellationRequested BIT DEFAULT 0,
 ALTER TABLE dbo.[Order]
 ADD RefundAmount DECIMAL(12,2) NOT NULL DEFAULT 0;
 
+ALTER TABLE dbo.News
+ADD Slug NVARCHAR(200) NOT NULL UNIQUE,       -- slug duy nhất
+    Summary NVARCHAR(500) NULL,               -- tóm tắt
+    ThumbnailUrl NVARCHAR(300) NULL,          -- ảnh thumbnail
+    Status NVARCHAR(50) NOT NULL DEFAULT('Draft'), -- trạng thái
+    IsDeleted BIT NOT NULL DEFAULT(0),        -- soft delete
+    PublishDate DATETIME NULL;
 
+ALTER TABLE dbo.Recruitment
+ADD Title NVARCHAR(200) NOT NULL DEFAULT(''),
+    Location NVARCHAR(200) NULL,
+    Status NVARCHAR(50) NOT NULL DEFAULT('Open'),
+    UpdatedAt DATETIME NULL,
+    IsDeleted BIT NOT NULL DEFAULT(0),
+    Requirement NVARCHAR(MAX) NULL,
+    Salary NVARCHAR(100) NULL;
 
+    ALTER TABLE dbo.Recruitment
+ADD Deadline DATE NULL;
+ALTER TABLE dbo.Recruitment
+ADD LogoUrl NVARCHAR(255) NULL;
+CREATE TABLE Application (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    FullName NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(100) NOT NULL,
+    Phone NVARCHAR(20),
+    CvUrl NVARCHAR(255),
+    CoverLetter NVARCHAR(MAX),
+    AppliedAt DATETIME DEFAULT GETDATE(),
+    JobId INT NOT NULL,
+    CONSTRAINT FK_Application_Recruitment FOREIGN KEY (JobId)
+        REFERENCES Recruitment(JobID)
+);
+ALTER TABLE Application
+DROP COLUMN CoverLetter;
+
+-- Đổi tên cột JobId thành JobID
+EXEC sp_rename 'Application.JobId', 'JobID', 'COLUMN';
+
+ALTER TABLE Application
+ADD status NVARCHAR(20) DEFAULT 'Pending';

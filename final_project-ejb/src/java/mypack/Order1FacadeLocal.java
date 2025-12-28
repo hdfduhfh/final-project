@@ -42,4 +42,7 @@ public interface Order1FacadeLocal {
     List<Order1> findPaidOrders();
 
     List<Object[]> getRevenueByDate();
+
+
+    boolean hasUserPurchasedSchedule(User user, ShowSchedule schedule);
 }

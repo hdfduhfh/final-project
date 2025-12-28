@@ -115,4 +115,42 @@ public class Order1Facade extends AbstractFacade<Order1> implements Order1Facade
             return new java.util.ArrayList<>(); // Trả về list rỗng để không crash web
         }
     }
+
+/**
+ * Kiểm tra user đã mua vé cho schedule này chưa (và đã thanh toán)
+     * @param user
+     * @param schedule
+     * @return 
+ */
+@Override
+public boolean hasUserPurchasedSchedule(User user, ShowSchedule schedule) {
+    try {
+        // ✅ CHECK CẢ PAYMENT_STATUS VÀ STATUS
+        Long count = em.createQuery(
+            "SELECT COUNT(od) FROM OrderDetail od " +
+            "WHERE od.orderID.userID = :user " +
+            "AND od.scheduleID = :schedule " +
+            "AND od.orderID.paymentStatus = 'PAID' " +
+            "AND od.orderID.status = 'CONFIRMED'",
+            Long.class
+        )
+        .setParameter("user", user)
+        .setParameter("schedule", schedule)
+        .getSingleResult();
+        
+        System.out.println("=== FEEDBACK PURCHASE CHECK ===");
+        System.out.println("User ID: " + user.getUserID());
+        System.out.println("User Name: " + user.getFullName());
+        System.out.println("Schedule ID: " + schedule.getScheduleID());
+        System.out.println("Show Name: " + schedule.getShowID().getShowName());
+        System.out.println("Purchase Count: " + count);
+        System.out.println("Has Purchased: " + (count > 0));
+        
+        return count > 0;
+    } catch (Exception e) {
+        System.err.println("❌ Error in hasUserPurchasedSchedule:");
+        e.printStackTrace();
+        return false;
+    }
+}
 }

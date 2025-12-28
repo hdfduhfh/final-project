@@ -37,8 +37,8 @@
                 </li>
 
 
-                <li class="nav-item"><a href="${pageContext.request.contextPath}/news">Tin tức</a></li>
-                <li class="nav-item"><a href="${pageContext.request.contextPath}/recruitment">Tuyển dụng</a></li>
+                <li class="nav-item"><a href="${pageContext.request.contextPath}/new">Tin tức</a></li>
+                <li class="nav-item"><a href="${pageContext.request.contextPath}/job">Tuyển dụng</a></li>
             </ul>
         </nav>
 

@@ -10,6 +10,47 @@
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/user.css">
+        <style>
+            /* CSS Bổ sung cho phần Thống kê */
+            .stats-container {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 25px;
+                gap: 15px;
+            }
+            .stat-box {
+                flex: 1;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 15px;
+                text-align: center;
+            }
+            .stat-value {
+                display: block;
+                font-family: 'Playfair Display', serif;
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: #d4af37;
+                margin-bottom: 5px;
+            }
+            .stat-label {
+                font-size: 0.8rem;
+                color: #aaa;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            .btn-edit {
+                margin-top: 10px;
+                font-size: 0.9rem;
+                color: #aaa;
+                text-decoration: underline;
+                cursor: pointer;
+                background: none;
+                border: none;
+            }
+            .btn-edit:hover { color: #fff; }
+        </style>
     </head>
     <body>
         <jsp:useBean id="now" class="java.util.Date" />
@@ -28,7 +69,7 @@
                 <div class="profile-header">
                     <div class="avatar-wrapper">
                         <div class="avatar">
-                            <i class="fa-solid fa-user-tie"></i>
+                            <c:out value="${sessionScope.user.fullName.substring(0, 1).toUpperCase()}" default="U"/>
                         </div>
                         <div class="avatar-ring"></div>
                     </div>
@@ -45,6 +86,36 @@
                 </div>
 
                 <div class="profile-body">
+                    
+                    <c:set var="totalSpent" value="0" />
+                    <c:set var="totalTickets" value="0" />
+                    <c:if test="${not empty orders}">
+                        <c:forEach var="order" items="${orders}">
+                            <c:if test="${order.status == 'CONFIRMED' || order.status == 'PAID'}">
+                                <c:set var="totalSpent" value="${totalSpent + order.finalAmount}" />
+                                <c:set var="totalTickets" value="${totalTickets + order.orderDetailCollection.size()}" />
+                            </c:if>
+                        </c:forEach>
+                    </c:if>
+
+                    <div class="stats-container">
+                        <div class="stat-box">
+                            <span class="stat-value">
+                                <fmt:formatNumber value="${totalSpent}" type="number" maxFractionDigits="0"/> đ
+                            </span>
+                            <span class="stat-label">Tổng Chi Tiêu</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-value">${totalTickets}</span>
+                            <span class="stat-label">Vé Đã Mua</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-value">
+                                <fmt:formatNumber value="${totalSpent / 10000}" type="number" maxFractionDigits="0"/>
+                            </span>
+                            <span class="stat-label">Điểm Thưởng</span>
+                        </div>
+                    </div>
                     <h3>
                         <i class="fa-solid fa-address-card" style="color: #d4af37;"></i>
                         Thông tin tài khoản
@@ -56,22 +127,37 @@
                     </div>
 
                     <div class="info-row">
-                        <span class="info-label">Email đăng ký</span>
+                        <span class="info-label">Email</span>
                         <span class="info-value">${sessionScope.user.email}</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="info-label">Số điện thoại</span>
+                        <span class="info-value">
+                            <c:choose>
+                                <c:when test="${not empty sessionScope.user.phone}">
+                                    ${sessionScope.user.phone}
+                                </c:when>
+                                <c:otherwise>
+                                    <span style="color: #777; font-style: italic;">Chưa cập nhật</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </span>
                     </div>
 
                     <div class="info-row">
                         <span class="info-label">Trạng thái</span>
                         <span class="info-value" style="color: #4cd137;">● Đang hoạt động</span>
                     </div>
-
-                    <div class="ticket-section-container">
+                   
+                    <div class="ticket-section-container" style="margin-top: 30px;">
                         <h3>
                             <i class="fa-solid fa-ticket" style="color: #d4af37;"></i>
-                            Vé đã mua
+                            Lịch sử mua vé
                         </h3>
 
-                        <div class="ticket-list-wrapper"> <c:choose>
+                        <div class="ticket-list-wrapper">
+                            <c:choose>
                                 <c:when test="${not empty orders}">
                                     <c:forEach var="order" items="${orders}">
                                         <c:forEach var="detail" items="${order.orderDetailCollection}">
@@ -94,52 +180,24 @@
                                                     <div class="ticket-detail">
                                                         <i class="fa-solid fa-couch"></i>
                                                         Ghế: <strong>${detail.seatID.seatNumber}</strong>
-
-                                                        <c:if test="${!detail.seatID.isActive}">
-                                                            <div class="seat-warning" style="margin-top: 8px; padding: 8px; background: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; border-radius: 4px; color: #e74c3c; font-size: 0.85rem;">
-                                                                <i class="fa-solid fa-triangle-exclamation"></i> 
-                                                                <strong>Cảnh báo:</strong> Ghế này đang bảo trì/hỏng.
-                                                                <div style="margin-top: 4px; font-size: 0.8rem; color: #c0392b;">
-                                                                    Vui lòng liên hệ nhân viên để đổi ghế mới.
-                                                                </div>
-                                                            </div>
-                                                        </c:if>
                                                     </div>
 
                                                     <div class="ticket-status">
                                                         <c:choose>
-                                                            <%-- TRƯỜNG HỢP VÉ ĐÃ THANH TOÁN THÀNH CÔNG --%>
                                                             <c:when test="${order.status == 'CONFIRMED'}">
-                                                                <c:choose>
-                                                                    <%-- Logic mới: Nếu giờ chiếu nhỏ hơn (<) giờ hiện tại (now) -> Đã hết hạn --%>
-                                                                    <c:when test="${detail.scheduleID.showTime lt now}">
-                                                                        <span style="color: #95a5a6; font-weight: bold;">
-                                                                            <i class="fa-solid fa-clock-rotate-left" style="color:#95a5a6; width:auto;"></i> Đã chiếu
-                                                                        </span>
-                                                                    </c:when>
-
-                                                                    <%-- Ngược lại: Vẫn còn hạn sử dụng -> Thành công --%>
-                                                                    <c:otherwise>
-                                                                        <span style="color: #4cd137; font-weight: bold;">
-                                                                            <i class="fa-solid fa-check-circle" style="color:#4cd137; width:auto;"></i> Thành công
-                                                                        </span>
-                                                                    </c:otherwise>
-                                                                </c:choose>
-                                                            </c:when>
-
-                                                            <%-- CÁC TRƯỜNG HỢP KHÁC (Hủy, Pending...) GIỮ NGUYÊN --%>
-                                                            <c:when test="${order.status == 'CANCELLED'}">
-                                                                <span style="color: #e74c3c;">
-                                                                    <i class="fa-solid fa-times-circle" style="color:#e74c3c; width:auto;"></i> Đã hủy
+                                                                <span style="color: #4cd137;">
+                                                                    <i class="fa-solid fa-check-circle"></i> Thành công
                                                                 </span>
                                                             </c:when>
-                                                            <c:when test="${order.status == 'PENDING'}">
-                                                                <span style="color: #f39c12;">
-                                                                    <i class="fa-solid fa-hourglass-half" style="color:#f39c12; width:auto;"></i> Chờ xử lý
+                                                            <c:when test="${order.status == 'CANCELLED'}">
+                                                                <span style="color: #e74c3c;">
+                                                                    <i class="fa-solid fa-times-circle"></i> Đã hủy
                                                                 </span>
                                                             </c:when>
                                                             <c:otherwise>
-                                                                <span style="color: #95a5a6;">● N/A</span>
+                                                                <span style="color: #f39c12;">
+                                                                    <i class="fa-solid fa-hourglass-half"></i> Chờ xử lý
+                                                                </span>
                                                             </c:otherwise>
                                                         </c:choose>
                                                     </div>
@@ -166,7 +224,8 @@
                             </c:choose>
                         </div>
                     </div>
-                    <div class="actions">
+                    
+                    <div class="actions" style="margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
                         <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-gold">
                             <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
                         </a>

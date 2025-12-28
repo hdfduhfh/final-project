@@ -538,30 +538,59 @@
 
                 <!-- ACTIONS -->
                 <div class="actions">
-                    <c:if test="${order.status == 'PENDING' && order.paymentStatus == 'PAID'}">
+
+                    <c:if test="${hasTickets}">
+                        <div class="alert alert-success">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <strong>Vé đã được tạo tự động!</strong> 
+                            Khách hàng đã nhận được vé qua email.
+                        </div>
+                    </c:if>
+
+                    <c:if test="${!hasTickets && order.paymentStatus == 'PAID'}">
+                        <div class="alert alert-warning">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                            <strong>Đang xử lý...</strong> 
+                            Vé sẽ được tạo tự động khi thanh toán hoàn tất.
+                        </div>
+                    </c:if>
+
+                    <!-- Nút xác nhận chỉ dùng để đổi status, KHÔNG TẠO VÉ NỮA -->
+                    <c:if test="${order.status == 'PENDING'}">
                         <a href="${pageContext.request.contextPath}/admin/orders?action=updateStatus&id=${order.orderID}&status=CONFIRMED"
                            class="btn btn-success btn-strong"
-                           onclick="return confirm('✅ Xác nhận đơn hàng này?\n\nVé sẽ được tạo ngay lập tức!')">
-                            <i class="fa-solid fa-circle-check"></i> XÁC NHẬN & TẠO VÉ
+                           onclick="return confirm('Xác nhận đơn hàng này?')">
+                            <i class="fa-solid fa-check"></i> XÁC NHẬN ĐỠN HÀNG
                         </a>
                     </c:if>
 
                     <c:if test="${order.paymentStatus != 'PAID'}">
-                        <a href="${pageContext.request.contextPath}/admin/orders?action=updatePaymentStatus&id=${order.orderID}&paymentStatus=PAID"
+                        <!-- Cái này bạn có thể giữ confirm() hoặc làm modal tương tự.
+                             Mình để luôn modal cho đồng bộ -->
+                        <a href="#"
                            class="btn btn-success btn-strong"
-                           onclick="return confirm('Xác nhận đơn hàng này đã thanh toán?')">
+                           data-bs-toggle="modal"
+                           data-bs-target="#confirmMarkPaidModal"
+                           data-confirm-url="${pageContext.request.contextPath}/admin/orders?action=updatePaymentStatus&id=${order.orderID}&paymentStatus=PAID">
                             <i class="fa-solid fa-money-check-dollar"></i> Xác nhận đã thanh toán
                         </a>
                     </c:if>
 
                     <c:if test="${order.status != 'CANCELLED' && order.cancellationRequested}">
-                        <form action="${pageContext.request.contextPath}/admin/orders" method="post" style="display:inline;">
+                        <button type="button"
+                                class="btn btn-danger btn-strong"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmApproveCancelModal">
+                            <i class="fa-solid fa-ban"></i> DUYỆT YÊU CẦU HỦY
+                        </button>
+
+                        <!-- form thật (ẩn) để submit khi bấm xác nhận trong modal -->
+                        <form id="approveCancelForm"
+                              action="${pageContext.request.contextPath}/admin/orders"
+                              method="post"
+                              style="display:none;">
                             <input type="hidden" name="action" value="approveCancel">
                             <input type="hidden" name="orderId" value="${order.orderID}">
-                            <button type="submit" class="btn btn-danger btn-strong"
-                                    onclick="return confirm('⚠️ Duyệt yêu cầu hủy và hoàn vé này?');">
-                                <i class="fa-solid fa-ban"></i> DUYỆT YÊU CẦU HỦY
-                            </button>
                         </form>
                     </c:if>
 
@@ -570,11 +599,144 @@
                     </a>
                 </div>
 
+
             </main>
         </div>
 
         <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- ====================== BOOTSTRAP CONFIRM MODALS ====================== -->
+
+        <!-- Modal: Xác nhận & tạo vé -->
+        <div class="modal fade" id="confirmCreateTicketModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fa-solid fa-circle-check text-success me-2"></i>
+                            Xác nhận & tạo vé
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="alert alert-info mb-0">
+                            Bạn có chắc chắn muốn <b>XÁC NHẬN</b> đơn hàng này?<br>
+                            Sau khi xác nhận, hệ thống sẽ <b>tạo vé ngay lập tức</b>.
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-xmark me-1"></i> Hủy
+                        </button>
+                        <a id="btnConfirmCreateTicket" href="#" class="btn btn-success">
+                            <i class="fa-solid fa-check me-1"></i> Xác nhận
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Xác nhận đã thanh toán -->
+        <div class="modal fade" id="confirmMarkPaidModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fa-solid fa-money-check-dollar text-success me-2"></i>
+                            Xác nhận đã thanh toán
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="alert alert-warning mb-0">
+                            Bạn có chắc chắn muốn đánh dấu đơn hàng này là <b>ĐÃ THANH TOÁN</b>?
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-xmark me-1"></i> Hủy
+                        </button>
+                        <a id="btnConfirmMarkPaid" href="#" class="btn btn-success">
+                            <i class="fa-solid fa-check me-1"></i> Xác nhận
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Duyệt yêu cầu hủy -->
+        <div class="modal fade" id="confirmApproveCancelModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>
+                            Duyệt yêu cầu hủy
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="alert alert-danger">
+                            Bạn có chắc chắn muốn <b>DUYỆT HỦY</b> đơn hàng này?
+                        </div>
+
+                        <c:if test="${order.cancellationRequested}">
+                            <div class="mt-2">
+                                <div class="fw-bold mb-1">Lý do hủy:</div>
+                                <div class="p-2 rounded bg-light text-dark">
+                                    ${order.cancellationReason}
+                                </div>
+                            </div>
+                        </c:if>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-xmark me-1"></i> Hủy
+                        </button>
+                        <button type="button" id="btnConfirmApproveCancel" class="btn btn-danger">
+                            <i class="fa-solid fa-ban me-1"></i> Duyệt hủy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+           // Gán URL vào nút confirm của modal "Tạo vé"
+           const createTicketModal = document.getElementById('confirmCreateTicketModal');
+           if (createTicketModal) {
+               createTicketModal.addEventListener('show.bs.modal', function (event) {
+                   const trigger = event.relatedTarget;
+                   const url = trigger.getAttribute('data-confirm-url');
+                   document.getElementById('btnConfirmCreateTicket').setAttribute('href', url);
+               });
+           }
+
+           // Gán URL vào nút confirm của modal "Đã thanh toán"
+           const markPaidModal = document.getElementById('confirmMarkPaidModal');
+           if (markPaidModal) {
+               markPaidModal.addEventListener('show.bs.modal', function (event) {
+                   const trigger = event.relatedTarget;
+                   const url = trigger.getAttribute('data-confirm-url');
+                   document.getElementById('btnConfirmMarkPaid').setAttribute('href', url);
+               });
+           }
+
+           // Submit form "approveCancel" khi bấm nút trong modal
+           const btnApproveCancel = document.getElementById('btnConfirmApproveCancel');
+           if (btnApproveCancel) {
+               btnApproveCancel.addEventListener('click', function () {
+                   const form = document.getElementById('approveCancelForm');
+                   if (form)
+                       form.submit();
+               });
+           }
+        </script>
 
     </body>
 </html>

@@ -148,7 +148,7 @@
                 <p class="hero-desc" data-aos="fade-up" data-aos-delay="200" data-aos-duration="1000">Rạp hát sang trọng, đẳng cấp, với AI đồng hành hỗ trợ bạn mọi lúc.</p>
                 <div data-aos="fade-up" data-aos-delay="400">
                     <a class="btn-gold" href="${pageContext.request.contextPath}/shows">Đặt vé ngay</a>
-                    <a class="btn-outline" href="${pageContext.request.contextPath}/schedule">Xem lịch diễn</a>
+                    <a class="btn-outline" href="${pageContext.request.contextPath}/showSchedule">Xem lịch diễn</a>
                 </div>
             </div>
         </section>

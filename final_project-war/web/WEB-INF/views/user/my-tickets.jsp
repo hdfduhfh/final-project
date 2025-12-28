@@ -3,255 +3,294 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Vé của tôi</title>
+    <title>Vé của tôi | BookingStage</title>
+    
+    <!-- Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        h1 { color: #667eea; margin-bottom: 20px; }
-        
-        .order-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .ticket-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #667eea; }
-        
-        .status-badge { padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block;}
-        .status-confirmed { background: #d4edda; color: #155724; }
-        .status-pending { background: #fff3cd; color: #856404; }
-        .status-cancelled { background: #f8d7da; color: #721c24; }
-        .status-request { background: #cce5ff; color: #004085; }
-
-        .btn-cancel {
-            background-color: #ff4d4d; color: white; border: none; padding: 6px 12px;
-            border-radius: 20px; cursor: pointer; margin-left: 10px; font-size: 0.9em; transition: 0.3s;
-        }
-        .btn-cancel:hover { background-color: #cc0000; }
-
-        /* --- MODAL --- */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
-        .modal-hidden { display: none !important; }
-        
-        .modal-content {
-            background-color: #fff; padding: 25px; border-radius: 12px; width: 500px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative;
-        }
-        
-        .close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #aaa; }
-        
-        /* CSS cho bảng tính tiền trong Modal */
-        .calc-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
-        .calc-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; }
-        .calc-row.total { border-top: 1px solid #ddd; padding-top: 8px; font-weight: bold; font-size: 1.1em; color: #2d3436; }
-        .calc-row.discount { color: #27ae60; }
-        .calc-row.fee { color: #d63031; }
-        .calc-row.refund { color: #0984e3; font-size: 1.2em; font-weight: bold; margin-top: 5px; }
-
-        .policy-note { font-size: 0.85em; color: #666; font-style: italic; margin-top: 10px; }
-        
-        textarea { width: 100%; height: 80px; margin: 10px 0; padding: 10px; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box;}
-        .btn-confirm { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; }
-        .btn-confirm:disabled { background: #ccc; cursor: not-allowed; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+    
+    <!-- ✅ LINK CSS -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/my-ticket.css">
 </head>
 <body>
+
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h1>🎫 Vé của tôi</h1>
-            <a href="${pageContext.request.contextPath}/" style="text-decoration: none; color: #667eea;">← Về trang chủ</a>
+        <div class="page-header">
+            <h1>Vé Của Tôi</h1>
+            <a href="${pageContext.request.contextPath}/" class="home-btn">
+                <i class="fa-solid fa-arrow-left"></i> Trang Chủ
+            </a>
         </div>
 
-        <c:choose>
-            <c:when test="${empty orders}">
-                <div style="text-align: center; padding: 40px;">
-                    <h3>Bạn chưa đặt vé nào.</h3>
-                    <a href="${pageContext.request.contextPath}/seats/layout" style="color: white; background: #667eea; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Đặt vé ngay</a>
-                </div>
-            </c:when>
-            <c:otherwise>
-                <c:forEach var="order" items="${orders}">
-                    
-                    <c:set var="originalTotal" value="0" />
-                    <c:forEach var="detail" items="${order.orderDetailCollection}">
-                        <c:set var="originalTotal" value="${originalTotal + detail.price}" />
-                    </c:forEach>
-                    
-                    <c:set var="firstDetail" value="${order.orderDetailCollection[0]}" />
+        <div class="ticket-list" id="ticketList">
+            <c:choose>
+                <c:when test="${empty orders}">
+                    <div style="text-align: center; padding: 80px 20px; color: #777;">
+                        <i class="fa-solid fa-film" style="font-size: 4em; margin-bottom: 25px; opacity: 0.3; color: var(--gold-primary);"></i>
+                        <h3 style="font-family: 'Playfair Display'; color: #ccc;">Bạn chưa có vé nào</h3>
+                        <a href="${pageContext.request.contextPath}/" style="display: inline-block; padding: 12px 30px; background: var(--gold-gradient); color: #000; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 20px;">Đặt vé ngay</a>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <jsp:useBean id="now" class="java.util.Date" />
 
-                    <div class="order-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
-                            <div>
-                                <strong>Đơn hàng #${order.orderID}</strong> 
-                                <span style="color: #777; font-size: 0.9em;">
-                                    (<fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm"/>)
-                                </span>
-                            </div>
-                            
-                            <div>
-                                <c:choose>
-                                    <c:when test="${order.status == 'CANCELLED'}">
-                                        <span class="status-badge status-cancelled">🚫 Đã hủy</span>
-                                    </c:when>
-                                    <c:when test="${order.cancellationRequested}">
-                                        <span class="status-badge status-request">⏳ Đang chờ duyệt</span>
-                                    </c:when>
-                                    <c:when test="${order.status == 'CONFIRMED'}">
-                                        <span class="status-badge status-confirmed">✓ Đã thanh toán</span>
-                                        
-                                        <button class="btn-cancel" 
-                                                onclick="openCancelModal(
-                                                    ${order.orderID}, 
-                                                    ${firstDetail.scheduleID.showTime.time}, 
-                                                    ${originalTotal}, 
-                                                    ${order.finalAmount}
-                                                )">
-                                            <i class="fa-solid fa-ban"></i> Yêu cầu hủy
-                                        </button>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <span class="status-badge status-pending">⏳ Chờ xử lý</span>
-                                    </c:otherwise>
-                                </c:choose>
-                            </div>
-                        </div>
-
+                    <c:forEach var="order" items="${orders}">
+                        <c:set var="firstDetail" value="${order.orderDetailCollection[0]}" />
+                        
+                        <c:set var="originalTotal" value="0" />
                         <c:forEach var="detail" items="${order.orderDetailCollection}">
-                            <div class="ticket-item">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <div>
-                                        <strong>Phim: ${detail.scheduleID.showID.showName}</strong><br/>
-                                        <small><i class="fa-regular fa-clock"></i> <fmt:formatDate value="${detail.scheduleID.showTime}" pattern="HH:mm dd/MM/yyyy"/></small>
+                            <c:set var="originalTotal" value="${originalTotal + detail.price}" />
+                        </c:forEach>
+
+                        <c:set var="showTimeMillis" value="${firstDetail.scheduleID.showTime.time}" />
+                        <c:set var="nowMillis" value="${now.time}" />
+                        <c:set var="diffMinutes" value="${(showTimeMillis - nowMillis) / (1000 * 60)}" />
+
+                        <c:set var="seatListString" value="" />
+                        <c:set var="hasBrokenSeat" value="false" />
+                        
+                        <c:forEach var="detail" items="${order.orderDetailCollection}" varStatus="loop">
+                            <c:set var="seatListString" value="${seatListString}${detail.seatID.seatNumber}${!loop.last ? ', ' : ''}" />
+                            <c:if test="${!detail.seatID.isActive}">
+                                <c:set var="hasBrokenSeat" value="true" />
+                            </c:if>
+                        </c:forEach>
+
+                        <c:set var="qrDate">
+                            <fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="dd/MM/yyyy HH:mm"/>
+                        </c:set>
+                        <c:set var="isoShowTime">
+                            <fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="yyyy-MM-dd'T'HH:mm:ss"/>
+                        </c:set>
+
+                        <c:set var="rawQrString" value="#${firstDetail.scheduleID.scheduleID}TICKET-${order.orderID}-${firstDetail.orderDetailID} ${firstDetail.scheduleID.showID.showName} ${qrDate} ${firstDetail.seatID.seatNumber} ${sessionScope.user.fullName} VALID" />
+                        
+                        <c:url value="https://api.qrserver.com/v1/create-qr-code/" var="encodedQrUrl">
+                            <c:param name="size" value="160x160"/>
+                            <c:param name="charset-source" value="UTF-8"/>
+                            <c:param name="data" value="${rawQrString}"/>
+                        </c:url>
+
+                        <div class="ticket-card">
+                            <div class="ticket-accent"></div>
+                            <div class="ticket-content">
+                                <div class="ticket-info">
+                                    <c:if test="${order.status == 'CONFIRMED'}">
+                                        <c:if test="${diffMinutes <= 0 && diffMinutes > -120}">
+                                            <div class="badge-live" style="background: #2ecc71; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; display: inline-block; margin-bottom: 5px;">
+                                                <i class="fa-solid fa-video"></i> Đang chiếu
+                                            </div>
+                                        </c:if>
+                                    </c:if>
+
+                                    <h3>${firstDetail.scheduleID.showID.showName}</h3>
+
+                                    <div class="meta-row">
+                                        <span class="meta-item">
+                                            <i class="fa-regular fa-clock"></i> 
+                                            <fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="HH:mm dd/MM/yyyy"/>
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="fa-solid fa-chair"></i> ${seatListString}
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="fa-solid fa-hashtag"></i> #${order.orderID}
+                                        </span>
                                     </div>
-                                    <div style="text-align: right;">
-                                        Ghế: <strong>${detail.seatID.seatNumber}</strong> 
-                                        <c:if test="${detail.seatID.seatType == 'VIP'}"><span style="color:gold">★VIP</span></c:if>
-                                        <br/>
-                                        <span style="color: #666; font-size: 0.9em;">Giá vé: <fmt:formatNumber value="${detail.price}" type="number" maxFractionDigits="0"/> đ</span>
-                                    </div>
-                                </div>
-                                <c:forEach var="ticket" items="${detail.ticketCollection}">
-                                    <c:if test="${not empty ticket.QRCode}">
-                                        <div style="margin-top: 10px; font-size: 0.85em; color: #555;">
-                                            <i class="fa-solid fa-qrcode"></i> QR: ${ticket.QRCode}
+
+                                    <c:if test="${hasBrokenSeat}">
+                                        <div class="seat-warning">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> 
+                                            <strong>Cảnh báo:</strong> Đơn hàng này có ghế đang bảo trì/hỏng.
+                                            <div class="warning-text">
+                                                Vui lòng liên hệ nhân viên tại quầy để được hỗ trợ đổi ghế mới.
+                                            </div>
                                         </div>
                                     </c:if>
-                                </c:forEach>
+                                </div>
+
+                                <div class="ticket-actions">
+                                    <div class="price-tag">
+                                        <fmt:formatNumber value="${order.finalAmount}" type="number" maxFractionDigits="0"/> đ
+                                    </div>
+                                    
+                                    <c:choose>
+                                        <c:when test="${order.status == 'CANCELLED'}">
+                                            <span class="status-badge st-cancel">Đã hủy</span>
+                                        </c:when>
+                                        <c:when test="${order.cancellationRequested}">
+                                            <span class="status-badge st-pending">Chờ hủy</span>
+                                        </c:when>
+                                        <c:when test="${order.status == 'CONFIRMED'}">
+                                            <button class="btn-view-ticket" 
+                                                    onclick="openViewTicketModal(
+                                                        '${firstDetail.scheduleID.showID.showName}',
+                                                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="dd/MM/yyyy"/>',
+                                                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="HH:mm"/>',
+                                                        '${seatListString}',
+                                                        '${order.orderDetailCollection.size()}',
+                                                        '${encodedQrUrl}',
+                                                        '${isoShowTime}'
+                                                    )">
+                                                <i class="fa-solid fa-ticket"></i> Xem vé
+                                            </button>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="status-badge st-pending">Chờ xử lý</span>
+                                        </c:otherwise>
+                                    </c:choose>
+
+                                    <!-- ✅ CÁC NÚT THAO TÁC -->
+                                    <c:if test="${order.status == 'CONFIRMED'}">
+                                        <!-- Nút Hủy vé -->
+                                        <button class="btn-action btn-cancel-req" 
+                                                onclick="openCancelModal(${order.orderID}, ${showTimeMillis}, ${originalTotal}, ${order.finalAmount})">
+                                            Hủy
+                                        </button>
+                                        
+                                        <!-- ✅ NÚT ĐÁNH GIÁ - Chỉ hiện SAU KHI XEM XONG -->
+                                        <c:if test="${diffMinutes < 0}">
+                                            <button class="btn-action btn-feedback" 
+                                                    onclick="openFeedbackModal(${firstDetail.scheduleID.scheduleID}, '${firstDetail.scheduleID.showID.showName}')">
+                                                <i class="fa-solid fa-star"></i> Đánh giá
+                                            </button>
+                                        </c:if>
+                                    </c:if>
+                                </div>
                             </div>
-                        </c:forEach>
-                        
-                        <div style="text-align: right; margin-top: 10px;">
-                            <c:if test="${originalTotal > order.finalAmount}">
-                                <span style="text-decoration: line-through; color: #999; margin-right: 10px;">
-                                    <fmt:formatNumber value="${originalTotal}" type="number" maxFractionDigits="0"/> đ
-                                </span>
-                            </c:if>
-                            Thực trả: <strong style="font-size: 1.2em; color: #d63031;"><fmt:formatNumber value="${order.finalAmount}" type="number" maxFractionDigits="0"/> đ</strong>
                         </div>
-                    </div>
-                </c:forEach>
-            </c:otherwise>
-        </c:choose>
+                    </c:forEach>
+                </c:otherwise>
+            </c:choose>
+        </div>
+
+        <div id="pagination" class="pagination"></div>
     </div>
 
-    <div id="cancelModal" class="modal modal-hidden">
-        <div class="modal-content">
-            <span class="close" onclick="closeCancelModal()">&times;</span>
-            <h3 style="margin-top: 0; color: #d63031;">⚠️ Yêu cầu hủy vé</h3>
-            
-            <div id="modalBody">
+    <!-- ===== VIEW TICKET MODAL ===== -->
+    <div id="viewTicketModal" class="modal">
+        <div style="position: relative;">
+            <div class="close-ticket" onclick="closeViewTicketModal()">&times;</div>
+            <div class="ticket-visual">
+                <div class="ticket-top">
+                    <div class="movie-title" id="tktShowName">TÊN PHIM</div>
+                    <div class="cinema-name">BOOKING STAGE CINEMA</div>
                 </div>
+                <div class="ticket-body">
+                    <div style="color: #555; font-size: 13px; margin-bottom: 10px; font-style: italic;">
+                        Quét mã này tại quầy soát vé
+                    </div>
+                    <div class="qr-placeholder">
+                        <img id="tktQrImage" src="" alt="QR Ticket">
+                    </div>
+                    <div class="seat-info">
+                        <div class="seat-box">
+                            <div>NGÀY</div>
+                            <div id="tktDate">--/--</div>
+                        </div>
+                        <div class="seat-box">
+                            <div>GIỜ</div>
+                            <div id="tktTime">--:--</div>
+                        </div>
+                        <div class="seat-box">
+                            <div>SỐ VÉ</div>
+                            <div id="tktCount">0</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 14px; font-weight: 600; color: #333;">
+                        Ghế: <span id="tktSeats" style="color: #000;"></span>
+                    </div>
+                    <div class="countdown-box">
+                        <div>Sắp tới giờ chiếu!</div>
+                        <div id="tktCountdown" class="countdown-timer">--:--:--</div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 11px; color: #aaa;">
+                        Vui lòng đến trước giờ chiếu 15 phút.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <form id="cancelForm" action="${pageContext.request.contextPath}/user/tickets" method="post" style="display:none;">
+    <!-- ===== CANCEL MODAL ===== -->
+    <div id="cancelModal" class="modal">
+        <div class="cancel-content">
+            <span onclick="closeCancelModal()" style="position:absolute; right:20px; top:15px; cursor:pointer; font-size:24px; color: #777;">&times;</span>
+            <h3 style="color: #ff6b6b; margin-top:0; font-family: 'Playfair Display';">
+                ⚠️ Yêu cầu hủy vé
+            </h3>
+            <div id="modalBody"></div>
+            <form id="cancelForm" action="${pageContext.request.contextPath}/my-tickets" method="post" style="display:none;">
                 <input type="hidden" name="action" value="requestCancel">
                 <input type="hidden" name="orderId" id="modalOrderId">
-                <label style="font-weight: bold;">Lý do hủy:</label>
-                <textarea name="reason" placeholder="Nhập lý do hủy vé..." required></textarea>
-                <button type="submit" class="btn-confirm">Xác nhận Hủy & Chịu phí</button>
+                <p style="margin-bottom:8px; color: #ccc;">Lý do hủy:</p>
+                <textarea name="reason" placeholder="Nhập lý do..." required></textarea>
+                <button type="submit" class="btn-confirm">Xác nhận</button>
             </form>
         </div>
     </div>
-<script>
-    // Định dạng tiền tệ kiểu Việt Nam (thay thế cho hàm JS cũ)
-    function formatVND(num) {
-        return num.toLocaleString('vi-VN', {style : 'currency', currency : 'VND'});
-    }
 
-    function openCancelModal(orderId, showTimeMillis, originalTotal, finalPaid) {
-        var modal = document.getElementById('cancelModal');
-        var modalBody = document.getElementById('modalBody');
-        var cancelForm = document.getElementById('cancelForm');
-        var orderInput = document.getElementById('modalOrderId');
-
-        // Gán ID vào input hidden
-        orderInput.value = orderId;
-
-        // Tính thời gian
-        var now = new Date().getTime();
-        var diffHours = (showTimeMillis - now) / (1000 * 60 * 60);
-        
-        if (diffHours < 24) {
-            // TRƯỜNG HỢP: QUÁ HẠN HỦY
-            modalBody.innerHTML = 
-                '<div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; text-align:center;">' +
-                    '<strong>🚫 KHÔNG THỂ HỦY VÉ</strong><br>' +
-                    'Suất chiếu sẽ diễn ra trong vòng ' + Math.floor(diffHours) + ' giờ tới.<br>' +
-                    '(Quy định: Chỉ được hủy trước 24h).' +
-                '</div>';
-            cancelForm.style.display = 'none';
-        } else {
-            // TRƯỜNG HỢP: ĐƯỢC HỦY
-            var voucherDiscount = originalTotal - finalPaid; 
-            var refundAmount = finalPaid * 0.7; // Hoàn 70%
-            var feeAmount = finalPaid * 0.3;    // Phí 30%
-
-            var html = '<div class="calc-box">';
+    <!-- ===== FEEDBACK MODAL ===== -->
+    <div id="feedbackModal" class="modal">
+        <div class="feedback-content">
+            <span onclick="closeFeedbackModal()" style="position:absolute; right:20px; top:15px; cursor:pointer; font-size:24px; color: #777;">&times;</span>
             
-            // Dòng 1: Giá gốc
-            html += '<div class="calc-row"><span>Tổng giá vé niêm yết:</span> <span>' + formatVND(originalTotal) + '</span></div>';
+            <div style="text-align: center; margin-bottom: 25px;">
+                <i class="fa-solid fa-star" style="font-size: 3em; color: var(--gold-primary); margin-bottom: 10px;"></i>
+                <h3 style="color: #fff; margin: 0; font-family: 'Playfair Display'; font-size: 1.8rem;">
+                    Đánh giá suất chiếu
+                </h3>
+                <p style="color: #888; font-size: 0.9rem; margin-top: 5px;" id="feedbackShowName"></p>
+            </div>
             
-            // Dòng 2: Voucher (Nếu có)
-            if (voucherDiscount > 0) {
-                html += '<div class="calc-row discount"><span>Voucher/Giảm giá:</span> <span>-' + formatVND(voucherDiscount) + '</span></div>';
-            }
-
-            // Dòng 3: Thực trả
-            html += '<div class="calc-row total"><span>Số tiền bạn thực trả:</span> <span>' + formatVND(finalPaid) + '</span></div>';
+            <form id="feedbackForm">
+                <input type="hidden" id="feedbackScheduleId" name="scheduleId">
+                
+                <!-- Rating Stars -->
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div class="star-rating">
+                        <i class="fa-solid fa-star" data-rating="1"></i>
+                        <i class="fa-solid fa-star" data-rating="2"></i>
+                        <i class="fa-solid fa-star" data-rating="3"></i>
+                        <i class="fa-solid fa-star" data-rating="4"></i>
+                        <i class="fa-solid fa-star" data-rating="5"></i>
+                    </div>
+                    <input type="hidden" id="feedbackRating" name="rating" value="5">
+                    <p style="color: var(--gold-primary); margin-top: 10px; font-size: 0.9rem;" id="ratingText">
+                        Xuất sắc!
+                    </p>
+                </div>
+                
+                <!-- Comment -->
+                <div style="margin-bottom: 20px;">
+                    <label style="color: #ccc; display: block; margin-bottom: 8px; font-size: 0.9rem;">
+                        Chia sẻ trải nghiệm của bạn:
+                    </label>
+                    <textarea 
+                        name="comment" 
+                        id="feedbackComment"
+                        placeholder="Bạn cảm thấy thế nào về suất chiếu này?..."
+                        style="width: 100%; background: #111; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; min-height: 100px; font-family: inherit; resize: vertical;"
+                        maxlength="500"
+                    ></textarea>
+                    <small style="color: #666; font-size: 0.8rem;">Tối đa 500 ký tự</small>
+                </div>
+                
+                <button type="submit" class="btn-submit-feedback">
+                    <i class="fa-solid fa-paper-plane"></i> Gửi đánh giá
+                </button>
+            </form>
             
-            html += '<hr style="margin: 10px 0; border: 0; border-top: 1px dashed #ccc;">';
-            
-            // Dòng 4: Phí hủy
-            html += '<div class="calc-row fee"><span>Phí hủy vé (30%):</span> <span>-' + formatVND(feeAmount) + '</span></div>';
-            
-            // Dòng 5: Cảnh báo Voucher
-            if (voucherDiscount > 0) {
-                 html += '<div class="calc-row" style="color:#666; font-size:0.85em;"><i>(Lưu ý: Không hoàn lại giá trị Voucher)</i></div>';
-            }
+            <div id="feedbackMessage" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px; text-align: center; font-size: 0.9rem;"></div>
+        </div>
+    </div>
 
-            // Dòng 6: Tiền nhận về
-            html += '<div class="calc-row refund"><span>💰 TIỀN HOÀN LẠI:</span> <span>' + formatVND(refundAmount) + '</span></div>';
-            html += '</div>';
-            
-            html += '<p class="policy-note">Tiền sẽ được hoàn về ví/tài khoản thanh toán trong 3-7 ngày làm việc.</p>';
-
-            modalBody.innerHTML = html;
-            cancelForm.style.display = 'block';
-        }
-
-        // Hiện modal (Xóa class ẩn)
-        modal.classList.remove('modal-hidden');
-    }
-
-    function closeCancelModal() {
-        document.getElementById('cancelModal').classList.add('modal-hidden');
-    }
-
-    // Đóng khi click ra ngoài
-    window.onclick = function(event) {
-        var modal = document.getElementById('cancelModal');
-        if (event.target == modal) {
-            closeCancelModal();
-        }
-    }
-</script>
+    <!-- ✅ LINK JAVASCRIPT -->
+    <script src="${pageContext.request.contextPath}/js/my-ticket.js"></script>
 </body>
 </html>
