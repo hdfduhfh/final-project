@@ -1,6 +1,6 @@
 <%-- 
     Document   : dashboard_dark_final
-    Updated    : Map Real Data & Added Revenue Link
+    Updated    : Added Events Menu & Fixed Apply Job Icon
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -307,6 +307,12 @@
                         <i class="fas fa-chair"></i> Sơ đồ ghế
                     </a>
 
+                    <!-- ✅ THÊM MỚI: Menu Sự kiện -->
+                    <div class="sidebar-heading">Sự kiện & Giao lưu</div>
+                    <a href="<%=contextPath%>/admin/events" class="list-group-item list-group-item-action">
+                        <i class="fas fa-calendar-star"></i> Quản lý Sự kiện
+                    </a>
+
                     <div class="sidebar-heading">Kinh Doanh</div>
                     <a href="<%=contextPath%>/admin/revenue" class="list-group-item list-group-item-action">
                         <i class="fas fa-chart-line"></i> Thống kê doanh thu
@@ -332,10 +338,11 @@
                         <i class="fas fa-newspaper"></i> Tin tức
                     </a>
                     <a href="<%=contextPath%>/admin/recruitment" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-briefcase me-2"></i> Tuyển dụng
+                        <i class="fas fa-briefcase"></i> Tuyển dụng
                     </a>
+                    <!-- ✅ SỬA: Icon Đơn tuyển từ fa-briefcase → fa-file-alt -->
                     <a href="<%=contextPath%>/admin/applyjob" class="list-group-item list-group-item-action">
-                        <i class="fas fa-fw fa-briefcase me-2"></i> Đơn tuyển
+                        <i class="fas fa-file-alt"></i> Đơn tuyển
                     </a>
                     <a href="<%=contextPath%>/admin/feedback" class="list-group-item list-group-item-action">
                         <i class="fas fa-comment-dots"></i> Feedback

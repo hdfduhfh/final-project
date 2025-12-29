@@ -295,3 +295,56 @@ EXEC sp_rename 'Application.JobId', 'JobID', 'COLUMN';
 
 ALTER TABLE Application
 ADD status NVARCHAR(20) DEFAULT 'Pending';
+
+CREATE TABLE dbo.Event (
+    EventID         INT IDENTITY(1,1) PRIMARY KEY,
+    EventName       NVARCHAR(200) NOT NULL,
+    Description     NVARCHAR(MAX) NULL,
+    EventType       NVARCHAR(50) NOT NULL,           -- 'MeetAndGreet', 'Workshop', 'FanMeeting', 'TalkShow'
+    EventDate       DATETIME NOT NULL,
+    EndDate         DATETIME NULL,                   -- Thời gian kết thúc (nếu event kéo dài nhiều giờ)
+    Venue           NVARCHAR(200) NULL,              -- Địa điểm tổ chức
+    Address         NVARCHAR(300) NULL,              -- Địa chỉ chi tiết
+    MaxAttendees    INT NOT NULL DEFAULT 0,          -- Số người tham gia tối đa
+    CurrentAttendees INT NOT NULL DEFAULT 0,         -- Số người đã đăng ký
+    Price           DECIMAL(12,2) NOT NULL DEFAULT 0, -- Phí tham gia (0 = miễn phí)
+    Status          NVARCHAR(20) NOT NULL DEFAULT 'Upcoming', -- 'Upcoming', 'Ongoing', 'Completed', 'Cancelled'
+    ThumbnailUrl    NVARCHAR(500) NULL,              -- Ảnh thumbnail
+    BannerUrl       NVARCHAR(500) NULL,              -- Ảnh banner lớn
+    ArtistIDs       NVARCHAR(200) NULL,              -- Lưu danh sách ID nghệ sĩ phân cách bằng dấu phẩy (VD: "1,3,5")
+    ArtistNames     NVARCHAR(500) NULL,              -- Tên nghệ sĩ để hiển thị nhanh (không cần join)
+    HostedBy        NVARCHAR(100) NULL,              -- Người/Tổ chức đứng ra tổ chức
+    ContactInfo     NVARCHAR(200) NULL,              -- Thông tin liên hệ
+    IsPublished     BIT NOT NULL DEFAULT 0,          -- Đã công khai chưa
+    AllowRegistration BIT NOT NULL DEFAULT 1,       -- Cho phép đăng ký không
+    RegistrationDeadline DATETIME NULL,             -- Hạn chót đăng ký
+    Requirements    NVARCHAR(500) NULL,              -- Yêu cầu tham gia (nếu có)
+    CreatedAt       DATETIME NOT NULL DEFAULT(GETDATE()),
+    UpdatedAt       DATETIME NULL,
+    CreatedBy       INT NULL,                        -- UserID của người tạo
+    
+    CONSTRAINT FK_Event_CreatedBy 
+        FOREIGN KEY (CreatedBy) REFERENCES dbo.[User](UserID)
+);
+
+CREATE TABLE dbo.EventRegistration (
+    RegistrationID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT NOT NULL,
+    EventID INT NOT NULL,
+    RegistrationDate DATETIME NOT NULL DEFAULT GETDATE(),
+    Status NVARCHAR(20) NOT NULL DEFAULT 'Confirmed', -- 'Confirmed', 'Cancelled', 'CheckedIn'
+    
+    CONSTRAINT FK_EventRegistration_User 
+        FOREIGN KEY (UserID) REFERENCES dbo.[User](UserID) ON DELETE CASCADE,
+    
+    CONSTRAINT FK_EventRegistration_Event 
+        FOREIGN KEY (EventID) REFERENCES dbo.Event(EventID) ON DELETE CASCADE,
+    
+    CONSTRAINT UQ_User_Event 
+        UNIQUE(UserID, EventID) -- 1 user chỉ đăng ký 1 event 1 lần
+);
+
+-- Tạo index để tăng tốc query
+CREATE INDEX IX_EventRegistration_UserID ON dbo.EventRegistration(UserID);
+CREATE INDEX IX_EventRegistration_EventID ON dbo.EventRegistration(EventID);
+CREATE INDEX IX_EventRegistration_Status ON dbo.EventRegistration(Status);

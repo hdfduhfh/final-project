@@ -1,6 +1,6 @@
 <%-- 
     Document   : header
-    Created on : Dec 5, 2025, 2:40:08 PM
+    Created on : Dec 5, 2025, 2:40:08 PM
     Author     : DANG KHOA
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -35,8 +35,12 @@
                         Mua vé
                     </a>
                 </li>
-
-
+                <!-- ✅ THÊM MỚI: Link Sự kiện -->
+                <li class="nav-item">
+                    <a href="${pageContext.request.contextPath}/events">
+                        <i class="fas fa-calendar-star"></i> Sự kiện
+                    </a>
+                </li>
                 <li class="nav-item"><a href="${pageContext.request.contextPath}/new">Tin tức</a></li>
                 <li class="nav-item"><a href="${pageContext.request.contextPath}/job">Tuyển dụng</a></li>
             </ul>
