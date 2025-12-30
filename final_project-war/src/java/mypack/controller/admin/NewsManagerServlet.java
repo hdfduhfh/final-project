@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack.controller.admin;
 
 import jakarta.ejb.EJB;
@@ -9,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import mypack.News;
 import mypack.NewsFacadeLocal;
@@ -32,33 +29,77 @@ public class NewsManagerServlet extends HttpServlet {
 
         if (action == null || action.equals("list")) {
             String search = req.getParameter("search");
+            String status = req.getParameter("status");
+            String createdDateStr = req.getParameter("createdDate");
+
+            Date createdDate = null;
+            try {
+                if (createdDateStr != null && !createdDateStr.isEmpty()) {
+                    createdDate = new SimpleDateFormat("yyyy-MM-dd").parse(createdDateStr);
+                }
+            } catch (Exception e) {
+            }
+
             int page = 1;
-            int pageSize = 5; // số tin mỗi trang
+            int pageSize = 5;
             try {
                 page = Integer.parseInt(req.getParameter("page"));
-            } catch (Exception e) {}
-
-            List<News> list;
-            long total;
-            int totalPages;
-
-            if (search != null && !search.trim().isEmpty()) {
-                // tìm theo tiêu đề
-                List<News> all = newsFacade.findByTitle(search.trim());
-                total = all.size();
-                totalPages = (int) Math.ceil((double) total / pageSize);
-                int fromIndex = (page - 1) * pageSize;
-                int toIndex = Math.min(fromIndex + pageSize, all.size());
-                if (fromIndex < all.size()) {
-                    list = all.subList(fromIndex, toIndex);
-                } else {
-                    list = Collections.emptyList();
-                }
-            } else {
-                list = newsFacade.findPage(page, pageSize);
-                total = newsFacade.countAll();
-                totalPages = (int) Math.ceil((double) total / pageSize);
+            } catch (Exception e) {
             }
+
+            List<News> all;
+            if (search != null && !search.trim().isEmpty()) {
+                all = newsFacade.findByTitle(search.trim());
+            } else {
+                all = newsFacade.findAll();
+            }
+
+            // lọc theo trạng thái
+            if (status != null && !status.isEmpty()) {
+                Iterator<News> it = all.iterator();
+                while (it.hasNext()) {
+                    News n = it.next();
+                    if (n.getStatus() == null || !status.equalsIgnoreCase(n.getStatus())) {
+                        it.remove();
+                    }
+                }
+            }
+
+            // lọc theo ngày tạo (chỉ một ngày)
+            if (createdDate != null) {
+                Calendar calSelected = Calendar.getInstance();
+                calSelected.setTime(createdDate);
+                calSelected.set(Calendar.HOUR_OF_DAY, 0);
+                calSelected.set(Calendar.MINUTE, 0);
+                calSelected.set(Calendar.SECOND, 0);
+                calSelected.set(Calendar.MILLISECOND, 0);
+
+                Iterator<News> it = all.iterator();
+                while (it.hasNext()) {
+                    News n = it.next();
+                    if (n.getCreatedAt() == null) {
+                        it.remove();
+                        continue;
+                    }
+
+                    Calendar calNews = Calendar.getInstance();
+                    calNews.setTime(n.getCreatedAt());
+                    calNews.set(Calendar.HOUR_OF_DAY, 0);
+                    calNews.set(Calendar.MINUTE, 0);
+                    calNews.set(Calendar.SECOND, 0);
+                    calNews.set(Calendar.MILLISECOND, 0);
+
+                    if (!calNews.getTime().equals(calSelected.getTime())) {
+                        it.remove();
+                    }
+                }
+            }
+
+            long total = all.size();
+            int totalPages = (int) Math.ceil((double) total / pageSize);
+            int fromIndex = (page - 1) * pageSize;
+            int toIndex = Math.min(fromIndex + pageSize, all.size());
+            List<News> list = (fromIndex < all.size()) ? all.subList(fromIndex, toIndex) : Collections.emptyList();
 
             req.setAttribute("newsList", list);
             req.setAttribute("currentPage", page);
@@ -68,13 +109,13 @@ public class NewsManagerServlet extends HttpServlet {
             return;
         }
 
-        if (action.equals("create")) {
+        if ("create".equals(action)) {
             loadAssetImages(req);
             req.getRequestDispatcher("/WEB-INF/views/admin/news/form.jsp").forward(req, resp);
             return;
         }
 
-        if (action.equals("edit")) {
+        if ("edit".equals(action)) {
             Integer id = parseId(req.getParameter("id"));
             News news = id != null ? newsFacade.find(id) : null;
             req.setAttribute("news", news);
@@ -83,7 +124,7 @@ public class NewsManagerServlet extends HttpServlet {
             return;
         }
 
-        if (action.equals("view")) {
+        if ("view".equals(action)) {
             Integer id = parseId(req.getParameter("id"));
             News news = id != null ? newsFacade.find(id) : null;
             req.setAttribute("news", news);
@@ -91,7 +132,7 @@ public class NewsManagerServlet extends HttpServlet {
             return;
         }
 
-        if (action.equals("delete")) {
+        if ("delete".equals(action)) {
             Integer id = parseId(req.getParameter("id"));
             if (id != null) {
                 newsFacade.softDelete(id);
@@ -110,7 +151,9 @@ public class NewsManagerServlet extends HttpServlet {
         if ("create".equals(action)) {
             News n = buildNews(req);
             String thumbnailPath = req.getParameter("thumbnailPath");
-            if (thumbnailPath != null && !thumbnailPath.isBlank()) n.setThumbnailUrl(thumbnailPath);
+            if (thumbnailPath != null && !thumbnailPath.isBlank()) {
+                n.setThumbnailUrl(thumbnailPath);
+            }
             newsFacade.create(n);
             resp.sendRedirect(req.getContextPath() + "/admin/news?action=list");
             return;
@@ -122,7 +165,9 @@ public class NewsManagerServlet extends HttpServlet {
             if (n != null) {
                 updateNews(n, req);
                 String thumbnailPath = req.getParameter("thumbnailPath");
-                if (thumbnailPath != null && !thumbnailPath.isBlank()) n.setThumbnailUrl(thumbnailPath);
+                if (thumbnailPath != null && !thumbnailPath.isBlank()) {
+                    n.setThumbnailUrl(thumbnailPath);
+                }
                 newsFacade.edit(n);
             }
             resp.sendRedirect(req.getContextPath() + "/admin/news?action=list");
@@ -154,7 +199,9 @@ public class NewsManagerServlet extends HttpServlet {
         n.setCreatedAt(new Date());
 
         User admin = userFacade.findByEmail("admin@example.com");
-        if (admin == null) throw new ServletException("Không tìm thấy tài khoản admin");
+        if (admin == null) {
+            throw new ServletException("Không tìm thấy tài khoản admin");
+        }
         n.setUserID(admin);
 
         return n;
@@ -169,11 +216,17 @@ public class NewsManagerServlet extends HttpServlet {
         n.setUpdatedAt(new Date());
 
         User admin = userFacade.findByEmail("admin@example.com");
-        if (admin == null) throw new ServletException("Không tìm thấy tài khoản admin");
+        if (admin == null) {
+            throw new ServletException("Không tìm thấy tài khoản admin");
+        }
         n.setUserID(admin);
     }
 
     private Integer parseId(String s) {
-        try { return Integer.valueOf(s); } catch (Exception e) { return null; }
+        try {
+            return Integer.valueOf(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

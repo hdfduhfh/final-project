@@ -348,3 +348,4 @@ CREATE TABLE dbo.EventRegistration (
 CREATE INDEX IX_EventRegistration_UserID ON dbo.EventRegistration(UserID);
 CREATE INDEX IX_EventRegistration_EventID ON dbo.EventRegistration(EventID);
 CREATE INDEX IX_EventRegistration_Status ON dbo.EventRegistration(Status);
+

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack.controller.admin;
 
 import jakarta.ejb.EJB;
@@ -32,20 +28,52 @@ public class RecruitmentManagerServlet extends HttpServlet {
 
         if (action == null || action.equals("list")) {
             String search = req.getParameter("search");
+            String status = req.getParameter("status");
+            String postedDate = req.getParameter("postedDate"); // chỉ một ngày
 
             // Trang hiện tại
             int page = 1;
-            int pageSize = 5; // ✅ cố định 5 job/trang
+            int pageSize = 5;
             try {
                 page = Integer.parseInt(req.getParameter("page"));
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
 
             // Lấy toàn bộ danh sách
             List<Recruitment> allJobs = (search != null && !search.trim().isEmpty())
                     ? recruitmentFacade.findByTitle(search.trim())
                     : recruitmentFacade.findAll();
 
-            // ✅ Sắp xếp theo ngày đăng mới nhất
+            // Lọc theo trạng thái
+            if (status != null && !status.isEmpty()) {
+                allJobs.removeIf(j -> !status.equalsIgnoreCase(j.getStatus()));
+            }
+
+            // Lọc theo ngày đăng (chỉ một ngày)
+            if (postedDate != null && !postedDate.isEmpty()) {
+                Date selected = java.sql.Date.valueOf(postedDate);
+                Calendar calSelected = Calendar.getInstance();
+                calSelected.setTime(selected);
+                calSelected.set(Calendar.HOUR_OF_DAY, 0);
+                calSelected.set(Calendar.MINUTE, 0);
+                calSelected.set(Calendar.SECOND, 0);
+                calSelected.set(Calendar.MILLISECOND, 0);
+
+                allJobs.removeIf(j -> {
+                    if (j.getPostedAt() == null) {
+                        return true;
+                    }
+                    Calendar calJob = Calendar.getInstance();
+                    calJob.setTime(j.getPostedAt());
+                    calJob.set(Calendar.HOUR_OF_DAY, 0);
+                    calJob.set(Calendar.MINUTE, 0);
+                    calJob.set(Calendar.SECOND, 0);
+                    calJob.set(Calendar.MILLISECOND, 0);
+                    return !calJob.getTime().equals(calSelected.getTime());
+                });
+            }
+
+            // Sắp xếp theo ngày đăng mới nhất
             allJobs.sort(Comparator.comparing(Recruitment::getPostedAt).reversed());
 
             // Tổng số trang
@@ -57,7 +85,7 @@ public class RecruitmentManagerServlet extends HttpServlet {
             int toIndex = Math.min(fromIndex + pageSize, totalJobs);
             List<Recruitment> list = allJobs.subList(fromIndex, toIndex);
 
-            // ✅ Kiểm tra deadline và tự động đóng
+            // Kiểm tra deadline và tự động đóng
             Date now = new Date();
             for (Recruitment job : list) {
                 if (job.getDeadline() != null && now.after(job.getDeadline())) {
@@ -77,13 +105,13 @@ public class RecruitmentManagerServlet extends HttpServlet {
             return;
         }
 
-        if (action.equals("create")) {
+        if ("create".equals(action)) {
             loadLogoImages(req);
             req.getRequestDispatcher("/WEB-INF/views/admin/recruitment/form.jsp").forward(req, resp);
             return;
         }
 
-        if (action.equals("edit")) {
+        if ("edit".equals(action)) {
             Integer id = parseId(req.getParameter("id"));
             Recruitment job = id != null ? recruitmentFacade.find(id) : null;
 
@@ -100,7 +128,7 @@ public class RecruitmentManagerServlet extends HttpServlet {
             return;
         }
 
-        if (action.equals("view")) {
+        if ("view".equals(action)) {
             Integer id = parseId(req.getParameter("id"));
             Recruitment job = id != null ? recruitmentFacade.find(id) : null;
 
@@ -116,12 +144,12 @@ public class RecruitmentManagerServlet extends HttpServlet {
             return;
         }
 
-        if (action.equals("delete")) {
+        if ("delete".equals(action)) {
             Integer id = parseId(req.getParameter("id"));
             if (id != null) {
                 Recruitment job = recruitmentFacade.find(id);
                 if (job != null) {
-                    recruitmentFacade.remove(job); // ✅ hard delete
+                    recruitmentFacade.remove(job); // hard delete
                 }
             }
             resp.sendRedirect(req.getContextPath() + "/admin/recruitment?action=list");
@@ -185,11 +213,14 @@ public class RecruitmentManagerServlet extends HttpServlet {
                 if (new Date().after(deadline)) {
                     job.setStatus("Closed");
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         }
 
         User admin = userFacade.findByEmail("admin@example.com");
-        if (admin == null) throw new ServletException("Không tìm thấy tài khoản admin");
+        if (admin == null) {
+            throw new ServletException("Không tìm thấy tài khoản admin");
+        }
         job.setUserID(admin);
 
         return job;
@@ -213,15 +244,23 @@ public class RecruitmentManagerServlet extends HttpServlet {
                 if (new Date().after(deadline)) {
                     job.setStatus("Closed");
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                // bỏ qua lỗi parse
+            }
         }
 
         User admin = userFacade.findByEmail("admin@example.com");
-        if (admin == null) throw new ServletException("Không tìm thấy tài khoản admin");
+        if (admin == null) {
+            throw new ServletException("Không tìm thấy tài khoản admin");
+        }
         job.setUserID(admin);
     }
 
     private Integer parseId(String s) {
-        try { return Integer.valueOf(s); } catch (Exception e) { return null; }
+        try {
+            return Integer.valueOf(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -62,6 +62,7 @@ public class ApplyJobServlet extends HttpServlet {
         app.setEmail(email);
         app.setPhone(phone);
         app.setCvUrl("assets/upload/" + safeName); // đường dẫn để JSP hiển thị
+        app.setStatus("Pending");
         app.setAppliedAt(new Date());
         app.setJob(job);
 

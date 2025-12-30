@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack.controller.admin;
 
 import jakarta.ejb.EJB;
@@ -11,6 +7,7 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.List;
+import java.util.Iterator;
 import mypack.Application;
 import mypack.ApplicationFacadeLocal;
 
@@ -29,16 +26,47 @@ public class ApplicationServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("text/html; charset=UTF-8");
 
-        String keyword = req.getParameter("keyword");
+        String keyword = req.getParameter("keyword");   // tìm theo tên/SĐT
+        String status = req.getParameter("status");     // lọc trạng thái
+        String jobTitle = req.getParameter("jobTitle"); // lọc theo tên công việc
+
         int page = 1;
         try {
             page = Integer.parseInt(req.getParameter("page"));
-        } catch (Exception e) { page = 1; }
+        } catch (Exception e) {
+            page = 1;
+        }
 
+        // lấy danh sách ban đầu
         List<Application> apps = (keyword != null && !keyword.trim().isEmpty())
                 ? applicationFacade.searchByNameOrPhone(keyword.trim())
                 : applicationFacade.findAll();
 
+        // lọc theo trạng thái
+        if (status != null && !status.isEmpty()) {
+            Iterator<Application> it = apps.iterator();
+            while (it.hasNext()) {
+                Application a = it.next();
+                if (a.getStatus() == null || !status.equalsIgnoreCase(a.getStatus())) {
+                    it.remove();
+                }
+            }
+        }
+
+        // lọc theo tên công việc
+        if (jobTitle != null && !jobTitle.trim().isEmpty()) {
+            String jobTitleLower = jobTitle.trim().toLowerCase();
+            Iterator<Application> it = apps.iterator();
+            while (it.hasNext()) {
+                Application a = it.next();
+                if (a.getJob() == null || a.getJob().getTitle() == null
+                        || !a.getJob().getTitle().toLowerCase().contains(jobTitleLower)) {
+                    it.remove();
+                }
+            }
+        }
+
+        // phân trang
         int total = apps.size();
         int totalPages = (int) Math.ceil((double) total / PAGE_SIZE);
         int fromIndex = Math.max(0, (page - 1) * PAGE_SIZE);
@@ -51,7 +79,9 @@ public class ApplicationServlet extends HttpServlet {
         req.setAttribute("keyword", keyword);
 
         String message = req.getParameter("message");
-        if (message != null) req.setAttribute("message", message);
+        if (message != null) {
+            req.setAttribute("message", message);
+        }
 
         req.getRequestDispatcher("/WEB-INF/views/admin/applyjob/listapplication.jsp").forward(req, resp);
     }
@@ -75,13 +105,13 @@ public class ApplicationServlet extends HttpServlet {
                     case "accept":
                         app.setStatus("Accepted");
                         applicationFacade.edit(app);
-                        message = "Đã gửi tin nhắn xác hẹn lịch phỏng vấn cho " +
-                                  app.getFullName() + " - SĐT: " + app.getPhone();
+                        message = "Đã gửi tin nhắn xác hẹn lịch phỏng vấn cho "
+                                + app.getFullName() + " - SĐT: " + app.getPhone();
                         break;
                     case "reject":
                         app.setStatus("Rejected");
                         applicationFacade.edit(app);
-                        message = " Đã gửi tin nhắn từ chối CV.";
+                        message = "Đã gửi tin nhắn từ chối CV.";
                         break;
                     case "delete":
                         applicationFacade.remove(app);

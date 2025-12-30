@@ -217,20 +217,28 @@
             <% } %>
 
             <div class="panel">
-                <form method="get" action="<%= request.getContextPath() %>/admin/applyjob">
-                    <div class="row g-2 align-items-center">
-                        <div class="col-lg-8">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                </span>
-                                <input type="text" name="keyword" value="<%= keyword != null ? keyword : "" %>" 
-                                       class="form-control" placeholder="Nhập tên hoặc SĐT...">
-                                <button type="submit" class="btn btn-warning fw-bold">Tìm</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                <!-- Form tìm kiếm và lọc -->
+<form method="get" action="<%= request.getContextPath() %>/admin/applyjob" style="margin-bottom: 16px;">
+    <input type="text" name="keyword" value="<%= keyword != null ? keyword : "" %>" placeholder="Nhập tên hoặc SĐT"/>
+
+    <!-- Lọc theo công việc (nhập tên) -->
+    <input type="text" name="jobTitle" value="<%= request.getParameter("jobTitle") != null ? request.getParameter("jobTitle") : "" %>" 
+           placeholder="Nhập tên công việc"/>
+
+    <!-- Lọc theo trạng thái -->
+    <select name="status">
+        <option value="">-- Trạng thái --</option>
+        <option value="Pending" <%= "Pending".equalsIgnoreCase(request.getParameter("status")) ? "selected" : "" %>>Pending</option>
+        <option value="Accepted" <%= "Accepted".equalsIgnoreCase(request.getParameter("status")) ? "selected" : "" %>>Accepted</option>
+        <option value="Rejected" <%= "Rejected".equalsIgnoreCase(request.getParameter("status")) ? "selected" : "" %>>Rejected</option>
+    </select>
+
+    <button type="submit">🔍 Lọc</button>
+    <button type="button" onclick="window.location.href='<%= request.getContextPath() %>/admin/applyjob'" 
+            style="margin-left:10px; background-color:#f44336; color:white; border:none; padding:6px 12px; cursor:pointer;">
+        ❌ Hủy lọc
+    </button>
+</form>
             </div>
 
             <div class="table-wrap">

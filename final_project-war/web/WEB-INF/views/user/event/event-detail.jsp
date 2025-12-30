@@ -260,7 +260,7 @@
                                             </button>
                                         </c:when>
                                         <c:otherwise>
-                                            <a href="${pageContext.request.contextPath}/login?redirect=event-detail&id=${event.eventID}" 
+                                            <a href="javascript:void(0)" onclick="registerEvent(5)" 
                                                class="btn-register">
                                                 <i class="fas fa-sign-in-alt"></i> Đăng nhập để đăng ký
                                             </a>

@@ -87,15 +87,31 @@
             <div class="panel">
                 <div class="row g-2 align-items-center">
                     <div class="col-lg-8">
-                        <form method="get" action="<%= request.getContextPath() %>/admin/news">
-                            <input type="hidden" name="action" value="list"/>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
-                                <input type="text" id="keywordInput" name="search" class="form-control" 
-                                       placeholder="Tìm kiếm tiêu đề tin..." value="<%= search %>">
-                                <button type="submit" class="btn btn-warning fw-bold">Tìm kiếm</button>
-                            </div>
-                        </form>
+                        <form method="get" action="<%= request.getContextPath() %>/admin/news" style="margin-bottom: 16px;">
+    <input type="hidden" name="action" value="list"/>
+    <input type="text" name="search" placeholder="Nhập tiêu đề cần tìm"
+           value="<%= request.getParameter("search") != null ? request.getParameter("search") : "" %>"
+           style="padding:6px; width:250px;"/>
+
+    <!-- Lọc theo trạng thái -->
+    <select name="status" style="padding:6px;">
+        <option value="">-- Trạng thái --</option>
+        <option value="Draft" <%= "Draft".equalsIgnoreCase(request.getParameter("status")) ? "selected" : "" %>>Draft</option>
+        <option value="Published" <%= "Published".equalsIgnoreCase(request.getParameter("status")) ? "selected" : "" %>>Published</option>
+        <option value="Archived" <%= "Archived".equalsIgnoreCase(request.getParameter("status")) ? "selected" : "" %>>Archived</option>
+    </select>
+
+    <!-- Lọc theo ngày tạo (chỉ một ngày) -->
+    Ngày tạo: 
+    <input type="date" name="createdDate"
+           value="<%= request.getParameter("createdDate") != null ? request.getParameter("createdDate") : "" %>"/>
+
+    <button type="submit">🔍 Lọc</button>
+    <button type="button" onclick="window.location.href='<%= request.getContextPath() %>/admin/news?action=list'" 
+            style="margin-left:10px; background-color:#f44336; color:white; border:none; padding:6px 12px; cursor:pointer;">
+        ❌ Hủy lọc
+    </button>
+</form>
                     </div>
                     <div class="col-lg-4 text-lg-end text-white-50 fw-bold">
                         Trang <%= currentPage %> / <%= totalPages %>

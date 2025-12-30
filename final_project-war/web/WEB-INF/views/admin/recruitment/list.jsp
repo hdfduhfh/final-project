@@ -224,22 +224,35 @@
             </div>
 
             <div class="panel">
-                <form method="get" action="<%= request.getContextPath() %>/admin/recruitment">
-                    <input type="hidden" name="action" value="list"/>
-                    <div class="row g-2 align-items-center">
-                        <div class="col-lg-8">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                </span>
-                                <input type="text" name="search" placeholder="Nhập tiêu đề cần tìm"
-                                       value="<%= request.getParameter("search") != null ? request.getParameter("search") : "" %>"
-                                       class="form-control">
-                                <button type="submit" class="btn btn-warning fw-bold">Tìm</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+               <!-- Form tìm kiếm và lọc -->
+<form method="get" action="<%= request.getContextPath() %>/admin/recruitment" style="margin-bottom: 16px;">
+    <input type="hidden" name="action" value="list"/>
+
+    <!-- Tìm theo tiêu đề -->
+    <input type="text" name="search" placeholder="Nhập tiêu đề cần tìm"
+           value="<%= request.getParameter("search") != null ? request.getParameter("search") : "" %>"
+           style="padding:6px; width:200px;"/>
+
+    <!-- Lọc theo trạng thái -->
+    <select name="status" style="padding:6px;">
+        <option value="">-- Trạng thái --</option>
+        <option value="Open" <%= "Open".equalsIgnoreCase(request.getParameter("status")) ? "selected" : "" %>>Open</option>
+        <option value="Closed" <%= "Closed".equalsIgnoreCase(request.getParameter("status")) ? "selected" : "" %>>Closed</option>
+    </select>
+
+    <!-- Lọc theo ngày đăng -->
+  
+Ngày đăng: <input type="date" name="postedDate"
+           value="<%= request.getParameter("postedDate") != null ? request.getParameter("postedDate") : "" %>"/>
+    <button type="submit">🔍 Lọc</button>
+    <button type="button" 
+        onclick="window.location.href='<%= request.getContextPath() %>/admin/recruitment?action=list'" 
+        style="margin-left:10px; background-color:#f44336; color:white; border:none; padding:6px 12px; cursor:pointer;">
+    Cancel
+</button>
+
+
+</form>
             </div>
 
             <div class="table-wrap">

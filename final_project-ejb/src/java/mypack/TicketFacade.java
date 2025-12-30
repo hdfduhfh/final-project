@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mypack;
 
 import jakarta.ejb.Stateless;
@@ -11,10 +7,6 @@ import jakarta.persistence.TypedQuery;
 import java.util.Date;
 import java.util.List;
 
-/**
- *
- * @author DANG KHOA
- */
 @Stateless
 public class TicketFacade extends AbstractFacade<Ticket> implements TicketFacadeLocal {
 
@@ -112,7 +104,6 @@ public class TicketFacade extends AbstractFacade<Ticket> implements TicketFacade
             return "TOO_LATE";
         }
 
-        // hợp lệ
         t.setStatus("USED");
         t.setCheckInAt(new Date());
         t.setUpdatedAt(new Date());
@@ -132,5 +123,95 @@ public class TicketFacade extends AbstractFacade<Ticket> implements TicketFacade
     @Override
     public int countAll() {
         return ((Long) em.createQuery("SELECT COUNT(t) FROM Ticket t").getSingleResult()).intValue();
+    }
+
+    // NEW: Advanced search implementation
+    @Override
+    public List<Ticket> searchTickets(String qrCode, String status, String customerName, 
+                                     Date fromDate, Date toDate, int offset, int limit) {
+        StringBuilder jpql = new StringBuilder("SELECT t FROM Ticket t WHERE 1=1");
+        
+        if (qrCode != null && !qrCode.trim().isEmpty()) {
+            jpql.append(" AND LOWER(t.qRCode) LIKE LOWER(:qrCode)");
+        }
+        if (status != null && !status.trim().isEmpty() && !status.equals("ALL")) {
+            jpql.append(" AND UPPER(t.status) = UPPER(:status)");
+        }
+        if (customerName != null && !customerName.trim().isEmpty()) {
+            jpql.append(" AND LOWER(t.orderDetailID.orderID.userID.fullName) LIKE LOWER(:customerName)");
+        }
+        if (fromDate != null) {
+            jpql.append(" AND t.issuedAt >= :fromDate");
+        }
+        if (toDate != null) {
+            jpql.append(" AND t.issuedAt <= :toDate");
+        }
+        
+        jpql.append(" ORDER BY t.ticketID DESC");
+        
+        TypedQuery<Ticket> query = em.createQuery(jpql.toString(), Ticket.class);
+        
+        if (qrCode != null && !qrCode.trim().isEmpty()) {
+            query.setParameter("qrCode", "%" + qrCode + "%");
+        }
+        if (status != null && !status.trim().isEmpty() && !status.equals("ALL")) {
+            query.setParameter("status", status);
+        }
+        if (customerName != null && !customerName.trim().isEmpty()) {
+            query.setParameter("customerName", "%" + customerName + "%");
+        }
+        if (fromDate != null) {
+            query.setParameter("fromDate", fromDate);
+        }
+        if (toDate != null) {
+            query.setParameter("toDate", toDate);
+        }
+        
+        query.setFirstResult(offset);
+        query.setMaxResults(limit);
+        
+        return query.getResultList();
+    }
+
+    @Override
+    public int countSearchResults(String qrCode, String status, String customerName, 
+                                 Date fromDate, Date toDate) {
+        StringBuilder jpql = new StringBuilder("SELECT COUNT(t) FROM Ticket t WHERE 1=1");
+        
+        if (qrCode != null && !qrCode.trim().isEmpty()) {
+            jpql.append(" AND LOWER(t.qRCode) LIKE LOWER(:qrCode)");
+        }
+        if (status != null && !status.trim().isEmpty() && !status.equals("ALL")) {
+            jpql.append(" AND UPPER(t.status) = UPPER(:status)");
+        }
+        if (customerName != null && !customerName.trim().isEmpty()) {
+            jpql.append(" AND LOWER(t.orderDetailID.orderID.userID.fullName) LIKE LOWER(:customerName)");
+        }
+        if (fromDate != null) {
+            jpql.append(" AND t.issuedAt >= :fromDate");
+        }
+        if (toDate != null) {
+            jpql.append(" AND t.issuedAt <= :toDate");
+        }
+        
+        TypedQuery<Long> query = em.createQuery(jpql.toString(), Long.class);
+        
+        if (qrCode != null && !qrCode.trim().isEmpty()) {
+            query.setParameter("qrCode", "%" + qrCode + "%");
+        }
+        if (status != null && !status.trim().isEmpty() && !status.equals("ALL")) {
+            query.setParameter("status", status);
+        }
+        if (customerName != null && !customerName.trim().isEmpty()) {
+            query.setParameter("customerName", "%" + customerName + "%");
+        }
+        if (fromDate != null) {
+            query.setParameter("fromDate", fromDate);
+        }
+        if (toDate != null) {
+            query.setParameter("toDate", toDate);
+        }
+        
+        return query.getSingleResult().intValue();
     }
 }

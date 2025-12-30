@@ -1,8 +1,4 @@
-/* 
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/JavaScript.js to edit this template
- */
-// ===== USER EVENT DETAIL JAVASCRIPT =====
+// ===== LUXURY EVENT DETAIL JAVASCRIPT =====
 
 // Get context path
 function getContextPath() {
@@ -10,12 +6,38 @@ function getContextPath() {
     return path.substring(0, path.indexOf("/", 2));
 }
 
+// ===== ĐĂNG KÝ SỰ KIỆN (Có check login) =====
 function registerEvent(eventId) {
+    // Kiểm tra đã đăng nhập chưa
+    const isLoggedIn = document.querySelector('.user-greeting') !== null;
+    
+    if (!isLoggedIn) {
+        // Chưa đăng nhập → Mở modal login
+        showLuxuryNotification(
+            'Vui lòng đăng nhập để đăng ký sự kiện này!', 
+            'warning'
+        );
+        
+        // Delay 500ms rồi mở modal (cho người dùng kịp đọc thông báo)
+        setTimeout(() => {
+            if (typeof openLoginModal === 'function') {
+                openLoginModal();
+            } else {
+                // Fallback nếu function không tồn tại
+                const loginBtn = document.getElementById('loginBtn');
+                if (loginBtn) loginBtn.click();
+            }
+        }, 500);
+        
+        return;
+    }
+
+    // Đã đăng nhập → Tiếp tục đăng ký
     if (!confirm('Bạn có chắc muốn đăng ký tham gia sự kiện này?')) {
         return;
     }
 
-    showLoading();
+    showLuxuryLoading();
 
     fetch(`${getContextPath()}/event-register?eventId=${eventId}`, {
         method: 'POST',
@@ -25,7 +47,7 @@ function registerEvent(eventId) {
         credentials: 'include'
     })
     .then(response => {
-        hideLoading();
+        hideLuxuryLoading();
         
         if (response.ok) {
             return response.json();
@@ -39,21 +61,21 @@ function registerEvent(eventId) {
     })
     .then(data => {
         if (data.success) {
-            showNotification(data.message, 'success');
+            showLuxuryNotification(data.message, 'success');
             setTimeout(() => {
                 window.location.reload();
             }, 2000);
         } else {
-            showNotification(data.message, 'error');
+            showLuxuryNotification(data.message, 'error');
         }
     })
     .catch(error => {
-        hideLoading();
-        showNotification(error.message, 'error');
+        hideLuxuryLoading();
+        showLuxuryNotification(error.message, 'error');
     });
 }
 
-// Share on Facebook
+// ===== SHARE FUNCTIONS =====
 function shareOnFacebook() {
     const url = encodeURIComponent(window.location.href);
     const title = encodeURIComponent(document.querySelector('.event-name').textContent);
@@ -65,7 +87,6 @@ function shareOnFacebook() {
     );
 }
 
-// Share on Twitter
 function shareOnTwitter() {
     const url = encodeURIComponent(window.location.href);
     const title = encodeURIComponent(document.querySelector('.event-name').textContent);
@@ -78,14 +99,13 @@ function shareOnTwitter() {
     );
 }
 
-// Copy link to clipboard
 function copyLink() {
     const url = window.location.href;
     
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url)
             .then(() => {
-                showNotification('Đã sao chép link vào clipboard!', 'success');
+                showLuxuryNotification('Đã sao chép link vào clipboard!', 'success');
             })
             .catch(err => {
                 fallbackCopyLink(url);
@@ -95,7 +115,6 @@ function copyLink() {
     }
 }
 
-// Fallback copy method for older browsers
 function fallbackCopyLink(url) {
     const textarea = document.createElement('textarea');
     textarea.value = url;
@@ -106,63 +125,80 @@ function fallbackCopyLink(url) {
     
     try {
         document.execCommand('copy');
-        showNotification('Đã sao chép link vào clipboard!', 'success');
+        showLuxuryNotification('Đã sao chép link vào clipboard!', 'success');
     } catch (err) {
-        showNotification('Không thể sao chép link. Vui lòng copy thủ công.', 'error');
+        showLuxuryNotification('Không thể sao chép link. Vui lòng copy thủ công.', 'error');
     }
     
     document.body.removeChild(textarea);
 }
 
-// Show loading overlay
-function showLoading() {
+// ===== LUXURY LOADING OVERLAY =====
+function showLuxuryLoading() {
     const overlay = document.createElement('div');
-    overlay.id = 'loading-overlay';
+    overlay.id = 'luxury-loading-overlay';
     overlay.innerHTML = `
-        <div class="loading-spinner">
-            <i class="fas fa-circle-notch fa-spin"></i>
+        <div class="luxury-loading-spinner">
+            <div class="spinner-circle"></div>
             <p>Đang xử lý...</p>
         </div>
     `;
     overlay.style.cssText = `
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.7);
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(10px);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 9999;
-        animation: fadeIn 0.3s ease;
+        animation: luxuryFadeIn 0.3s ease;
     `;
     
-    const spinner = overlay.querySelector('.loading-spinner');
+    const spinner = overlay.querySelector('.luxury-loading-spinner');
     spinner.style.cssText = `
         text-align: center;
-        color: white;
+        color: #d4af37;
     `;
-    spinner.querySelector('i').style.fontSize = '48px';
-    spinner.querySelector('p').style.cssText = 'margin-top: 20px; font-size: 16px;';
+    
+    // Spinner circle CSS
+    const spinnerCircle = overlay.querySelector('.spinner-circle');
+    spinnerCircle.style.cssText = `
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(212, 175, 55, 0.2);
+        border-top: 4px solid #d4af37;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        animation: luxurySpin 1s linear infinite;
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    `;
+    
+    spinner.querySelector('p').style.cssText = `
+        margin-top: 20px; 
+        font-size: 16px;
+        font-family: 'Playfair Display', serif;
+        letter-spacing: 1px;
+    `;
     
     document.body.appendChild(overlay);
 }
 
-// Hide loading overlay
-function hideLoading() {
-    const overlay = document.getElementById('loading-overlay');
+function hideLuxuryLoading() {
+    const overlay = document.getElementById('luxury-loading-overlay');
     if (overlay) {
-        overlay.style.animation = 'fadeOut 0.3s ease';
+        overlay.style.animation = 'luxuryFadeOut 0.3s ease';
         setTimeout(() => overlay.remove(), 300);
     }
 }
 
-// Show notification
-function showNotification(message, type = 'info') {
-    // Remove existing notifications
-    const existing = document.querySelector('.notification');
+// ===== LUXURY NOTIFICATION =====
+function showLuxuryNotification(message, type = 'info') {
+    const existing = document.querySelector('.luxury-notification');
     if (existing) existing.remove();
     
     const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
+    notification.className = `luxury-notification luxury-notification-${type}`;
     
     const icons = {
         success: 'check-circle',
@@ -180,49 +216,71 @@ function showNotification(message, type = 'info') {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        background: rgba(10, 10, 12, 0.95);
+        backdrop-filter: blur(15px);
+        padding: 18px 24px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         z-index: 10000;
         display: flex;
         align-items: center;
-        gap: 10px;
-        min-width: 300px;
-        animation: slideInRight 0.3s ease;
+        gap: 12px;
+        min-width: 320px;
+        max-width: 400px;
+        animation: luxurySlideInRight 0.4s ease;
+        border: 1px solid ${getNotificationBorderColor(type)};
+        font-family: 'Playfair Display', serif;
+        font-size: 15px;
     `;
     
-    // Color based on type
-    const colors = {
-        success: '#27ae60',
-        error: '#e74c3c',
-        warning: '#f39c12',
-        info: '#3498db'
-    };
+    notification.querySelector('i').style.cssText = `
+        color: ${getNotificationColor(type)};
+        font-size: 20px;
+        filter: drop-shadow(0 0 10px ${getNotificationColor(type)});
+    `;
     
-    notification.style.borderLeft = `4px solid ${colors[type] || colors.info}`;
-    notification.querySelector('i').style.color = colors[type] || colors.info;
+    notification.querySelector('span').style.color = '#fff';
     
     document.body.appendChild(notification);
     
     setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
+        notification.style.animation = 'luxurySlideOutRight 0.4s ease';
+        setTimeout(() => notification.remove(), 400);
     }, 4000);
 }
 
-// Add Google Maps integration (if address available)
+function getNotificationColor(type) {
+    const colors = {
+        success: '#27ae60',
+        error: '#e74c3c',
+        warning: '#d4af37',
+        info: '#3498db'
+    };
+    return colors[type] || colors.info;
+}
+
+function getNotificationBorderColor(type) {
+    const colors = {
+        success: 'rgba(39, 174, 96, 0.3)',
+        error: 'rgba(231, 76, 60, 0.3)',
+        warning: 'rgba(212, 175, 55, 0.3)',
+        info: 'rgba(52, 152, 219, 0.3)'
+    };
+    return colors[type] || colors.info;
+}
+
+// ===== GOOGLE MAPS INTEGRATION =====
 document.addEventListener('DOMContentLoaded', function() {
-    const addressElement = document.querySelector('.detail-item [class*="address"]');
+    const addressElements = document.querySelectorAll('.detail-subtext');
     
-    if (addressElement) {
+    addressElements.forEach(addressElement => {
         const address = addressElement.textContent.trim();
         
-        if (address) {
+        if (address && address.length > 10) {
             const mapButton = document.createElement('a');
             mapButton.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
             mapButton.target = '_blank';
-            mapButton.className = 'map-link';
+            mapButton.className = 'luxury-map-link';
             mapButton.innerHTML = '<i class="fas fa-map-marked-alt"></i> Xem trên bản đồ';
             mapButton.style.cssText = `
                 display: inline-flex;
@@ -230,116 +288,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 gap: 8px;
                 margin-top: 10px;
                 padding: 8px 16px;
-                background: #667eea;
-                color: white;
+                background: linear-gradient(135deg, #ffd700, #b38728);
+                color: #000;
                 text-decoration: none;
                 border-radius: 6px;
-                font-size: 14px;
-                font-weight: 600;
+                font-size: 13px;
+                font-weight: 700;
                 transition: all 0.3s ease;
+                font-family: 'Playfair Display', serif;
             `;
             
             mapButton.addEventListener('mouseenter', function() {
-                this.style.background = '#764ba2';
+                this.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.5)';
+                this.style.transform = 'scale(1.05)';
             });
             
             mapButton.addEventListener('mouseleave', function() {
-                this.style.background = '#667eea';
+                this.style.boxShadow = 'none';
+                this.style.transform = 'scale(1)';
             });
             
             addressElement.parentElement.appendChild(mapButton);
         }
-    }
+    });
 });
 
-// Event countdown timer
-document.addEventListener('DOMContentLoaded', function() {
-    const eventDateElement = document.querySelector('[data-event-date]');
-    
-    if (eventDateElement) {
-        const eventDate = new Date(eventDateElement.dataset.eventDate).getTime();
-        const countdownContainer = document.createElement('div');
-        countdownContainer.className = 'event-countdown';
-        countdownContainer.style.cssText = `
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            margin: 20px 0;
-        `;
-        
-        const updateCountdown = () => {
-            const now = new Date().getTime();
-            const distance = eventDate - now;
-            
-            if (distance < 0) {
-                countdownContainer.innerHTML = '<h3>Sự kiện đã diễn ra</h3>';
-                return;
-            }
-            
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            
-            countdownContainer.innerHTML = `
-                <div style="font-size: 14px; margin-bottom: 10px; opacity: 0.9;">Sự kiện bắt đầu sau</div>
-                <div style="display: flex; justify-content: center; gap: 15px; font-size: 24px; font-weight: 700;">
-                    <div><span>${days}</span><br><small style="font-size: 12px; opacity: 0.8;">Ngày</small></div>
-                    <div><span>${hours}</span><br><small style="font-size: 12px; opacity: 0.8;">Giờ</small></div>
-                    <div><span>${minutes}</span><br><small style="font-size: 12px; opacity: 0.8;">Phút</small></div>
-                    <div><span>${seconds}</span><br><small style="font-size: 12px; opacity: 0.8;">Giây</small></div>
-                </div>
-            `;
-        };
-        
-        // Insert countdown after event header
-        const eventHeader = document.querySelector('.event-header');
-        if (eventHeader) {
-            eventHeader.after(countdownContainer);
-            updateCountdown();
-            setInterval(updateCountdown, 1000);
-        }
-    }
-});
-
-// Sticky sidebar behavior
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.querySelector('.event-sidebar');
-    const content = document.querySelector('.event-content-left');
-    
-    if (sidebar && content) {
-        window.addEventListener('scroll', function() {
-            const contentBottom = content.offsetTop + content.offsetHeight;
-            const sidebarHeight = sidebar.offsetHeight;
-            const scrollTop = window.pageYOffset;
-            
-            if (scrollTop + sidebarHeight + 100 > contentBottom) {
-                sidebar.style.position = 'absolute';
-                sidebar.style.top = `${contentBottom - sidebarHeight}px`;
-            } else {
-                sidebar.style.position = 'sticky';
-                sidebar.style.top = '20px';
-            }
-        });
-    }
-});
-
-// Add CSS animations
+// ===== CSS ANIMATIONS =====
 const style = document.createElement('style');
 style.textContent = `
-    @keyframes fadeIn {
+    @keyframes luxuryFadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
     }
     
-    @keyframes fadeOut {
+    @keyframes luxuryFadeOut {
         from { opacity: 1; }
         to { opacity: 0; }
     }
     
-    @keyframes slideInRight {
+    @keyframes luxurySlideInRight {
         from {
             transform: translateX(400px);
             opacity: 0;
@@ -350,7 +337,7 @@ style.textContent = `
         }
     }
     
-    @keyframes slideOutRight {
+    @keyframes luxurySlideOutRight {
         from {
             transform: translateX(0);
             opacity: 1;
@@ -360,8 +347,30 @@ style.textContent = `
             opacity: 0;
         }
     }
+    
+    @keyframes luxurySpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.5);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #ffd700, #b38728);
+        border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #b38728, #ffd700);
+    }
 `;
 document.head.appendChild(style);
 
-console.log('✅ Event detail scripts loaded successfully!');
-
+console.log('✅ Luxury Event Detail Scripts Loaded Successfully!');

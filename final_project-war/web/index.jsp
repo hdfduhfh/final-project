@@ -194,9 +194,9 @@
 
                             <a href="${pageContext.request.contextPath}/seats/layout" class="luxury-card" data-aos="fade-up" data-aos-delay="100">
                                 <div class="badge-corner">MỚI</div>
-                                <img src="${pageContext.request.contextPath}/assets/images/show/ANH_TRAI_SAY_AI.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Anh+Trai'" />
+                                <img src="${pageContext.request.contextPath}/assets/images/show/TAM_MA.jpg" class="luxury-poster" onerror="this.src='https://via.placeholder.com/280x420/111/fff?text=Anh+Trai'" />
                                 <div class="luxury-info">
-                                    <h3 class="show-name">Anh Trai Say Hi</h3>
+                                    <h3 class="show-name">Tâm Ma</h3>
                                     <span class="btn-luxury-gold">Đặt vé ngay</span>
                                 </div>
                             </a>
