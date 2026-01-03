@@ -65,4 +65,36 @@ public class OrderDetailFacade extends AbstractFacade<OrderDetail> implements Or
             return List.of();
         }
     }
+    // ✅ IMPLEMENTATION MỚI
+    @Override
+    public boolean hasOrdersForSchedule(Integer scheduleId) {
+        if (scheduleId == null) {
+            return false;
+        }
+        
+        Long count = em.createQuery(
+            "SELECT COUNT(od) FROM OrderDetail od WHERE od.scheduleID.scheduleID = :scheduleId",
+            Long.class
+        )
+        .setParameter("scheduleId", scheduleId)
+        .getSingleResult();
+        
+        return count != null && count > 0;
+    }
+
+    @Override
+    public Long countOrdersBySchedule(Integer scheduleId) {
+        if (scheduleId == null) {
+            return 0L;
+        }
+        
+        Long count = em.createQuery(
+            "SELECT COUNT(od) FROM OrderDetail od WHERE od.scheduleID.scheduleID = :scheduleId",
+            Long.class
+        )
+        .setParameter("scheduleId", scheduleId)
+        .getSingleResult();
+        
+        return count != null ? count : 0L;
+    }
 }

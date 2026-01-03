@@ -30,7 +30,12 @@ public interface OrderDetailFacadeLocal {
     int count();
 
     Set<Integer> findBookedSeatIdsBySchedule(int scheduleId);
-    
+
     List<OrderDetail> findByOrderId(Integer oderId);
-    
+    // ✅ THÊM METHOD MỚI: Kiểm tra xem suất chiếu có đơn hàng nào chưa
+
+    boolean hasOrdersForSchedule(Integer scheduleId);
+
+    // ✅ Đếm số lượng đơn hàng của suất chiếu
+    Long countOrdersBySchedule(Integer scheduleId);
 }

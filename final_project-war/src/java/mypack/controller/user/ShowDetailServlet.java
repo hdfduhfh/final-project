@@ -13,6 +13,7 @@ import mypack.ShowSchedule;
 import mypack.ShowScheduleFacadeLocal;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 @WebServlet(name = "ShowDetailServlet", urlPatterns = {"/shows/detail/*"})
@@ -23,6 +24,11 @@ public class ShowDetailServlet extends HttpServlet {
 
     @EJB
     private ShowScheduleFacadeLocal showScheduleFacade;
+
+    private boolean isOngoing(Show show) {
+        if (show == null || show.getStatus() == null) return false;
+        return "Ongoing".equalsIgnoreCase(show.getStatus().trim());
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -39,7 +45,7 @@ public class ShowDetailServlet extends HttpServlet {
         try {
             int showID = Integer.parseInt(pathInfo.substring(1));
 
-            // 1️⃣ Lấy thông tin show
+            // 1) Lấy thông tin show
             Show show = showFacade.find(showID);
 
             if (show == null) {
@@ -47,18 +53,20 @@ public class ShowDetailServlet extends HttpServlet {
                 return;
             }
 
-            // 2️⃣ Lấy danh sách suất chiếu theo showID
-            List<ShowSchedule> schedules
-                    = showScheduleFacade.findByShowId(showID);
+            // 2) Chỉ lấy lịch chiếu khi show đang chiếu (Ongoing)
+            List<ShowSchedule> schedules = Collections.emptyList();
+            if (isOngoing(show)) {
+                schedules = showScheduleFacade.findByShowId(showID);
+                if (schedules == null) schedules = Collections.emptyList();
+            }
 
-            // 3️⃣ Đẩy dữ liệu sang JSP
+            // 3) Đẩy dữ liệu sang JSP
             req.setAttribute("show", show);
             req.setAttribute("schedules", schedules);
 
-            // 4️⃣ Forward
-            req.getRequestDispatcher(
-                    "/WEB-INF/views/user/showDetail.jsp"
-            ).forward(req, resp);
+            // 4) Forward
+            req.getRequestDispatcher("/WEB-INF/views/user/showDetail.jsp")
+               .forward(req, resp);
 
         } catch (NumberFormatException ex) {
             resp.sendRedirect(req.getContextPath() + "/shows");

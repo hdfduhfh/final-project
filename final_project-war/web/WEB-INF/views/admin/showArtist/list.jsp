@@ -268,30 +268,56 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                <%-- ✅ Dùng để nhớ show trước đó (để chỉ in tên show 1 lần) --%>
+                                <c:set var="prevShowId" value="-1" />
+
                                 <c:forEach var="sa" items="${links}">
+                                    <c:set var="curShowId" value="${sa.showID.showID}" />
+
                                     <tr>
-                                        <td class="fw-bold">
-                                            <i class="fa-solid fa-clapperboard text-primary"></i>
-                                            ${sa.showID.showName}
-                                        </td>
+                                        <%-- ✅ Chỉ render cột Show khi gặp show mới --%>
+                                        <c:if test="${curShowId ne prevShowId}">
+                                            <%-- ✅ Đếm số dòng có cùng showId để set rowspan --%>
+                                            <c:set var="rowspan" value="0" />
+                                            <c:forEach var="x" items="${links}">
+                                                <c:if test="${x.showID.showID == curShowId}">
+                                                    <c:set var="rowspan" value="${rowspan + 1}" />
+                                                </c:if>
+                                            </c:forEach>
+
+                                            <td class="fw-bold" rowspan="${rowspan}" style="vertical-align: middle;">
+                                                <i class="fa-solid fa-clapperboard text-primary"></i>
+                                                ${sa.showID.showName}
+                                            </td>
+                                        </c:if>
+
                                         <td class="fw-bold">
                                             <i class="fa-solid fa-user text-secondary"></i>
                                             ${sa.artistID.name}
                                         </td>
+
                                         <td>
                                             <span class="role-chip">
                                                 <i class="fa-solid fa-id-badge"></i>
                                                 ${sa.artistID.role}
                                             </span>
                                         </td>
+
                                         <td class="text-nowrap">
-                                            <a class="btn btn-danger btn-sm fw-bold"
-                                               href="${pageContext.request.contextPath}/admin/showArtist/delete?showId=${sa.showID.showID}&artistId=${sa.artistID.artistID}"
-                                               onclick="return confirm('Xóa nghệ sĩ này khỏi show này?');">
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm fw-bold"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#confirmDeleteShowArtistModal"
+                                                    data-href="${pageContext.request.contextPath}/admin/showArtist/delete?showId=${sa.showID.showID}&artistId=${sa.artistID.artistID}"
+                                                    data-show="${sa.showID.showName}"
+                                                    data-artist="${sa.artistID.name}">
                                                 <i class="fa-solid fa-user-xmark"></i> Xóa
-                                            </a>
+                                            </button>
                                         </td>
                                     </tr>
+
+                                    <%-- ✅ cập nhật prevShowId sau mỗi dòng --%>
+                                    <c:set var="prevShowId" value="${curShowId}" />
                                 </c:forEach>
 
                                 <c:if test="${empty links}">
@@ -303,6 +329,7 @@
                                     </tr>
                                 </c:if>
                             </tbody>
+
                         </table>
                     </div>
                 </div>
@@ -312,5 +339,64 @@
 
         <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- ====================== CONFIRM DELETE MODAL ====================== -->
+        <div class="modal fade" id="confirmDeleteShowArtistModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>
+                            Xác nhận xóa nghệ sĩ khỏi show
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="alert alert-danger mb-0">
+                            Bạn có chắc chắn muốn xóa nghệ sĩ
+                            <b id="mdArtistName">—</b>
+                            khỏi show
+                            <b id="mdShowName">—</b>
+                            không?
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-xmark me-1"></i> Hủy
+                        </button>
+                        <a href="#" id="mdDeleteLink" class="btn btn-danger">
+                            <i class="fa-solid fa-user-xmark me-1"></i> Xác nhận xóa
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <script>
+            const deleteModalEl = document.getElementById('confirmDeleteShowArtistModal');
+            if (deleteModalEl) {
+                deleteModalEl.addEventListener('show.bs.modal', function (event) {
+                    const trigger = event.relatedTarget;
+
+                    const href = trigger.getAttribute('data-href');
+                    const showName = trigger.getAttribute('data-show');
+                    const artistName = trigger.getAttribute('data-artist');
+
+                    const mdLink = document.getElementById('mdDeleteLink');
+                    const mdShow = document.getElementById('mdShowName');
+                    const mdArtist = document.getElementById('mdArtistName');
+
+                    if (mdLink)
+                        mdLink.setAttribute('href', href);
+                    if (mdShow)
+                        mdShow.textContent = showName || '—';
+                    if (mdArtist)
+                        mdArtist.textContent = artistName || '—';
+                });
+            }
+        </script>
+
     </body>
 </html>

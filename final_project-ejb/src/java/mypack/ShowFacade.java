@@ -119,4 +119,63 @@ public class ShowFacade extends AbstractFacade<Show> implements ShowFacadeLocal 
         query.setMaxResults(limit);
         return query.getResultList();
     }
+    // ✅ THÊM VÀO ShowFacade.java
+
+/**
+ * Kiểm tra Show có lịch diễn nào đã được đặt vé chưa
+ * @param showId ID của Show
+ * @return true nếu có đơn hàng, false nếu không
+ */
+@Override
+public boolean hasOrdersForShow(Integer showId) {
+    if (showId == null) {
+        return false;
+    }
+    
+    try {
+        // Đếm số lượng OrderDetail liên quan đến ShowSchedule của Show này
+        Long count = em.createQuery(
+            "SELECT COUNT(od) " +
+            "FROM OrderDetail od " +
+            "WHERE od.scheduleID.showID.showID = :showId",
+            Long.class
+        )
+        .setParameter("showId", showId)
+        .getSingleResult();
+        
+        System.out.println("✅ Show #" + showId + " có " + count + " đơn hàng");
+        return count != null && count > 0;
+        
+    } catch (Exception e) {
+        System.err.println("❌ Lỗi kiểm tra đơn hàng: " + e.getMessage());
+        e.printStackTrace();
+        return true; // AN TOÀN: Nếu lỗi thì CHẶN XÓA
+    }
+}
+
+/**
+ * Đếm số lượng đơn hàng của Show (để hiển thị)
+ * @param showId
+ * @return 
+ */
+@Override
+public Long countOrdersForShow(Integer showId) {
+    if (showId == null) {
+        return 0L;
+    }
+    
+    try {
+        return em.createQuery(
+            "SELECT COUNT(od) " +
+            "FROM OrderDetail od " +
+            "WHERE od.scheduleID.showID.showID = :showId",
+            Long.class
+        )
+        .setParameter("showId", showId)
+        .getSingleResult();
+    } catch (Exception e) {
+        e.printStackTrace();
+        return 0L;
+    }
+}
 }

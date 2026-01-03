@@ -11,6 +11,7 @@ import mypack.Show;
 import mypack.ShowFacadeLocal;
 import mypack.ShowSchedule;
 import mypack.ShowScheduleFacadeLocal;
+import mypack.OrderDetailFacadeLocal; // ✅ THÊM
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -18,12 +19,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-// ✅ NEW: auto status theo ngày/giờ hiện tại (đúng timezone VN)
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.LocalDate;
 
-// ✅ NEW: encode UTF-8 cho message trên URL
 import java.net.URLEncoder;
 
 @WebServlet(name = "ScheduleManagementServlet", urlPatterns = {
@@ -39,10 +38,12 @@ public class ScheduleManagementServlet extends HttpServlet {
 
     @EJB
     private ShowFacadeLocal showFacade;
+    
+    // ✅ THÊM EJB MỚI
+    @EJB
+    private OrderDetailFacadeLocal orderDetailFacade;
 
     private static final SimpleDateFormat DTL = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-
-    // ✅ timezone VN
     private static final ZoneId APP_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private void setUtf8(HttpServletRequest request, HttpServletResponse response) {
@@ -54,7 +55,6 @@ public class ScheduleManagementServlet extends HttpServlet {
         response.setContentType("text/html; charset=UTF-8");
     }
 
-    // ✅ AUTO STATUS theo rule bạn đưa
     private String computeAutoStatus(Date showTime) {
         if (showTime == null) {
             return "Cancelled";
@@ -73,14 +73,12 @@ public class ScheduleManagementServlet extends HttpServlet {
             return "Upcoming";
         }
 
-        // showDate == today
         if (st.isBefore(now)) {
             return "Ongoing";
         }
         return "Ongoing";
     }
 
-    // ✅ NEW: Ràng buộc không cho chọn ngày/giờ thấp hơn thời điểm hiện tại (VN timezone)
     private boolean isBeforeNowVN(Date showTime) {
         if (showTime == null) return true;
 
@@ -291,7 +289,6 @@ public class ScheduleManagementServlet extends HttpServlet {
         }
 
         try {
-            // 1) validate show
             if (isShowEmpty) {
                 forwardAddError(request, response, "Tên vở diễn chưa được chọn");
                 return;
@@ -311,7 +308,6 @@ public class ScheduleManagementServlet extends HttpServlet {
                 return;
             }
 
-            // 2) validate times
             if (isTimesEmpty) {
                 forwardAddError(request, response, "Giờ chiếu cho buổi diễn chưa được chọn");
                 return;
@@ -334,13 +330,11 @@ public class ScheduleManagementServlet extends HttpServlet {
                     return;
                 }
 
-                // ✅ NEW: Không cho chọn ngày/giờ thấp hơn thời điểm hiện tại (VN)
                 if (isBeforeNowVN(t)) {
                     forwardAddError(request, response, "Ngày và giờ bạn chọn không được thấp hơn thời điểm hiện tại");
                     return;
                 }
 
-                // ✅ vẫn giữ: không cho trùng nhau trong chính form
                 long key = t.getTime();
                 if (timeKeySet.contains(key)) {
                     forwardAddError(request, response, "Ngày và giờ bạn chọn không được trùng nhau trong form");
@@ -350,7 +344,6 @@ public class ScheduleManagementServlet extends HttpServlet {
                 times.add(t);
             }
 
-            // ✅ vẫn giữ: 1 show tối đa 3 lịch (tính cả DB)
             int existingCount = showScheduleFacade.countByShowId(show.getShowID());
             if (existingCount + times.size() > 3) {
                 forwardAddError(request, response,
@@ -358,20 +351,15 @@ public class ScheduleManagementServlet extends HttpServlet {
                 return;
             }
 
-            // ✅ tạo nhiều schedule
             for (Date t : times) {
                 ShowSchedule schedule = new ShowSchedule();
                 schedule.setShowID(show);
                 schedule.setShowTime(t);
-
-                // ✅ AUTO STATUS
                 schedule.setStatus(computeAutoStatus(t));
-
                 schedule.setCreatedAt(new Date());
                 showScheduleFacade.create(schedule);
             }
 
-            // ✅ UTF-8 encode message
             String msg = URLEncoder.encode("Thêm lịch chiếu thành công!", "UTF-8");
             response.sendRedirect(request.getContextPath() + "/admin/schedule?success=" + msg);
 
@@ -476,7 +464,6 @@ public class ScheduleManagementServlet extends HttpServlet {
                 return;
             }
 
-            // ✅ NEW: Không cho chọn ngày/giờ thấp hơn thời điểm hiện tại (VN)
             if (isBeforeNowVN(showTime)) {
                 forwardEditError(request, response, schedule, "Ngày và giờ bạn chọn không được thấp hơn thời điểm hiện tại");
                 return;
@@ -484,7 +471,6 @@ public class ScheduleManagementServlet extends HttpServlet {
 
             Integer currentId = schedule.getScheduleID();
 
-            // ✅ GIỮ ràng buộc: 1 show tối đa 3 lịch (trừ chính nó)
             int count = showScheduleFacade.countByShowIdExcept(show.getShowID(), currentId);
             if (count >= 3) {
                 forwardEditError(request, response, schedule,
@@ -492,17 +478,12 @@ public class ScheduleManagementServlet extends HttpServlet {
                 return;
             }
 
-            // ✅ BỎ ràng buộc trùng show
-            // ✅ BỎ ràng buộc trùng ngày/giờ chiếu
             schedule.setShowID(show);
             schedule.setShowTime(showTime);
-
-            // ✅ AUTO STATUS theo giờ mới
             schedule.setStatus(computeAutoStatus(showTime));
 
             showScheduleFacade.edit(schedule);
 
-            // ✅ UTF-8 encode message
             String msg = URLEncoder.encode("Cập nhật lịch chiếu thành công!", "UTF-8");
             response.sendRedirect(request.getContextPath() + "/admin/schedule?success=" + msg);
 
@@ -536,9 +517,19 @@ public class ScheduleManagementServlet extends HttpServlet {
                 return;
             }
 
+            // ✅ KIỂM TRA TRƯỚC KHI XÓA
+            if (orderDetailFacade.hasOrdersForSchedule(id)) {
+                Long orderCount = orderDetailFacade.countOrdersBySchedule(id);
+                String msg = URLEncoder.encode(
+                    "❌ Không thể xóa! Suất chiếu này đã có " + orderCount + " vé được đặt.", 
+                    "UTF-8"
+                );
+                response.sendRedirect(request.getContextPath() + "/admin/schedule?error=" + msg);
+                return;
+            }
+
             showScheduleFacade.remove(schedule);
 
-            // ✅ UTF-8 encode message
             String msg = URLEncoder.encode("Xóa lịch chiếu thành công!", "UTF-8");
             response.sendRedirect(request.getContextPath() + "/admin/schedule?success=" + msg);
 

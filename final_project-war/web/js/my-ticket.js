@@ -290,3 +290,92 @@ window.addEventListener('click', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     updateStarRating(5);
 });
+// THÊM VÀO CUỐI FILE my-ticket.js
+
+// ===== SEAT CHANGE MODAL =====
+function openSeatChangeModal(orderId) {
+    document.getElementById('seatChangeOrderId').value = orderId;
+    document.getElementById('seatChangeReason').value = '';
+    document.getElementById('seatChangeMessage').style.display = 'none';
+    document.getElementById('seatChangeModal').style.display = 'flex';
+}
+
+function closeSeatChangeModal() {
+    document.getElementById('seatChangeModal').style.display = 'none';
+}
+
+// Submit seat change request
+document.addEventListener('DOMContentLoaded', function() {
+    const seatChangeForm = document.getElementById('seatChangeForm');
+    
+    if (seatChangeForm) {
+        seatChangeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const messageDiv = document.getElementById('seatChangeMessage');
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+            
+            const contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf('/', 1));
+            
+            fetch(contextPath + '/seat-change-request', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi yêu cầu';
+                
+                messageDiv.style.display = 'block';
+                
+                if (data.success) {
+                    messageDiv.style.background = 'rgba(46, 204, 113, 0.2)';
+                    messageDiv.style.border = '1px solid #2ecc71';
+                    messageDiv.style.color = '#2ecc71';
+                    messageDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> ' + data.message;
+                    
+                    setTimeout(() => {
+                        closeSeatChangeModal();
+                        location.reload();
+                    }, 2000);
+                } else {
+                    messageDiv.style.background = 'rgba(231, 76, 60, 0.2)';
+                    messageDiv.style.border = '1px solid #e74c3c';
+                    messageDiv.style.color = '#e74c3c';
+                    messageDiv.innerHTML = '<i class="fa-solid fa-times-circle"></i> ' + data.message;
+                }
+            })
+            .catch(error => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi yêu cầu';
+                
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = 'rgba(231, 76, 60, 0.2)';
+                messageDiv.style.border = '1px solid #e74c3c';
+                messageDiv.style.color = '#e74c3c';
+                messageDiv.innerHTML = '<i class="fa-solid fa-times-circle"></i> Lỗi kết nối!';
+            });
+        });
+    }
+});
+
+// Add seat change modal to global click listener
+window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('cancelModal')) {
+        closeCancelModal();
+    }
+    if (e.target === document.getElementById('viewTicketModal')) {
+        closeViewTicketModal();
+    }
+    if (e.target === document.getElementById('feedbackModal')) {
+        closeFeedbackModal();
+    }
+    if (e.target === document.getElementById('seatChangeModal')) {
+        closeSeatChangeModal();
+    }
+});

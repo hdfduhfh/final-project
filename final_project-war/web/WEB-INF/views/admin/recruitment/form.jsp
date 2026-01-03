@@ -262,12 +262,12 @@
                     
                     <div class="form-group">
                         <label><i class="fa-solid fa-briefcase"></i> Tiêu đề</label>
-                        <input type="text" name="title" value="<%= isEdit ? job.getTitle() : "" %>" required placeholder="Nhập tiêu đề công việc"/>
+                        <input type="text" name="title" value="<%= isEdit ? job.getTitle() : "" %>"  placeholder="Nhập tiêu đề công việc"/>
                     </div>
 
                     <div class="form-group">
                         <label><i class="fa-solid fa-file-lines"></i> Mô tả công việc</label>
-                        <textarea name="description" rows="4" required placeholder="Nhập mô tả chi tiết về công việc"><%= isEdit ? job.getDescription() : "" %></textarea>
+                        <textarea name="description" rows="4" placeholder="Nhập mô tả chi tiết về công việc"><%= isEdit ? job.getDescription() : "" %></textarea>
                     </div>
 
                     <div class="form-group">

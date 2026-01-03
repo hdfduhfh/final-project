@@ -99,6 +99,52 @@ public class Order1 implements Serializable {
     private BigDecimal refundAmount = BigDecimal.ZERO;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "orderID")
     private Collection<OrderDetail> orderDetailCollection;
+// ===== THÊM VÀO Order1.java (SAU CÁC TRƯỜNG ĐÃ CÓ) =====
+
+@Column(name = "SeatChangeRequested")
+private Boolean seatChangeRequested = false; // Có yêu cầu đổi ghế không
+
+@Column(name = "SeatChangeReason", length = 500)
+private String seatChangeReason; // Lý do yêu cầu đổi ghế
+
+@Column(name = "SeatChangeStatus", length = 20)
+private String seatChangeStatus; // PENDING, APPROVED, REJECTED
+
+@Column(name = "AdminNote", length = 500)
+private String adminNote; // Ghi chú của admin khi xử lý
+
+// Getters & Setters
+public Boolean getSeatChangeRequested() {
+    return seatChangeRequested;
+}
+
+public void setSeatChangeRequested(Boolean seatChangeRequested) {
+    this.seatChangeRequested = seatChangeRequested;
+}
+
+public String getSeatChangeReason() {
+    return seatChangeReason;
+}
+
+public void setSeatChangeReason(String seatChangeReason) {
+    this.seatChangeReason = seatChangeReason;
+}
+
+public String getSeatChangeStatus() {
+    return seatChangeStatus;
+}
+
+public void setSeatChangeStatus(String seatChangeStatus) {
+    this.seatChangeStatus = seatChangeStatus;
+}
+
+public String getAdminNote() {
+    return adminNote;
+}
+
+public void setAdminNote(String adminNote) {
+    this.adminNote = adminNote;
+}
 
     public Order1() {
     }

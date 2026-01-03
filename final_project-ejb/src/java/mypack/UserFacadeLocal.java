@@ -35,4 +35,6 @@ public interface UserFacadeLocal {
     User findByEmail(String email);
 
     Long countOrdersByUser(Integer userID);
+    
+    void deleteUser(Integer userId);
 }

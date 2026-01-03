@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -72,33 +72,6 @@
             .brand small{
                 color: var(--muted);
                 font-weight: 600;
-            }
-
-            .nav-group{
-                margin-top: 14px;
-            }
-            .nav-item{
-                display:flex;
-                align-items:center;
-                gap:10px;
-                padding: 10px 12px;
-                border-radius: 12px;
-                color:#dbe5ff;
-                text-decoration:none;
-                border: 1px solid transparent;
-            }
-            .nav-item:hover{
-                background: rgba(255,255,255,.06);
-                border-color: var(--line);
-            }
-            .nav-item.active{
-                background: rgba(6,182,212,.16);
-                border-color: rgba(6,182,212,.35);
-            }
-            .nav-item i{
-                width:20px;
-                text-align:center;
-                color:#bcd0ff;
             }
 
             .content{
@@ -273,6 +246,9 @@
     </head>
 
     <body>
+        <c:set var="kw" value="${searchKeyword != null ? searchKeyword : (param.search != null ? param.search : '')}" />
+        <c:set var="stt" value="${param.status != null && param.status != '' ? param.status : 'ALL'}" />
+
         <div class="admin-wrap">
 
             <!-- SIDEBAR -->
@@ -357,8 +333,14 @@
                                            name="search"
                                            class="form-control"
                                            placeholder="Nhập tên show cần tìm..."
-                                           value="${searchKeyword != null ? searchKeyword : ''}"
+                                           value="${kw}"
                                            style="padding-right:48px;"/>
+
+                                    <!-- ✅ status hidden để filter server-side -->
+                                    <input type="hidden" name="status" id="statusInput" value="${stt}" />
+
+                                    <!-- ✅ NEW: page hidden để filter/search ép về page=1 an toàn -->
+                                    <input type="hidden" name="page" id="pageInput" value="${currentPage}" />
 
                                     <button type="submit" class="btn btn-warning fw-bold">
                                         Tìm
@@ -366,25 +348,36 @@
                                 </div>
                             </form>
 
-                            <!-- FILTER STATUS (Client-side, không đụng servlet) -->
+                            <!-- ✅ FILTER STATUS (SERVER-SIDE) -->
                             <div class="col-12 mt-2">
                                 <div class="btn-group btn-group-sm" role="group" aria-label="Filter status">
-                                    <button type="button" class="btn btn-outline-light fw-bold status-filter active" data-status="ALL">
+                                    <button type="button"
+                                            class="btn btn-outline-light fw-bold status-filter ${stt == 'ALL' ? 'active' : ''}"
+                                            onclick="setStatusAndSubmit('ALL')">
                                         <i class="fa-solid fa-layer-group"></i> Tất cả
                                     </button>
-                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="Ongoing">
+
+                                    <button type="button"
+                                            class="btn btn-outline-light fw-bold status-filter ${stt == 'Ongoing' ? 'active' : ''}"
+                                            onclick="setStatusAndSubmit('Ongoing')">
                                         <i class="fa-solid fa-circle-play"></i> Ongoing
                                     </button>
-                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="Upcoming">
+
+                                    <button type="button"
+                                            class="btn btn-outline-light fw-bold status-filter ${stt == 'Upcoming' ? 'active' : ''}"
+                                            onclick="setStatusAndSubmit('Upcoming')">
                                         <i class="fa-solid fa-clock"></i> Upcoming
                                     </button>
-                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="Cancelled">
+
+                                    <button type="button"
+                                            class="btn btn-outline-light fw-bold status-filter ${stt == 'Cancelled' ? 'active' : ''}"
+                                            onclick="setStatusAndSubmit('Cancelled')">
                                         <i class="fa-solid fa-ban"></i> Cancelled
                                     </button>
                                 </div>
 
                                 <span class="ms-2 text-white-50" style="font-weight:700; font-size:13px;">
-                                    Lọc nhanh theo trạng thái (không tải lại trang)
+                                    Lọc theo trạng thái (áp dụng toàn bộ dữ liệu, có phân trang)
                                 </span>
                             </div>
                         </div>
@@ -419,12 +412,9 @@
                                     <c:forEach var="sc" items="${list}" varStatus="st">
                                         <fmt:formatDate value="${sc.showTime}" pattern="dd/MM/yyyy HH:mm" var="timeFmt"/>
 
-                                        <!-- durationMinutes từ Show -->
                                         <c:set var="dur" value="${sc.showID != null ? sc.showID.durationMinutes : 0}" />
 
-                                        <!-- ✅ Tính endTime + rtStatus (real-time theo NGÀY giữ nguyên, thêm GIỜ/PHÚT khi hôm nay) -->
                                         <%
-                                            // ===== LẤY DATA =====
                                             mypack.ShowSchedule scObj = (mypack.ShowSchedule) pageContext.findAttribute("sc");
 
                                             int _dur = 0;
@@ -439,7 +429,6 @@
 
                                             java.util.Date _start = (scObj != null) ? scObj.getShowTime() : null;
 
-                                            // ===== endTime =====
                                             java.util.Date _end = null;
                                             if (_start != null && _dur > 0) {
                                                 java.util.Calendar cal = java.util.Calendar.getInstance();
@@ -449,24 +438,13 @@
                                             }
                                             pageContext.setAttribute("endTime", _end);
 
-                                            // ===== REAL-TIME STATUS =====
-                                            // Rule theo NGÀY vẫn giữ nguyên:
-                                            // - showDate < today => Cancelled
-                                            // - showDate > today => Upcoming
-                                            // - showDate == today => xét thêm theo GIỜ/PHÚT:
-                                            //      + now < start => Upcoming
-                                            //      + start <= now <= end => Ongoing
-                                            //      + now > end => Cancelled
                                             String _rtStatus = "Upcoming";
-
                                             if (_start != null) {
-                                                // timezone VN (để tránh server lệch múi giờ)
                                                 java.util.TimeZone tz = java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
 
                                                 java.util.Calendar nowCal = java.util.Calendar.getInstance(tz);
                                                 nowCal.setTime(new java.util.Date());
 
-                                                // today 00:00
                                                 java.util.Calendar cToday = java.util.Calendar.getInstance(tz);
                                                 cToday.setTime(nowCal.getTime());
                                                 cToday.set(java.util.Calendar.HOUR_OF_DAY, 0);
@@ -474,7 +452,6 @@
                                                 cToday.set(java.util.Calendar.SECOND, 0);
                                                 cToday.set(java.util.Calendar.MILLISECOND, 0);
 
-                                                // showDate 00:00
                                                 java.util.Calendar cShow = java.util.Calendar.getInstance(tz);
                                                 cShow.setTime(_start);
                                                 cShow.set(java.util.Calendar.HOUR_OF_DAY, 0);
@@ -487,14 +464,12 @@
                                                 } else if (cShow.after(cToday)) {
                                                     _rtStatus = "Upcoming";
                                                 } else {
-                                                    // ✅ showDate == today => xét thêm GIỜ/PHÚT
                                                     long nowMs = nowCal.getTimeInMillis();
                                                     long startMs = _start.getTime();
 
                                                     if (nowMs < startMs) {
                                                         _rtStatus = "Upcoming";
                                                     } else {
-                                                        // now >= start
                                                         if (_end != null && _dur > 0) {
                                                             long endMs = _end.getTime();
                                                             if (nowMs > endMs) {
@@ -503,21 +478,17 @@
                                                                 _rtStatus = "Ongoing";
                                                             }
                                                         } else {
-                                                            // nếu không có duration/endTime thì coi như đã tới giờ => Ongoing
                                                             _rtStatus = "Ongoing";
                                                         }
                                                     }
                                                 }
                                             }
-
                                             pageContext.setAttribute("rtStatus", _rtStatus);
                                         %>
 
-                                        <!-- format end -->
                                         <fmt:formatDate value="${endTime}" pattern="dd/MM/yyyy HH:mm" var="endFmt"/>
 
-                                        <tr data-status="${rtStatus}">
-                                            <!-- Merge cell: chỉ show 1 lần -->
+                                        <tr>
                                             <c:if test="${st.first}">
                                                 <td rowspan="${rowspan}" class="fw-bold" style="vertical-align: middle;">
                                                     <c:choose>
@@ -546,7 +517,6 @@
                                             </td>
 
                                             <td class="text-nowrap">
-                                                <!-- DETAIL -->
                                                 <button type="button"
                                                         class="btn btn-info btn-icon"
                                                         title="Chi tiết"
@@ -573,7 +543,6 @@
                                                                         '<c:out value="${timeFmt}"/>')">
                                                     <i class="fa-solid fa-trash"></i>
                                                 </button>
-
                                             </td>
                                         </tr>
                                     </c:forEach>
@@ -592,17 +561,15 @@
                     </div>
                 </div>
 
-                <!-- PAGINATION (giữ searchKeyword trên link) -->
+                <!-- PAGINATION (giữ search + status trên link) -->
                 <c:if test="${totalPages > 1}">
                     <div class="mt-3">
                         <nav aria-label="pagination">
                             <ul class="pagination justify-content-center mb-0">
-                                <c:set var="kw" value="${searchKeyword != null ? searchKeyword : ''}" />
-
                                 <c:if test="${currentPage > 1}">
                                     <li class="page-item">
                                         <a class="page-link"
-                                           href="${pageContext.request.contextPath}/admin/schedule?page=${currentPage - 1}&search=${kw}">
+                                           href="${pageContext.request.contextPath}/admin/schedule?page=${currentPage - 1}&search=${fn:escapeXml(kw)}&status=${fn:escapeXml(stt)}">
                                             <i class="fa-solid fa-arrow-left"></i> Trước
                                         </a>
                                     </li>
@@ -617,7 +584,7 @@
                                 <c:if test="${currentPage < totalPages}">
                                     <li class="page-item">
                                         <a class="page-link"
-                                           href="${pageContext.request.contextPath}/admin/schedule?page=${currentPage + 1}&search=${kw}">
+                                           href="${pageContext.request.contextPath}/admin/schedule?page=${currentPage + 1}&search=${fn:escapeXml(kw)}&status=${fn:escapeXml(stt)}">
                                             Sau <i class="fa-solid fa-arrow-right"></i>
                                         </a>
                                     </li>
@@ -678,25 +645,41 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
-                            function openDeleteScheduleModal(deleteUrl, showName, showTime) {
-                                const nameEl = document.getElementById('deleteScheduleShowName');
-                                const timeEl = document.getElementById('deleteScheduleShowTime');
-                                const confirmBtn = document.getElementById('deleteScheduleConfirmBtn');
+                            // ✅ Fix chắc chắn: submit form thay vì tự build URL
+                            function setStatusAndSubmit(status) {
+                                const form = document.getElementById('searchForm');
+                                const statusInput = document.getElementById('statusInput');
+                                const pageInput = document.getElementById('pageInput');
 
-                                if (nameEl)
-                                    nameEl.textContent = showName || '';
-                                if (timeEl)
-                                    timeEl.textContent = showTime || '';
-                                if (confirmBtn)
-                                    confirmBtn.setAttribute('href', deleteUrl || '#');
+                                if (!form || !statusInput || !pageInput)
+                                    return;
 
-                                const modalEl = document.getElementById('deleteScheduleModal');
-                                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                                modal.show();
+                                statusInput.value = status || 'ALL';
+                                pageInput.value = '1'; // đổi filter -> về trang 1
+
+                                form.submit();
                             }
         </script>
 
-        <!-- Popup detail schedule -->
+        <script>
+            function openDeleteScheduleModal(deleteUrl, showName, showTime) {
+                const nameEl = document.getElementById('deleteScheduleShowName');
+                const timeEl = document.getElementById('deleteScheduleShowTime');
+                const confirmBtn = document.getElementById('deleteScheduleConfirmBtn');
+
+                if (nameEl)
+                    nameEl.textContent = showName || '';
+                if (timeEl)
+                    timeEl.textContent = showTime || '';
+                if (confirmBtn)
+                    confirmBtn.setAttribute('href', deleteUrl || '#');
+
+                const modalEl = document.getElementById('deleteScheduleModal');
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
+        </script>
+
         <script>
             function openScheduleDetail(btn) {
                 document.getElementById("detailTitle").textContent = "Chi tiết lịch chiếu";
@@ -737,7 +720,6 @@
             });
         </script>
 
-        <!-- ✅ Clear X giống trang quản lý nghệ sĩ -->
         <script>
             (function () {
                 const input = document.getElementById('keywordInput');
@@ -775,89 +757,6 @@
                 input.addEventListener('change', toggle);
 
                 toggle();
-            })();
-        </script>
-
-        <!-- FILTER STATUS + FIX ROWSPAN -->
-        <script>
-            (function () {
-                const table = document.querySelector('.table-wrap table');
-                if (!table)
-                    return;
-
-                const filterButtons = document.querySelectorAll('.status-filter');
-                const tbody = table.querySelector('tbody');
-                if (!tbody)
-                    return;
-
-                const rows = Array.from(tbody.querySelectorAll('tr'));
-
-                const groupMap = new Map();
-                let currentShowCell = null;
-                let currentGroupRows = [];
-
-                rows.forEach((tr) => {
-                    const showCell = tr.querySelector('td[rowspan]');
-                    if (showCell) {
-                        if (currentShowCell && currentGroupRows.length) {
-                            groupMap.set(currentShowCell, currentGroupRows);
-                        }
-                        currentShowCell = showCell;
-                        currentGroupRows = [tr];
-                    } else {
-                        if (currentShowCell)
-                            currentGroupRows.push(tr);
-                    }
-                });
-                if (currentShowCell && currentGroupRows.length) {
-                    groupMap.set(currentShowCell, currentGroupRows);
-                }
-
-                function applyFilter(status) {
-                    rows.forEach(tr => {
-                        const st = (tr.getAttribute('data-status') || '').trim();
-                        const show = (status === 'ALL') || (st === status);
-                        tr.style.display = show ? '' : 'none';
-                    });
-
-                    groupMap.forEach((groupRows, showCell) => {
-                        const visibleRows = groupRows.filter(r => r.style.display !== 'none');
-
-                        if (visibleRows.length === 0) {
-                            showCell.style.display = 'none';
-                            showCell.setAttribute('rowspan', '1');
-                            return;
-                        }
-
-                        showCell.style.display = '';
-                        showCell.setAttribute('rowspan', String(visibleRows.length));
-
-                        const firstRow = groupRows[0];
-                        const firstVisibleRow = visibleRows[0];
-
-                        if (firstRow !== firstVisibleRow) {
-                            if (firstRow.contains(showCell))
-                                firstRow.removeChild(showCell);
-                            firstVisibleRow.insertBefore(showCell, firstVisibleRow.firstElementChild);
-                        } else {
-                            if (!firstRow.contains(showCell)) {
-                                firstRow.insertBefore(showCell, firstRow.firstElementChild);
-                            }
-                        }
-                    });
-                }
-
-                filterButtons.forEach(btn => {
-                    btn.addEventListener('click', function () {
-                        filterButtons.forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-
-                        const status = (this.getAttribute('data-status') || 'ALL').trim();
-                        applyFilter(status);
-                    });
-                });
-
-                applyFilter('ALL');
             })();
         </script>
 

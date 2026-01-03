@@ -3,22 +3,13 @@ package mypack.controller.admin;
 import jakarta.ejb.EJB;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import mypack.Role;
-import mypack.User;
-import mypack.RoleFacadeLocal;
-import mypack.UserFacadeLocal;
-import mypack.utils.HashUtils;
+import jakarta.servlet.http.*;
+import mypack.*;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Comparator;
+import mypack.utils.HashUtils;
 
 @WebServlet("/admin/user")
 public class UserManagementServlet extends HttpServlet {
@@ -41,7 +32,6 @@ public class UserManagementServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
-        response.setContentType("text/html; charset=UTF-8");
 
         String action = request.getParameter("action");
 
@@ -60,180 +50,217 @@ public class UserManagementServlet extends HttpServlet {
                     request.setAttribute("error", "Hành động không hợp lệ!");
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            request.setAttribute("error", "Lỗi hệ thống: " + e.getMessage());
+            request.setAttribute("error", "❌ " + e.getMessage());
         }
 
         loadList(request, response);
     }
 
+    // ================= CREATE =================
     private void handleCreate(HttpServletRequest request) {
         String fullName = request.getParameter("fullName");
         String email = request.getParameter("email");
         String phone = request.getParameter("phone");
         String roleName = request.getParameter("roleName");
 
-        String error = null;
-
-        if (fullName == null || fullName.trim().isEmpty()) {
-            error = "Vui lòng nhập họ tên!";
-        } else if (email == null || email.trim().isEmpty()) {
-            error = "Vui lòng nhập email!";
-        } else if (roleName == null || roleName.trim().isEmpty()) {
-            error = "Vui lòng chọn vai trò!";
-        } else if (userFacade.findByEmail(email) != null) {
-            error = "Email đã tồn tại trong hệ thống!";
+        if (fullName == null || fullName.isBlank()) {
+            request.setAttribute("error", "Vui lòng nhập họ tên");
+            setCreateAttributes(request, fullName, email, phone, roleName);
+            return;
         }
 
-        if (error != null) {
-            request.setAttribute("error", error);
-            request.setAttribute("oldFullName", fullName);
-            request.setAttribute("oldEmail", email);
-            request.setAttribute("oldPhone", phone);
-            request.setAttribute("oldRole", roleName);
-            request.setAttribute("showCreateModal", true);
-        } else {
-            Role role = roleFacade.findByName(roleName);
-            User user = new User();
-            user.setFullName(fullName);
-            user.setEmail(email);
-            user.setPhone(phone);
-            user.setRoleID(role);
-            user.setPasswordHash(HashUtils.hashPassword("123456"));
-            user.setCreatedAt(new Date());
-            user.setUpdatedAt(new Date());
-
-            userFacade.create(user);
-            request.setAttribute("message", "Tạo tài khoản thành công!");
+        if (email == null || email.isBlank()) {
+            request.setAttribute("error", "Vui lòng nhập email");
+            setCreateAttributes(request, fullName, email, phone, roleName);
+            return;
         }
+
+        if (!isValidEmail(email)) {
+            request.setAttribute("error", "Email không đúng định dạng!");
+            setCreateAttributes(request, fullName, email, phone, roleName);
+            return;
+        }
+
+        if (userFacade.findByEmail(email) != null) {
+            request.setAttribute("error", "Email đã tồn tại!");
+            setCreateAttributes(request, fullName, email, phone, roleName);
+            return;
+        }
+
+        Role role = roleFacade.findByName(roleName);
+        if (role == null) {
+            request.setAttribute("error", "Vai trò không hợp lệ");
+            setCreateAttributes(request, fullName, email, phone, roleName);
+            return;
+        }
+
+        User user = new User();
+        user.setFullName(fullName);
+        user.setEmail(email);
+        user.setPhone(phone);
+        user.setRoleID(role);
+        user.setPasswordHash(HashUtils.hashPassword("123456"));
+        user.setCreatedAt(new Date());
+
+        userFacade.create(user);
+        request.setAttribute("message", "Tạo người dùng thành công!");
     }
 
+// ================= UPDATE =================
     private void handleUpdate(HttpServletRequest request) {
-        String idStr = request.getParameter("userID");
+        int id = Integer.parseInt(request.getParameter("userID"));
+        User user = userFacade.find(id);
+
+        if (user == null) {
+            request.setAttribute("error", "Không tìm thấy người dùng!");
+            return;
+        }
+
         String fullName = request.getParameter("fullName");
         String email = request.getParameter("email");
         String phone = request.getParameter("phone");
+
+        // ❗ Validate email rỗng
+        if (email == null || email.isBlank()) {
+            request.setAttribute("error", "Email không được để trống");
+            setEditAttributes(request, id, fullName, email, phone);
+            return;
+        }
+
+        // ❗ Validate format email
+        if (!isValidEmail(email)) {
+            request.setAttribute("error", "Email không hợp lệ!");
+            setEditAttributes(request, id, fullName, email, phone);
+            return;
+        }
+
+        // ❗ Check trùng email
+        User checkEmail = userFacade.findByEmail(email);
+        if (checkEmail != null && checkEmail.getUserID() != id) {
+            request.setAttribute("error", "Email đã được sử dụng!");
+            setEditAttributes(request, id, fullName, email, phone);
+            return;
+        }
+
         String roleName = request.getParameter("roleName");
 
-        if (idStr == null || idStr.trim().isEmpty()) {
-            request.setAttribute("error", "ID người dùng không hợp lệ!");
-            return;
-        }
+        user.setFullName(fullName);
+        user.setEmail(email);
+        user.setPhone(phone);
 
-        int userID = Integer.parseInt(idStr);
-        User currentUser = userFacade.find(userID);
-
-        if (currentUser == null) {
-            request.setAttribute("error", "Người dùng không tồn tại!");
-            return;
-        }
-
-        User userWithEmail = userFacade.findByEmail(email);
-        if (userWithEmail != null && userWithEmail.getUserID() != userID) {
-            request.setAttribute("error", "Email này đang được sử dụng bởi người khác!");
-            request.setAttribute("editUserId", userID);
-            request.setAttribute("editFullName", fullName);
-            request.setAttribute("editEmail", email);
-            request.setAttribute("editPhone", phone);
-            request.setAttribute("showEditModal", true);
-            return;
-        }
-
-        currentUser.setFullName(fullName);
-        currentUser.setEmail(email);
-        currentUser.setPhone(phone);
-        currentUser.setUpdatedAt(new Date());
-
-        if (roleName != null && !roleName.trim().isEmpty()) {
+        if (roleName != null) {
             Role role = roleFacade.findByName(roleName);
             if (role != null) {
-                currentUser.setRoleID(role);
+                user.setRoleID(role);
             }
         }
 
-        userFacade.edit(currentUser);
+        userFacade.edit(user);
         request.setAttribute("message", "Cập nhật thành công!");
     }
 
+    // ================= DELETE =================
     private void handleDelete(HttpServletRequest request) {
         String idStr = request.getParameter("userID");
-        if (idStr == null || idStr.trim().isEmpty()) {
-            request.setAttribute("error", "ID người dùng không hợp lệ!");
+
+        if (idStr == null || idStr.isEmpty()) {
+            request.setAttribute("message", "ID người dùng không hợp lệ!");
             return;
         }
 
-        int id = Integer.parseInt(idStr);
-        User user = userFacade.find(id);
+        int userId = Integer.parseInt(idStr);
+        User user = userFacade.find(userId);
+
         if (user == null) {
-            request.setAttribute("error", "Người dùng không tồn tại!");
+            request.setAttribute("message", "Người dùng không tồn tại!");
             return;
         }
 
-        Long orderCount = userFacade.countOrdersByUser(id);
-        if (orderCount != null && orderCount > 0) {
-            request.setAttribute("error", "❌ Không thể xóa người dùng này vì đã có "
-                    + orderCount + " đơn hàng trong hệ thống!");
+        if ("ADMIN".equalsIgnoreCase(user.getRoleID().getRoleName())) {
+            request.setAttribute("message", "Không thể xóa tài khoản ADMIN!");
             return;
         }
 
-        try {
-            userFacade.remove(user);
-            request.setAttribute("message", "✅ Xóa người dùng thành công!");
-        } catch (Exception e) {
-            e.printStackTrace();
-            request.setAttribute("error", "❌ Không thể xóa người dùng này: " + e.getMessage());
+        Long orderCount = userFacade.countOrdersByUser(userId);
+        if (orderCount > 0) {
+            request.setAttribute("message",
+                    "Không thể xóa vì người dùng có " + orderCount + " đơn hàng!");
+            return;
         }
+
+        userFacade.deleteUser(userId);
+        request.setAttribute("message", "Đã xóa người dùng thành công!");
     }
 
+    // ================= LOAD LIST =================
     private void loadList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        // 🔥 LẤY THAM SỐ LỌC
+
         String roleFilter = request.getParameter("roleFilter");
-        String dateSort = request.getParameter("dateSort");
         String keyword = request.getParameter("keyword");
-        
-        // Lấy toàn bộ users
+        String dateSort = request.getParameter("dateSort");
+
         List<User> users = userFacade.findAll();
-        
-        // 🔥 LỌC THEO VAI TRÒ
-        if (roleFilter != null && !roleFilter.trim().isEmpty()) {
+
+        if (roleFilter != null && !roleFilter.isBlank()) {
             users = users.stream()
-                    .filter(u -> u.getRoleID().getRoleName().equalsIgnoreCase(roleFilter))
+                    .filter(u -> u.getRoleID().getRoleName().equals(roleFilter))
                     .collect(Collectors.toList());
         }
-        
-        // 🔥 TÌM KIẾM THEO TÊN HOẶC EMAIL
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String keywordLower = keyword.trim().toLowerCase();
+
+        if (keyword != null && !keyword.isBlank()) {
+            String k = keyword.toLowerCase();
             users = users.stream()
-                    .filter(u -> u.getFullName().toLowerCase().contains(keywordLower)
-                            || u.getEmail().toLowerCase().contains(keywordLower))
+                    .filter(u -> u.getFullName().toLowerCase().contains(k)
+                    || u.getEmail().toLowerCase().contains(k))
                     .collect(Collectors.toList());
         }
-        
-        // 🔥 SẮP XẾP THEO NGÀY TẠO
-        if (dateSort != null && !dateSort.trim().isEmpty()) {
-            if (dateSort.equals("newest")) {
-                // Mới nhất trước
-                users.sort(Comparator.comparing(User::getCreatedAt).reversed());
-            } else if (dateSort.equals("oldest")) {
-                // Cũ nhất trước
-                users.sort(Comparator.comparing(User::getCreatedAt));
-            }
+
+        if ("newest".equals(dateSort)) {
+            users.sort(Comparator.comparing(User::getCreatedAt).reversed());
+        } else if ("oldest".equals(dateSort)) {
+            users.sort(Comparator.comparing(User::getCreatedAt));
         }
-        
-        // 🔥 TẠO MAP ĐẾM SỐ ĐƠN HÀNG CHO MỖI USER
-        Map<Integer, Long> orderCountMap = new HashMap<>();
-        for (User user : users) {
-            Long count = userFacade.countOrdersByUser(user.getUserID());
-            orderCountMap.put(user.getUserID(), count != null ? count : 0L);
+
+        Map<Integer, Long> orderMap = new HashMap<>();
+        for (User u : users) {
+            orderMap.put(u.getUserID(), userFacade.countOrdersByUser(u.getUserID()));
         }
-        
+
         request.setAttribute("users", users);
-        request.setAttribute("orderCountMap", orderCountMap);
-        
+        request.setAttribute("orderCountMap", orderMap);
+
         request.getRequestDispatcher("/WEB-INF/views/admin/user/list.jsp")
                 .forward(request, response);
     }
+
+    private boolean isValidEmail(String email) {
+        if (email == null) {
+            return false;
+        }
+        String regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        return email.matches(regex);
+    }
+
+    private void setEditAttributes(HttpServletRequest request, int id,
+            String fullName, String email, String phone) {
+        request.setAttribute("showEditModal", true);
+        request.setAttribute("editUserId", id);
+        request.setAttribute("editFullName", fullName);
+        request.setAttribute("editEmail", email);
+        request.setAttribute("editPhone", phone);
+    }
+
+    private void setCreateAttributes(HttpServletRequest request,
+            String fullName,
+            String email,
+            String phone,
+            String role) {
+        request.setAttribute("showCreateModal", true);
+        request.setAttribute("oldFullName", fullName);
+        request.setAttribute("oldEmail", email);
+        request.setAttribute("oldPhone", phone);
+        request.setAttribute("oldRole", role);
+    }
+
 }

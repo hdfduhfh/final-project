@@ -37,15 +37,13 @@ public class NewsManagerServlet extends HttpServlet {
                 if (createdDateStr != null && !createdDateStr.isEmpty()) {
                     createdDate = new SimpleDateFormat("yyyy-MM-dd").parse(createdDateStr);
                 }
-            } catch (Exception e) {
-            }
+            } catch (Exception e) { }
 
             int page = 1;
             int pageSize = 5;
             try {
                 page = Integer.parseInt(req.getParameter("page"));
-            } catch (Exception e) {
-            }
+            } catch (Exception e) { }
 
             List<News> all;
             if (search != null && !search.trim().isEmpty()) {
@@ -54,18 +52,20 @@ public class NewsManagerServlet extends HttpServlet {
                 all = newsFacade.findAll();
             }
 
+            // sắp xếp tin mới nhất lên đầu (theo createdAt giảm dần)
+            all.sort((a, b) -> {
+                if (a.getCreatedAt() == null || b.getCreatedAt() == null) {
+                    return 0;
+                }
+                return b.getCreatedAt().compareTo(a.getCreatedAt());
+            });
+
             // lọc theo trạng thái
             if (status != null && !status.isEmpty()) {
-                Iterator<News> it = all.iterator();
-                while (it.hasNext()) {
-                    News n = it.next();
-                    if (n.getStatus() == null || !status.equalsIgnoreCase(n.getStatus())) {
-                        it.remove();
-                    }
-                }
+                all.removeIf(n -> n.getStatus() == null || !status.equalsIgnoreCase(n.getStatus()));
             }
 
-            // lọc theo ngày tạo (chỉ một ngày)
+            // lọc theo ngày tạo
             if (createdDate != null) {
                 Calendar calSelected = Calendar.getInstance();
                 calSelected.setTime(createdDate);
@@ -74,32 +74,25 @@ public class NewsManagerServlet extends HttpServlet {
                 calSelected.set(Calendar.SECOND, 0);
                 calSelected.set(Calendar.MILLISECOND, 0);
 
-                Iterator<News> it = all.iterator();
-                while (it.hasNext()) {
-                    News n = it.next();
-                    if (n.getCreatedAt() == null) {
-                        it.remove();
-                        continue;
-                    }
-
+                all.removeIf(n -> {
+                    if (n.getCreatedAt() == null) return true;
                     Calendar calNews = Calendar.getInstance();
                     calNews.setTime(n.getCreatedAt());
                     calNews.set(Calendar.HOUR_OF_DAY, 0);
-                    calNews.set(Calendar.MINUTE, 0);
-                    calNews.set(Calendar.SECOND, 0);
+                    calNews.set(Calendar.MINUTE, 0);calNews.set(Calendar.SECOND, 0);
                     calNews.set(Calendar.MILLISECOND, 0);
-
-                    if (!calNews.getTime().equals(calSelected.getTime())) {
-                        it.remove();
-                    }
-                }
+                    return !calNews.getTime().equals(calSelected.getTime());
+                });
             }
 
-            long total = all.size();
+            int total = all.size();
             int totalPages = (int) Math.ceil((double) total / pageSize);
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+
             int fromIndex = (page - 1) * pageSize;
-            int toIndex = Math.min(fromIndex + pageSize, all.size());
-            List<News> list = (fromIndex < all.size()) ? all.subList(fromIndex, toIndex) : Collections.emptyList();
+            int toIndex = Math.min(fromIndex + pageSize, total);
+            List<News> list = all.subList(fromIndex, toIndex);
 
             req.setAttribute("newsList", list);
             req.setAttribute("currentPage", page);
@@ -163,8 +156,7 @@ public class NewsManagerServlet extends HttpServlet {
             Integer id = parseId(req.getParameter("id"));
             News n = id != null ? newsFacade.find(id) : null;
             if (n != null) {
-                updateNews(n, req);
-                String thumbnailPath = req.getParameter("thumbnailPath");
+                updateNews(n, req);String thumbnailPath = req.getParameter("thumbnailPath");
                 if (thumbnailPath != null && !thumbnailPath.isBlank()) {
                     n.setThumbnailUrl(thumbnailPath);
                 }

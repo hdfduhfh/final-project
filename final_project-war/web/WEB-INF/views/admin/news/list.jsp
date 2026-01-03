@@ -47,6 +47,68 @@
         .thumb{ width: 60px; height: 45px; border-radius: 8px; object-fit: cover; border: 1px solid #ddd; }
         .btn-icon{ width: 36px; height: 36px; display:inline-grid; place-items:center; border-radius: 12px; }
         @media (max-width: 992px){ .sidebar{ display:none; } }
+     /* ===============================
+   FILTER BAR - NEWS (SYNC STYLE)
+   =============================== */
+.panel form {
+    background: rgba(255,255,255,0.95);
+    padding: 14px;
+    border-radius: 14px;
+    box-shadow: 0 12px 35px rgba(0,0,0,.18);
+}
+
+/* Input + Select */
+.panel form input[type="text"],
+.panel form input[type="date"],
+.panel form select {
+    background: #ffffff !important;
+    color: #0b1220 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-weight: 500;
+}
+
+/* Placeholder */
+.panel form input::placeholder {
+    color: #9ca3af;
+}
+
+/* Focus effect */
+.panel form input:focus,
+.panel form select:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,.25);
+    outline: none;
+}
+
+/* Nút LỌC */
+.panel form button[type="submit"] {
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 7px 14px;
+    border: none;
+}
+
+.panel form button[type="submit"]:hover {
+    background: #1d4ed8;
+}
+
+/* Nút HỦY */
+.panel form button[type="button"] {
+    background: #ef4444;
+    color: #fff;
+    border-radius: 10px;
+    padding: 7px 14px;
+    border: none;
+}
+
+.panel form button[type="button"]:hover {
+    background: #dc2626;
+}
+
     </style>
 </head>
 <body>

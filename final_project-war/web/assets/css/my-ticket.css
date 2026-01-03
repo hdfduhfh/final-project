@@ -578,3 +578,86 @@ textarea {
         gap: 8px;
     }
 }
+/* THÊM VÀO CUỐI FILE my-ticket.css */
+
+/* ===== SEAT CHANGE REQUEST BUTTON ===== */
+.btn-seat-change {
+    background: transparent;
+    color: var(--gold-primary);
+    border: 1px solid var(--gold-primary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: 600;
+}
+
+.btn-seat-change:hover {
+    background: var(--gold-gradient);
+    color: #000;
+    border-color: transparent;
+}
+
+/* ===== SEAT STATUS BOXES ===== */
+.seat-success {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid #2ecc71;
+    border-radius: 6px;
+    color: #2ecc71;
+    font-size: 0.85rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.seat-success i {
+    color: #2ecc71;
+    margin-right: 5px;
+}
+
+.seat-pending {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(241, 196, 15, 0.1);
+    border: 1px solid #f1c40f;
+    border-radius: 6px;
+    color: #f1c40f;
+    font-size: 0.85rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.seat-pending i {
+    color: #f1c40f;
+    margin-right: 5px;
+}
+
+.seat-rejected {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid #e74c3c;
+    border-radius: 6px;
+    color: #e74c3c;
+    font-size: 0.85rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.seat-rejected i {
+    color: #e74c3c;
+    margin-right: 5px;
+}
+
+.admin-note {
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid currentColor;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.admin-note i {
+    margin-right: 4px;
+}

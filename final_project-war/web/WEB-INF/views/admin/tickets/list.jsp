@@ -7,7 +7,7 @@
 <html lang="vi">
     <head>
         <meta charset="UTF-8">
-        <title>Quản lý vé</title>
+        <title>Quản lý vé - Full CRUD</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin/tickets-list.css">
@@ -22,7 +22,7 @@
                     <div class="logo"><i class="fa-solid fa-masks-theater"></i></div>
                     <div>
                         <div class="title">Theater Admin</div>
-                        <small>Quản lý vé</small>
+                        <small>Quản lý vé - Full CRUD</small>
                     </div>
                 </div>
 
@@ -36,9 +36,24 @@
                         <a class="btn btn-outline-light fw-bold" href="${pageContext.request.contextPath}/admin/dashboard" style="border-radius:14px;">
                             <i class="fa-solid fa-arrow-left"></i> Về Dashboard
                         </a>
+                        <a class="btn btn-outline-danger fw-bold" href="${pageContext.request.contextPath}/admin/tickets?action=deleted" style="border-radius:14px;">
+                            <i class="fa-solid fa-trash"></i> Vé đã xóa
+                        </a>
                         <button class="btn btn-light fw-bold" onclick="window.print()" style="border-radius:14px;">
                             <i class="fa-solid fa-print"></i> In báo cáo
                         </button>
+                    </div>
+
+                    <hr style="border-color: var(--line); margin: 16px 0;">
+
+                    <div class="alert alert-info" style="font-size: 12px; border-radius: 12px;">
+                        <i class="fa-solid fa-info-circle"></i> <strong>CRUD Logic:</strong><br>
+                        <small>
+                            • <strong>C</strong>reate: Tự động khi user thanh toán<br>
+                            • <strong>R</strong>ead: Xem danh sách & chi tiết<br>
+                            • <strong>U</strong>pdate: Đổi trạng thái (có validation)<br>
+                            • <strong>D</strong>elete: Chỉ xóa vé đã HỦY
+                        </small>
                     </div>
                 </div>
             </aside>
@@ -53,11 +68,28 @@
                             <i class="fa-solid fa-ticket"></i>
                         </div>
                         <div>
-                            <h1>Quản lý vé</h1>
+                            <h1>Quản lý vé (Full CRUD)</h1>
                             <div class="crumb">Admin / Ticket Management / List</div>
                         </div>
                     </div>
                 </div>
+
+                <!-- SUCCESS/ERROR MESSAGES -->
+                <c:if test="${not empty sessionScope.success}">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius:14px; margin-top:14px;">
+                        <i class="fa-solid fa-circle-check"></i> ${sessionScope.success}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <c:remove var="success" scope="session"/>
+                </c:if>
+
+                <c:if test="${not empty sessionScope.error}">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius:14px; margin-top:14px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> ${sessionScope.error}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <c:remove var="error" scope="session"/>
+                </c:if>
 
                 <!-- SEARCH PANEL -->
                 <div class="panel">
@@ -209,7 +241,7 @@
                     </div>
                 </div>
 
-                <!-- TABLE -->
+                <!-- TABLE WITH FULL CRUD ACTIONS -->
                 <div class="table-wrap">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
@@ -218,11 +250,11 @@
                                     <th style="width:90px;">ID</th>
                                     <th>QR Code</th>
                                     <th>Show</th>
-                                    <th>Suất diễn</th>
-                                    <th>Ghế</th>
                                     <th>Khách hàng</th>
                                     <th>Trạng thái</th>
-                                    <th style="width:120px;">Hành động</th>
+                                    <th style="width:200px;">
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> Hành động (CRUD)
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -241,16 +273,6 @@
                                         <td class="fw-bold">
                                             <i class="fa-solid fa-clapperboard text-primary"></i>
                                             <c:out value="${ticket.orderDetailID.scheduleID.showID.showName}" />
-                                        </td>
-
-                                        <td>
-                                            <i class="fa-regular fa-clock text-secondary"></i>
-                                            <fmt:formatDate value="${ticket.orderDetailID.scheduleID.showTime}" pattern="dd/MM/yyyy HH:mm"/>
-                                        </td>
-
-                                        <td class="fw-bold">
-                                            <i class="fa-solid fa-couch text-secondary"></i>
-                                            <c:out value="${ticket.orderDetailID.seatID.seatNumber}" />
                                         </td>
 
                                         <td>
@@ -285,24 +307,50 @@
                                         </td>
 
                                         <td class="text-nowrap">
+                                            <!-- READ: Xem chi tiết -->
                                             <button class="btn btn-info btn-icon"
-                                                    title="Xem chi tiết"
+                                                    title="[R] Xem chi tiết"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#ticketModal-${ticket.ticketID}">
-                                                <i class="fa-solid fa-circle-info"></i>
+                                                <i class="fa-solid fa-eye"></i>
                                             </button>
+
+                                            <!-- UPDATE: Chỉnh sửa -->
+                                            <a href="${pageContext.request.contextPath}/admin/tickets?action=edit&id=${ticket.ticketID}"
+                                               class="btn btn-warning btn-icon"
+                                               title="[U] Chỉnh sửa trạng thái">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </a>
+
+                                            <!-- DELETE: Xóa (chỉ vé CANCELLED) -->
+                                            <c:choose>
+                                                <c:when test="${stLower == 'cancelled'}">
+                                                    <button class="btn btn-danger btn-icon"
+                                                            title="[D] Xóa vé đã hủy"
+                                                            onclick="confirmDelete(${ticket.ticketID}, '${ticket.QRCode}')">
+                                                        <i class="fa-solid fa-trash-alt"></i>
+                                                    </button>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <button class="btn btn-secondary btn-icon"
+                                                            disabled
+                                                            title="[D] Chỉ xóa được vé CANCELLED">
+                                                        <i class="fa-solid fa-ban"></i>
+                                                    </button>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
                                     </tr>
                                 </c:forEach>
 
                                 <c:if test="${empty tickets}">
                                     <tr>
-                                        <td colspan="8" class="empty">
+                                        <td colspan="6" class="empty">
                                             <i class="fa-regular fa-folder-open fa-2x"></i>
                                             <div class="mt-2 fw-bold">
                                                 <c:choose>
                                                     <c:when test="${hasSearchParams}">
-                                                        Không tìm thấy vé nào phù hợp với tiêu chí tìm kiếm.
+                                                        Không tìm thấy vé nào phù hợp.
                                                     </c:when>
                                                     <c:otherwise>
                                                         Chưa có vé nào.
@@ -357,7 +405,7 @@
             </main>
         </div>
 
-        <!-- MODALS -->
+        <!-- DETAIL MODALS (READ) -->
         <c:forEach var="ticket" items="${tickets}">
             <c:set var="stLower" value="${ticket.status != null ? fn:toLowerCase(ticket.status) : ''}" />
             <div class="modal fade" id="ticketModal-${ticket.ticketID}" tabindex="-1" aria-hidden="true">
@@ -366,9 +414,9 @@
                         <div class="modal-header">
                             <h5 class="modal-title">
                                 <i class="fa-solid fa-ticket me-2 text-warning"></i>
-                                Chi tiết vé #${ticket.ticketID}
+                                [READ] Chi tiết vé #${ticket.ticketID}
                             </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
 
                         <div class="modal-body">
@@ -421,7 +469,6 @@
                                             </c:when>
                                             <c:otherwise>
                                                 <span class="status-badge">
-                                                    <i class="fa-solid fa-tag"></i>
                                                     <c:out value="${ticket.status}" />
                                                 </span>
                                             </c:otherwise>
@@ -429,30 +476,19 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th>Phát hành lúc</th>
+                                    <th>Phát hành</th>
                                     <td>
                                         <fmt:formatDate value="${ticket.issuedAt}" pattern="dd/MM/yyyy HH:mm:ss"/>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th>Check-in lúc</th>
+                                    <th>Check-in</th>
                                     <td>
                                         <c:choose>
                                             <c:when test="${not empty ticket.checkInAt}">
                                                 <fmt:formatDate value="${ticket.checkInAt}" pattern="dd/MM/yyyy HH:mm:ss"/>
                                             </c:when>
                                             <c:otherwise>Chưa check-in</c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Cập nhật</th>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${not empty ticket.updatedAt}">
-                                                <fmt:formatDate value="${ticket.updatedAt}" pattern="dd/MM/yyyy HH:mm:ss"/>
-                                            </c:when>
-                                            <c:otherwise>—</c:otherwise>
                                         </c:choose>
                                     </td>
                                 </tr>
@@ -470,5 +506,16 @@
         </c:forEach>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+                                                                function confirmDelete(ticketId, qrCode) {
+                                                                    if (confirm('⚠️ XÁC NHẬN XÓA VÉ\n\n' +
+                                                                            'Vé: #' + ticketId + '\n' +
+                                                                            'QR: ' + qrCode + '\n\n' +
+                                                                            'Bạn có chắc chắn muốn XÓA vé này không?\n' +
+                                                                            '(Chỉ xóa được vé đã HỦY)')) {
+                                                                        window.location.href = '${pageContext.request.contextPath}/admin/tickets?action=delete&id=' + ticketId;
+                                                                    }
+                                                                }
+        </script>
     </body>
 </html>

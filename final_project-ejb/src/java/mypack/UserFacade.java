@@ -88,5 +88,29 @@ public class UserFacade extends AbstractFacade<User> implements UserFacadeLocal 
                 .setParameter("uid", userID)
                 .getSingleResult();
     }
+public void deleteUser(Integer userId) {
+    User user = em.find(User.class, userId);
+
+    if (user == null) {
+        throw new RuntimeException("Người dùng không tồn tại");
+    }
+
+    // ❌ CẤM xóa ADMIN
+    if ("ADMIN".equalsIgnoreCase(user.getRoleID().getRoleName())) {
+        throw new RuntimeException("Không thể xóa tài khoản ADMIN");
+    }
+
+    // ❌ CÓ ĐƠN HÀNG
+    Long count = em.createQuery(
+        "SELECT COUNT(o) FROM Order1 o WHERE o.userID = :user",
+        Long.class
+    ).setParameter("user", user).getSingleResult();
+
+    if (count > 0) {
+        throw new RuntimeException("Người dùng đã có đơn hàng, không thể xóa");
+    }
+
+    em.remove(user);
+}
 
 }

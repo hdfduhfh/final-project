@@ -278,6 +278,10 @@
                     margin-left: 0;
                 }
             }
+            .text-muted {
+    color: #b6c2e2 !important; /* sáng hơn, dễ nhìn trên nền tối */
+}
+
         </style>
     </head>
     <body>
@@ -285,7 +289,7 @@
         <div class="d-flex" id="wrapper">
             <div id="sidebar-wrapper">
                 <div class="sidebar-brand">
-                    <i class="fas fa-film text-primary me-2"></i> THEATER ADMIN
+                    <i class="fas fa-film text-primary me-2"></i> BOOKING STAGE
                 </div>
 
                 <div class="list-group list-group-flush mt-2">
@@ -295,22 +299,22 @@
 
                     <div class="sidebar-heading">Quản lý Show</div>
                     <a href="<%=contextPath%>/admin/show" class="list-group-item list-group-item-action">
-                        <i class="fas fa-theater-masks"></i> Danh sách Show
+                        <i class="fas fa-theater-masks"></i> Quản lý chương trình
                     </a>
                     <a href="<%=contextPath%>/admin/artist" class="list-group-item list-group-item-action">
-                        <i class="fas fa-microphone-alt"></i> Nghệ sĩ
+                        <i class="fas fa-microphone-alt"></i> Quản lý nghệ sĩ
                     </a>
                     <a href="<%=contextPath%>/admin/schedule" class="list-group-item list-group-item-action">
-                        <i class="fas fa-calendar-alt"></i> Lịch diễn
+                        <i class="fas fa-calendar-alt"></i> Quản lý lịch diễn
                     </a>
                     <a href="<%=contextPath%>/admin/seats" class="list-group-item list-group-item-action">
-                        <i class="fas fa-chair"></i> Sơ đồ ghế
+                        <i class="fas fa-chair"></i> Quản lý ghế
                     </a>
 
                     <!-- ✅ THÊM MỚI: Menu Sự kiện -->
                     <div class="sidebar-heading">Sự kiện & Giao lưu</div>
                     <a href="<%=contextPath%>/admin/events" class="list-group-item list-group-item-action">
-                        <i class="fas fa-calendar-star"></i> Quản lý Sự kiện
+                        <i class="fas fa-calendar-check"></i> Quản lý Sự kiện
                     </a>
 
                     <div class="sidebar-heading">Kinh Doanh</div>
@@ -318,34 +322,34 @@
                         <i class="fas fa-chart-line"></i> Thống kê doanh thu
                     </a>
                     <a href="<%=contextPath%>/admin/promotions" class="list-group-item list-group-item-action">
-                        <i class="fas fa-tags"></i> Khuyến mãi
+                        <i class="fas fa-tags"></i> Quản lý khuyến mãi
                     </a>
                     <a href="<%=contextPath%>/admin/tickets" class="list-group-item list-group-item-action">
-                        <i class="fas fa-ticket-alt"></i> Vé bán
+                        <i class="fas fa-ticket-alt"></i> Quản lý vé bán
                     </a>
                     <a href="<%=contextPath%>/admin/ticket-checkin" class="list-group-item list-group-item-action text-warning fw-bold">
                         <i class="fas fa-qrcode"></i> Check-in Vé
                     </a>
                     <a href="<%=contextPath%>/admin/orders" class="list-group-item list-group-item-action">
-                        <i class="fas fa-shopping-cart"></i> Đơn hàng <span class="badge bg-danger ms-auto">New</span>
+                        <i class="fas fa-shopping-cart"></i> Quản lý đơn hàng <span class="badge bg-danger ms-auto">New</span>
                     </a>
 
                     <div class="sidebar-heading">Hệ Thống & Nội Dung</div>
                     <a href="<%=contextPath%>/admin/user" class="list-group-item list-group-item-action">
-                        <i class="fas fa-users"></i> Thành viên
+                        <i class="fas fa-users"></i> Quản lý người dùng
                     </a>
                     <a href="<%=contextPath%>/admin/news" class="list-group-item list-group-item-action">
-                        <i class="fas fa-newspaper"></i> Tin tức
+                        <i class="fas fa-newspaper"></i> Quản lý tin tức
                     </a>
                     <a href="<%=contextPath%>/admin/recruitment" class="list-group-item list-group-item-action">
-                        <i class="fas fa-briefcase"></i> Tuyển dụng
+                        <i class="fas fa-briefcase"></i> Quản lý tuyển dụng
                     </a>
                     <!-- ✅ SỬA: Icon Đơn tuyển từ fa-briefcase → fa-file-alt -->
                     <a href="<%=contextPath%>/admin/applyjob" class="list-group-item list-group-item-action">
-                        <i class="fas fa-file-alt"></i> Đơn tuyển
+                        <i class="fas fa-file-alt"></i> Danh sách đơn tuyển
                     </a>
                     <a href="<%=contextPath%>/admin/feedback" class="list-group-item list-group-item-action">
-                        <i class="fas fa-comment-dots"></i> Feedback
+                        <i class="fas fa-comment-dots"></i> Quản lý đánh giá
                     </a>
                 </div>
             </div>
@@ -362,7 +366,13 @@
                                 <span class="fw-bold"><%= fullName%></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark shadow">
-                                <li><a class="dropdown-item" href="#">Hồ sơ</a></li>
+                                <li>
+    <a class="dropdown-item" href="<%=contextPath%>/admin/profile">
+        Hồ sơ
+    </a>
+</li>
+
+
                                 <li><a class="dropdown-item" href="#">Cài đặt</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="<%=contextPath%>/logout">Đăng xuất</a></li>

@@ -179,6 +179,47 @@
                 display:none;
             }
         }
+        /* ===== FILTER FORM FIX ===== */
+.panel form input[type="text"],
+.panel form input[type="date"],
+.panel form select {
+    background: #ffffff !important;
+    color: #0b1220 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-weight: 500;
+}
+
+.panel form input::placeholder {
+    color: #9ca3af;
+}
+
+/* focus đẹp hơn */
+.panel form input:focus,
+.panel form select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99,102,241,.25);
+}
+
+/* nút lọc */
+.panel form button {
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* nút hủy */
+.panel form button[type="button"] {
+    background: #ef4444 !important;
+    color: white !important;
+    border: none;
+}
+
+.panel form button[type="button"]:hover {
+    background: #dc2626 !important;
+}
+
     </style>
 </head>
 

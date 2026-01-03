@@ -8,16 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý đơn hàng</title>
     
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin/orders-list.css">
 </head>
 <body>
     <div class="admin-wrap">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="brand">
                 <div class="logo"><i class="fa-solid fa-masks-theater"></i></div>
@@ -39,9 +35,7 @@
             </div>
         </aside>
 
-        <!-- CONTENT -->
         <main class="content">
-            <!-- TOPBAR -->
             <div class="topbar">
                 <div class="page-h">
                     <div class="d-none d-md-grid" style="place-items:center; width:44px; height:44px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid var(--line);">
@@ -54,7 +48,6 @@
                 </div>
             </div>
 
-            <!-- STATS -->
             <div class="stat-grid">
                 <div class="stat">
                     <div>
@@ -95,7 +88,6 @@
                 </div>
             </div>
 
-            <!-- FILTER PANEL -->
             <div class="panel">
                 <div class="row g-2 align-items-center">
                     <div class="col-lg-6">
@@ -118,7 +110,6 @@
                 </div>
             </div>
 
-            <!-- TABLE -->
             <c:choose>
                 <c:when test="${empty orders}">
                     <div class="table-wrap">
@@ -191,9 +182,18 @@
                                                         </span>
                                                     </c:otherwise>
                                                 </c:choose>
+                                                
+                                                <%-- ✅ BADGE YÊU CẦU HỦY --%>
                                                 <c:if test="${order.cancellationRequested}">
                                                     <span class="req-cancel">
                                                         <i class="fa-solid fa-triangle-exclamation"></i> Yêu cầu hủy
+                                                    </span>
+                                                </c:if>
+                                                
+                                                <%-- ✅ BADGE YÊU CẦU ĐỔI GHẾ --%>
+                                                <c:if test="${order.seatChangeRequested && order.seatChangeStatus == 'PENDING'}">
+                                                    <span class="req-seat-change">
+                                                        <i class="fa-solid fa-sync"></i> Yêu cầu đổi ghế
                                                     </span>
                                                 </c:if>
                                             </td>
@@ -230,7 +230,6 @@
         </main>
     </div>
 
-    <!-- MODAL: Confirm Approve Cancel -->
     <div class="modal fade" id="confirmApproveCancelModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -259,9 +258,7 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
     <script src="${pageContext.request.contextPath}/js/admin/orders-list.js"></script>
 </body>
 </html>

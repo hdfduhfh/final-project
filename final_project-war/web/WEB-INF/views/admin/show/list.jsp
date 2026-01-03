@@ -270,7 +270,7 @@
                 border-radius: 12px;
             }
 
-            /* Overlay + Popup (giữ logic) */
+            /* Overlay + Popup */
             .show-detail-overlay {
                 position: fixed;
                 inset: 0;
@@ -306,7 +306,6 @@
                 object-fit: cover;
             }
 
-            /* ===== POPUP TEXT CLEAR (fixed) ===== */
             .show-detail-right{
                 flex: 1;
                 padding: 22px 24px;
@@ -343,8 +342,7 @@
                 color:#0f172a !important;
                 font-weight:900 !important;
             }
-            #detailDirector,
-            #detailArtists{
+            #detailDirector, #detailArtists{
                 color:#111827 !important;
                 font-weight:700 !important;
             }
@@ -385,10 +383,7 @@
                 background-repeat:no-repeat;
                 transform:translate(-50%, -50%);
             }
-            /* Poster loading overlay */
-            .poster-wrap{
-                position:relative;
-            }
+
             .poster-loading{
                 position:absolute;
                 inset:0;
@@ -398,46 +393,18 @@
                 background: rgba(0,0,0,0.35);
                 z-index: 2;
             }
-
-            /* Cho popup render “nhẹ” hơn lúc mở */
-            .show-detail-overlay{
-                will-change: opacity;
-            }
-            .show-detail-modal{
-                will-change: transform;
-            }
-            /* Clear X nằm TRONG ô input (chừa chỗ cho nút Tìm) */
-            .clear-x{
-                position:absolute;
-                right: 56px;            /* chừa chỗ cho nút Tìm */
-                top: 50%;
-                transform: translateY(-50%);
-                width: 26px;
-                height: 26px;
-                border-radius: 999px;
-
-                display:none;           /* mặc định ẩn */
-                place-items:center;
-
-                cursor:pointer;
-                user-select:none;
-                color:#6b7280;
-                background: transparent;
-                border: none;
-                padding:0;
-            }
-            .clear-x:hover{
-                background:#f3f4f6;
-            }
-
-
         </style>
     </head>
 
     <body>
+
+        <%-- ✅ Ưu tiên lấy status từ request attribute (servlet setAttribute) --%>
+        <c:set var="statusValue"
+               value="${not empty status ? status : (empty param.status ? 'ALL' : param.status)}"/>
+
         <div class="admin-wrap">
 
-            <!-- SIDEBAR (chỉ giữ 2 nút: Danh sách vở diễn + Quản lý nghệ sĩ) -->
+            <!-- SIDEBAR -->
             <aside class="sidebar">
                 <div class="brand">
                     <div class="logo"><i class="fa-solid fa-masks-theater"></i></div>
@@ -458,7 +425,6 @@
 
                 <hr style="border-color: var(--line);">
 
-                <!-- Quick actions (chỉ giữ: Về Dashboard) -->
                 <div class="px-2">
                     <div class="text-uppercase" style="font-size:12px; color:var(--muted); font-weight:900; letter-spacing:.3px;">
                         Quick actions
@@ -467,8 +433,14 @@
                         <a class="btn btn-outline-light fw-bold" href="${pageContext.request.contextPath}/admin/dashboard" style="border-radius:14px;">
                             <i class="fa-solid fa-arrow-left"></i> Về Dashboard
                         </a>
+
                         <a href="${pageContext.request.contextPath}/admin/show/add" class="btn btn-light fw-bold" style="border-radius:14px;">
                             <i class="fa-solid fa-circle-plus"></i> Thêm vở diễn
+                        </a>
+
+                        <%-- ✅ NEW: Thùng rác (không ảnh hưởng CSS) --%>
+                        <a href="${pageContext.request.contextPath}/admin/show/trash" class="btn btn-outline-warning fw-bold" style="border-radius:14px;">
+                            <i class="fa-solid fa-trash-can"></i> Thùng rác
                         </a>
                     </div>
                 </div>
@@ -516,7 +488,7 @@
 
                     <div class="stat">
                         <div>
-                            <div class="label">ĐANG CHIẾU</div>
+                            <div class="label">ĐANG HOẠT ĐỘNG</div>
                             <div class="value">${statOngoing}</div>
                         </div>
                         <div class="icon i-on"><i class="fa-solid fa-play"></i></div>
@@ -524,7 +496,7 @@
 
                     <div class="stat">
                         <div>
-                            <div class="label">SẮP CHIẾU</div>
+                            <div class="label">SẮP HOẠT ĐỘNG</div>
                             <div class="value">${statUpcoming}</div>
                         </div>
                         <div class="icon i-up"><i class="fa-solid fa-calendar-days"></i></div>
@@ -532,17 +504,22 @@
 
                     <div class="stat">
                         <div>
-                            <div class="label">BỊ HỦY</div>
+                            <div class="label">TẠM NGƯNG</div>
                             <div class="value">${statCancelled}</div>
                         </div>
                         <div class="icon i-cancel"><i class="fa-solid fa-ban"></i></div>
                     </div>
                 </div>
 
-                <!-- CONTROLS (nút Tìm sát input như trang Quản lý nghệ sĩ) -->
+                <!-- CONTROLS -->
                 <div class="panel">
-                    <form method="get" action="${pageContext.request.contextPath}/admin/show">
+                    <form id="filterForm" method="get" action="${pageContext.request.contextPath}/admin/show">
+
+                        <input type="hidden" name="status" id="statusParam" value="${fn:escapeXml(statusValue)}"/>
+                        <input type="hidden" name="page" id="pageParam" value="${empty currentPage ? '1' : currentPage}"/>
+
                         <div class="row g-2 align-items-center">
+
                             <div class="col-lg-8">
                                 <div class="input-group position-relative">
                                     <span class="input-group-text bg-white">
@@ -552,21 +529,82 @@
                                     <input type="text"
                                            id="keywordInput"
                                            name="keyword"
-                                           value="${searchKeyword}"
+                                           value="${fn:escapeXml(searchKeyword)}"
                                            class="form-control"
                                            placeholder="Tìm theo tên vở diễn..."
-                                           style="padding-right:48px;">
+                                           style="padding-right:90px;">
+
+                                    <!-- ✅ Nút X xoá nhanh -->
+                                    <button type="button"
+                                            id="clearKeywordBtn"
+                                            class="btn btn-light"
+                                            title="Xóa"
+                                            style="
+                                            position:absolute;
+                                            right:80px;
+                                            top:50%;
+                                            transform:translateY(-50%);
+                                            width:34px;height:34px;
+                                            border-radius:10px;
+                                            display:none;
+                                            align-items:center;
+                                            justify-content:center;
+                                            z-index:5;
+                                            border:1px solid rgba(0,0,0,.12);
+                                            ">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
 
                                     <button type="submit" class="btn btn-warning fw-bold">Tìm</button>
                                 </div>
-
-
-
                             </div>
+
+                            <!-- Date range filter -->
+                            <div class="col-lg-4">
+                                <div class="d-flex gap-2">
+                                    <div class="w-50">
+                                        <label class="form-label mb-1 text-white-50 fw-bold" style="font-size:12px;">Từ ngày</label>
+                                        <input type="date" id="fromDate" name="fromDate" value="${fn:escapeXml(fromDate)}" class="form-control">
+                                    </div>
+
+                                    <div class="w-50">
+                                        <label class="form-label mb-1 text-white-50 fw-bold" style="font-size:12px;">Đến ngày</label>
+                                        <input type="date" id="toDate" name="toDate" value="${fn:escapeXml(toDate)}" class="form-control">
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <button type="button" id="clearDateBtn" class="btn btn-sm btn-outline-light fw-bold">
+                                        <i class="fa-solid fa-eraser"></i> Xóa lọc ngày
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Status filter -->
+                            <div class="col-12 mt-2">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Filter status">
+                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="ALL">
+                                        <i class="fa-solid fa-layer-group"></i> Tất cả
+                                    </button>
+                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="Ongoing">
+                                        <i class="fa-solid fa-circle-play"></i> Ongoing
+                                    </button>
+                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="Upcoming">
+                                        <i class="fa-solid fa-clock"></i> Upcoming
+                                    </button>
+                                    <button type="button" class="btn btn-outline-light fw-bold status-filter" data-status="Cancelled">
+                                        <i class="fa-solid fa-ban"></i> Cancelled
+                                    </button>
+                                </div>
+
+                                <span class="ms-2 text-white-50" style="font-weight:700; font-size:13px;">
+                                    Lọc theo trạng thái (server-side + đúng phân trang)
+                                </span>
+                            </div>
+
                         </div>
                     </form>
                 </div>
-
 
                 <!-- TABLE -->
                 <div class="table-wrap">
@@ -641,14 +679,14 @@
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
 
+                                            <%-- ✅ NEW: Xóa mềm => chuyển vào thùng rác --%>
                                             <button type="button"
                                                     class="btn btn-danger btn-icon"
-                                                    title="Xóa vở diễn"
-                                                    onclick="openDeleteShowModal('${pageContext.request.contextPath}/admin/show/delete?id=${s.showID}',
+                                                    title="Chuyển vào thùng rác"
+                                                    onclick="openDeleteShowModal('${pageContext.request.contextPath}/admin/show/soft-delete?id=${s.showID}',
                                                                     '${fn:escapeXml(s.showName)}')">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>
-
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -671,10 +709,26 @@
                     <c:if test="${totalPages > 1}">
                         <nav aria-label="pagination">
                             <ul class="pagination justify-content-center mb-0">
+
+                                <c:url var="prevUrl" value="/admin/show">
+                                    <c:param name="page" value="${currentPage - 1}" />
+                                    <c:param name="keyword" value="${searchKeyword}" />
+                                    <c:param name="fromDate" value="${fromDate}" />
+                                    <c:param name="toDate" value="${toDate}" />
+                                    <c:param name="status" value="${statusValue}" />
+                                </c:url>
+
+                                <c:url var="nextUrl" value="/admin/show">
+                                    <c:param name="page" value="${currentPage + 1}" />
+                                    <c:param name="keyword" value="${searchKeyword}" />
+                                    <c:param name="fromDate" value="${fromDate}" />
+                                    <c:param name="toDate" value="${toDate}" />
+                                    <c:param name="status" value="${statusValue}" />
+                                </c:url>
+
                                 <c:if test="${currentPage > 1}">
                                     <li class="page-item">
-                                        <a class="page-link"
-                                           href="${pageContext.request.contextPath}/admin/show?page=${currentPage - 1}&keyword=${fn:escapeXml(searchKeyword)}">
+                                        <a class="page-link" href="${prevUrl}">
                                             <i class="fa-solid fa-arrow-left"></i> Trước
                                         </a>
                                     </li>
@@ -689,12 +743,12 @@
 
                                 <c:if test="${currentPage < totalPages}">
                                     <li class="page-item">
-                                        <a class="page-link"
-                                           href="${pageContext.request.contextPath}/admin/show?page=${currentPage + 1}&keyword=${fn:escapeXml(searchKeyword)}">
+                                        <a class="page-link" href="${nextUrl}">
                                             Sau <i class="fa-solid fa-arrow-right"></i>
                                         </a>
                                     </li>
                                 </c:if>
+
                             </ul>
                         </nav>
                     </c:if>
@@ -703,12 +757,11 @@
             </main>
         </div>
 
-        <!-- POPUP DETAIL SHOW -->
+        <!-- POPUP DETAIL SHOW (giữ nguyên) -->
         <div id="showDetailOverlay" class="show-detail-overlay">
             <div class="show-detail-close" onclick="closeShowDetail()">&times;</div>
 
             <div class="show-detail-modal">
-                <!-- LEFT: POSTER -->
                 <div class="show-detail-left">
                     <div class="poster-wrap" id="posterWrap">
                         <img id="detailPoster" src="" alt="Poster" decoding="async">
@@ -718,11 +771,9 @@
                             </div>
                         </div>
                         <div class="magnifier-lens" id="magnifierLens"></div>
-                        >
                     </div>
                 </div>
 
-                <!-- RIGHT: INFO -->
                 <div class="show-detail-right">
                     <div id="detailTitle" class="show-detail-title"></div>
 
@@ -730,6 +781,7 @@
                         <strong><i class="fa-solid fa-user-tie"></i> Đạo diễn:</strong>
                         <span id="detailDirector"></span>
                     </div>
+
                     <div class="mt-2 show-detail-meta">
                         <strong><i class="fa-solid fa-align-left"></i> Mô tả:</strong>
                         <div id="detailDescription" class="mt-1" style="white-space:pre-line;"></div>
@@ -763,216 +815,94 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
-                            function openDeleteShowModal(deleteUrl, showName) {
-                                const nameEl = document.getElementById('deleteShowName');
-                                const confirmBtn = document.getElementById('deleteShowConfirmBtn');
+            function openDeleteShowModal(deleteUrl, showName) {
+                const nameEl = document.getElementById('deleteShowName');
+                const confirmBtn = document.getElementById('deleteShowConfirmBtn');
 
-                                if (nameEl)
-                                    nameEl.textContent = showName || '';
-                                if (confirmBtn)
-                                    confirmBtn.setAttribute('href', deleteUrl || '#');
+                if (nameEl) nameEl.textContent = showName || '';
+                if (confirmBtn) confirmBtn.setAttribute('href', deleteUrl || '#');
 
-                                const modalEl = document.getElementById('deleteShowModal');
-                                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                                modal.show();
-                            }
+                const modalEl = document.getElementById('deleteShowModal');
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
         </script>
 
+        <!-- ✅ FILTER: status/date đều submit server-side + reset page=1 -->
+        <script>
+            (function () {
+                const form = document.getElementById('filterForm');
+                if (!form) return;
 
+                const filterButtons = document.querySelectorAll('.status-filter');
+                const statusParam = document.getElementById('statusParam');
+                const pageParam = document.getElementById('pageParam');
 
+                const fromInput = document.getElementById('fromDate');
+                const toInput = document.getElementById('toDate');
+                const clearDateBtn = document.getElementById('clearDateBtn');
+
+                function setPage1AndSubmit() {
+                    if (pageParam) pageParam.value = '1';
+                    form.submit();
+                }
+
+                const activeStatus = (statusParam ? (statusParam.value || 'ALL') : 'ALL').trim() || 'ALL';
+                filterButtons.forEach(b => b.classList.remove('active'));
+                const btnActive = Array.from(filterButtons).find(b => ((b.getAttribute('data-status') || 'ALL').trim() === activeStatus));
+                if (btnActive) btnActive.classList.add('active');
+                else if (filterButtons.length) filterButtons[0].classList.add('active');
+
+                filterButtons.forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const st = (this.getAttribute('data-status') || 'ALL').trim() || 'ALL';
+                        if (statusParam) statusParam.value = st;
+                        setPage1AndSubmit();
+                    });
+                });
+
+                if (fromInput) fromInput.addEventListener('change', setPage1AndSubmit);
+                if (toInput) toInput.addEventListener('change', setPage1AndSubmit);
+
+                if (clearDateBtn) {
+                    clearDateBtn.addEventListener('click', function () {
+                        if (fromInput) fromInput.value = '';
+                        if (toInput) toInput.value = '';
+                        setPage1AndSubmit();
+                    });
+                }
+            })();
+        </script>
+
+        <!-- ✅ CLEAR KEYWORD (nút X) -->
         <script>
             (function () {
                 const input = document.getElementById('keywordInput');
-                if (!input)
-                    return;
+                const btn = document.getElementById('clearKeywordBtn');
+                const form = document.getElementById('filterForm');
+                const pageParam = document.getElementById('pageParam');
 
-                const group = input.closest('.input-group');
-                if (!group)
-                    return;
-
-                // Tạo nút X
-                const clearBtn = document.createElement('button');
-                clearBtn.type = 'button';
-                clearBtn.className = 'btn btn-outline-secondary';
-                clearBtn.setAttribute('aria-label', 'Clear search');
-                clearBtn.style.display = 'none';
-                clearBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-
-                // Chèn nút X NGAY TRƯỚC nút submit (Tìm) => giống trang nghệ sĩ
-                const submitBtn = group.querySelector('button[type="submit"], input[type="submit"]');
-                if (submitBtn)
-                    group.insertBefore(clearBtn, submitBtn);
-                else
-                    group.appendChild(clearBtn);
+                if (!input || !btn) return;
 
                 function toggle() {
-                    clearBtn.style.display = input.value.trim().length ? '' : 'none';
+                    btn.style.display = (input.value && input.value.trim().length) ? 'inline-flex' : 'none';
                 }
 
-                clearBtn.addEventListener('click', function () {
+                input.addEventListener('input', toggle);
+
+                btn.addEventListener('click', function () {
                     input.value = '';
                     toggle();
                     input.focus();
-                    // Nếu muốn xóa xong tự submit lại:
-                    // input.form && input.form.submit();
+                    // Nếu muốn xóa xong tự reload danh sách:
+                    // if(pageParam) pageParam.value = '1';
+                    // if(form) form.submit();
                 });
 
-                input.addEventListener('input', toggle);
-                input.addEventListener('change', toggle);
-
-                toggle(); // init khi reload có sẵn keyword
+                toggle();
             })();
         </script>
 
-
-        <script>
-            const overlay = document.getElementById("showDetailOverlay");
-            const modal = overlay.querySelector(".show-detail-modal");
-
-            const titleEl = document.getElementById("detailTitle");
-            const directorEl = document.getElementById("detailDirector");
-            const artistsEl = document.getElementById("detailArtists");
-            const descEl = document.getElementById("detailDescription");
-            const durEl = document.getElementById("detailDuration");
-            const statusEl = document.getElementById("detailStatus");
-
-
-            const posterImg = document.getElementById("detailPoster");
-            const posterLoading = document.getElementById("posterLoading");
-
-            // Preload image helper
-            function preloadImage(url) {
-                return new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.onload = () => resolve(url);
-                    img.onerror = reject;
-                    img.src = url;
-                });
-            }
-
-            async function openShowDetail(btn) {
-                if (descEl)
-                    descEl.textContent = btn.getAttribute("data-description") || "";
-                if (durEl) {
-                    const d = btn.getAttribute("data-duration") || "";
-                    durEl.textContent = d ? (d + " phút") : "";
-                }
-                if (statusEl)
-                    statusEl.textContent = btn.getAttribute("data-status") || "";
-
-                // 1) Set text trước (nhẹ, popup hiện liền)
-                titleEl.textContent = btn.getAttribute("data-show-name") || "";
-                directorEl.textContent = btn.getAttribute("data-director") || "(Chưa có)";
-                artistsEl.textContent = btn.getAttribute("data-actors") || "";
-
-                // 2) Mở popup ngay lập tức
-                overlay.style.display = "flex";
-
-                // 3) Show loading + clear ảnh cũ (tránh dùng ảnh cũ rồi mới đổi)
-                posterLoading.style.display = "flex";
-                posterImg.removeAttribute("src");
-
-                const url = btn.getAttribute("data-poster-url") || "";
-                if (!url) {
-                    posterLoading.style.display = "none";
-                    return;
-                }
-
-                // 4) Load ảnh trước bằng Image() -> xong mới set vào DOM
-                try {
-                    await preloadImage(url);
-                    // set vào img thật
-                    posterImg.src = url;
-                } catch (e) {
-                    // nếu lỗi, tắt loading
-                    posterImg.removeAttribute("src");
-                } finally {
-                    posterLoading.style.display = "none";
-                }
-            }
-
-            function closeShowDetail() {
-                overlay.style.display = "none";
-                posterLoading.style.display = "none";
-                posterImg.removeAttribute("src");
-            }
-
-            // ✅ Click ngoài modal thì đóng (KHÔNG dựa vào class btn-info nữa)
-            overlay.addEventListener("click", function (e) {
-                // nếu click trực tiếp lên nền overlay (không phải modal) -> đóng
-                if (e.target === overlay) {
-                    closeShowDetail();
-                }
-            });
-
-            // ESC to close
-            document.addEventListener("keydown", function (e) {
-                if (e.key === "Escape" && overlay.style.display === "flex") {
-                    closeShowDetail();
-                }
-            });
-        </script>
-
-
-        <script>
-            (function () {
-                const zoom = 2.2;
-
-                function setupMagnifier() {
-                    const wrap = document.getElementById("posterWrap");
-                    const img = document.getElementById("detailPoster");
-                    const lens = document.getElementById("magnifierLens");
-                    if (!wrap || !img || !lens)
-                        return;
-
-                    function showLens() {
-                        if (!img.src)
-                            return;
-                        lens.style.display = "block";
-                        lens.style.backgroundImage = "url('" + img.src + "')";
-                    }
-
-                    function hideLens() {
-                        lens.style.display = "none";
-                    }
-
-                    function moveLens(e) {
-                        if (lens.style.display !== "block")
-                            return;
-
-                        const rect = wrap.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-
-                        const size = lens.offsetWidth;
-                        const half = size / 2;
-
-                        const cx = Math.max(half, Math.min(x, rect.width - half));
-                        const cy = Math.max(half, Math.min(y, rect.height - half));
-
-                        lens.style.left = cx + "px";
-                        lens.style.top = cy + "px";
-
-                        lens.style.backgroundSize =
-                                (rect.width * zoom) + "px " + (rect.height * zoom) + "px";
-
-                        const bgX = -(cx * zoom - half);
-                        const bgY = -(cy * zoom - half);
-                        lens.style.backgroundPosition = bgX + "px " + bgY + "px";
-                    }
-
-                    wrap.addEventListener("mouseenter", showLens);
-                    wrap.addEventListener("mouseleave", hideLens);
-                    wrap.addEventListener("mousemove", moveLens);
-
-                    img.addEventListener("load", function () {
-                        lens.style.backgroundImage = "url('" + img.src + "')";
-                    });
-                }
-
-                window.addEventListener("load", setupMagnifier);
-            })();
-        </script>
         <!-- ===== DELETE CONFIRM MODAL (Bootstrap) ===== -->
         <div class="modal fade" id="deleteShowModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -992,7 +922,7 @@
                             </div>
 
                             <div>
-                                <div class="fw-bold mb-1">Bạn chắc chắn muốn xóa vở diễn này?</div>
+                                <div class="fw-bold mb-1">Bạn chắc chắn muốn chuyển vở diễn này vào thùng rác?</div>
                                 <div class="text-secondary">
                                     Vở diễn: <span id="deleteShowName" class="fw-bold"></span>
                                 </div>
@@ -1006,12 +936,134 @@
                         </button>
 
                         <a href="#" id="deleteShowConfirmBtn" class="btn btn-danger fw-bold">
-                            <i class="fa-solid fa-trash"></i> Xóa
+                            <i class="fa-solid fa-trash"></i> Chuyển vào thùng rác
                         </a>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- ===== scripts detail popup + magnifier giữ nguyên như bạn (nếu bạn cần mình paste full cũng được) ===== -->
+
+        <script>
+            const overlay = document.getElementById("showDetailOverlay");
+            const titleEl = document.getElementById("detailTitle");
+            const directorEl = document.getElementById("detailDirector");
+            const artistsEl = document.getElementById("detailArtists");
+            const descEl = document.getElementById("detailDescription");
+            const durEl = document.getElementById("detailDuration");
+            const statusEl = document.getElementById("detailStatus");
+            const posterImg = document.getElementById("detailPoster");
+            const posterLoading = document.getElementById("posterLoading");
+
+            function preloadImage(url) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(url);
+                    img.onerror = reject;
+                    img.src = url;
+                });
+            }
+
+            async function openShowDetail(btn) {
+                if (descEl) descEl.textContent = btn.getAttribute("data-description") || "";
+                if (durEl) {
+                    const d = btn.getAttribute("data-duration") || "";
+                    durEl.textContent = d ? (d + " phút") : "";
+                }
+                if (statusEl) statusEl.textContent = btn.getAttribute("data-status") || "";
+
+                titleEl.textContent = btn.getAttribute("data-show-name") || "";
+                directorEl.textContent = btn.getAttribute("data-director") || "(Chưa có)";
+                artistsEl.textContent = btn.getAttribute("data-actors") || "";
+
+                overlay.style.display = "flex";
+
+                posterLoading.style.display = "flex";
+                posterImg.removeAttribute("src");
+
+                const url = btn.getAttribute("data-poster-url") || "";
+                if (!url) {
+                    posterLoading.style.display = "none";
+                    return;
+                }
+
+                try {
+                    await preloadImage(url);
+                    posterImg.src = url;
+                } catch (e) {
+                    posterImg.removeAttribute("src");
+                } finally {
+                    posterLoading.style.display = "none";
+                }
+            }
+
+            function closeShowDetail() {
+                overlay.style.display = "none";
+                posterLoading.style.display = "none";
+                posterImg.removeAttribute("src");
+            }
+
+            overlay.addEventListener("click", function (e) {
+                if (e.target === overlay) closeShowDetail();
+            });
+
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape" && overlay.style.display === "flex")
+                    closeShowDetail();
+            });
+        </script>
+
+        <script>
+            (function () {
+                const zoom = 2.2;
+                function setupMagnifier() {
+                    const wrap = document.getElementById("posterWrap");
+                    const img = document.getElementById("detailPoster");
+                    const lens = document.getElementById("magnifierLens");
+                    if (!wrap || !img || !lens) return;
+
+                    function showLens() {
+                        if (!img.src) return;
+                        lens.style.display = "block";
+                        lens.style.backgroundImage = "url('" + img.src + "')";
+                    }
+                    function hideLens() { lens.style.display = "none"; }
+
+                    function moveLens(e) {
+                        if (lens.style.display !== "block") return;
+
+                        const rect = wrap.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+
+                        const size = lens.offsetWidth;
+                        const half = size / 2;
+
+                        const cx = Math.max(half, Math.min(x, rect.width - half));
+                        const cy = Math.max(half, Math.min(y, rect.height - half));
+
+                        lens.style.left = cx + "px";
+                        lens.style.top = cy + "px";
+
+                        lens.style.backgroundSize = (rect.width * zoom) + "px " + (rect.height * zoom) + "px ";
+
+                        const bgX = -(cx * zoom - half);
+                        const bgY = -(cy * zoom - half);
+                        lens.style.backgroundPosition = bgX + "px " + bgY + "px ";
+                    }
+
+                    wrap.addEventListener("mouseenter", showLens);
+                    wrap.addEventListener("mouseleave", hideLens);
+                    wrap.addEventListener("mousemove", moveLens);
+
+                    img.addEventListener("load", function () {
+                        lens.style.backgroundImage = "url('" + img.src + "')";
+                    });
+                }
+                window.addEventListener("load", setupMagnifier);
+            })();
+        </script>
 
     </body>
 </html>

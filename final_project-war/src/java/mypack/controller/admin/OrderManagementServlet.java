@@ -21,14 +21,15 @@ public class OrderManagementServlet extends HttpServlet {
     @EJB
     private TicketFacadeLocal ticketFacade;
 
-    // --- XỬ LÝ GET (Xem, Filter, Redirect) ---
+    @EJB
+    private SeatFacadeLocal seatFacade;
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         String action = request.getParameter("action");
 
-        // 1. Xem chi tiết đơn hàng
         if ("view".equals(action)) {
             String idParam = request.getParameter("id");
             if (idParam != null) {
@@ -39,7 +40,6 @@ public class OrderManagementServlet extends HttpServlet {
                     if (order != null) {
                         List<OrderDetail> orderDetails = orderDetailFacade.findByOrderId(orderId);
                         
-                        // ✅ CHECK: Đã có vé chưa?
                         boolean hasTickets = false;
                         for (OrderDetail detail : orderDetails) {
                             List<Ticket> tickets = ticketFacade.findByOrderDetailId(detail.getOrderDetailID());
@@ -49,9 +49,34 @@ public class OrderManagementServlet extends HttpServlet {
                             }
                         }
                         
+                        // ✅ LẤY DANH SÁCH GHẾ KHẢ DỤNG (CÙNG LOẠI, CÙNG SUẤT CHIẾU)
+                        List<Seat> availableSeats = new ArrayList<>();
+                        if (order.getSeatChangeRequested() != null && order.getSeatChangeRequested() 
+                            && "PENDING".equals(order.getSeatChangeStatus())) {
+                            
+                            for (OrderDetail detail : orderDetails) {
+                                if (!detail.getSeatID().getIsActive()) {
+                                    // Lấy ghế cùng loại, active, chưa được đặt
+                                    String seatType = detail.getSeatID().getSeatType();
+                                    int scheduleId = detail.getScheduleID().getScheduleID();
+                                    
+                                    List<Seat> sameTypeSeats = seatFacade.findBySeatType(seatType);
+                                    Set<Integer> bookedSeatIds = orderDetailFacade.findBookedSeatIdsBySchedule(scheduleId);
+                                    
+                                    for (Seat seat : sameTypeSeats) {
+                                        if (seat.getIsActive() && !bookedSeatIds.contains(seat.getSeatID())) {
+                                            availableSeats.add(seat);
+                                        }
+                                    }
+                                    break; // Chỉ xử lý ghế hỏng đầu tiên
+                                }
+                            }
+                        }
+                        
                         request.setAttribute("order", order);
                         request.setAttribute("orderDetails", orderDetails);
-                        request.setAttribute("hasTickets", hasTickets); // ✅ THÊM FLAG
+                        request.setAttribute("hasTickets", hasTickets);
+                        request.setAttribute("availableSeats", availableSeats);
                         request.getRequestDispatcher("/WEB-INF/views/admin/orders/view.jsp")
                                 .forward(request, response);
                         return;
@@ -64,19 +89,16 @@ public class OrderManagementServlet extends HttpServlet {
             return;
         }
 
-        // 2. Cập nhật trạng thái (GET link)
         if ("updateStatus".equals(action)) {
             handleUpdateStatus(request, response);
             return;
         }
 
-        // 3. Cập nhật thanh toán (GET link)
         if ("updatePaymentStatus".equals(action)) {
             handleUpdatePayment(request, response);
             return;
         }
 
-        // 4. Xóa đơn hàng (GET link)
         if ("delete".equals(action)) {
             handleDelete(request, response);
             return;
@@ -84,7 +106,6 @@ public class OrderManagementServlet extends HttpServlet {
 
         // DEFAULT: Hiển thị danh sách đơn hàng
         List<Order1> orders = orderFacade.findAll();
-        // Sắp xếp mới nhất lên đầu
         orders.sort((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()));
 
         request.setAttribute("orders", orders);
@@ -92,7 +113,6 @@ public class OrderManagementServlet extends HttpServlet {
                 .forward(request, response);
     }
 
-    // --- XỬ LÝ POST (Form submit: Duyệt hủy) ---
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -100,7 +120,6 @@ public class OrderManagementServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         String action = request.getParameter("action");
 
-        // >>> ĐOẠN NÀY LÀ MỚI THÊM ĐỂ DUYỆT HỦY <<<
         if ("approveCancel".equals(action)) {
             try {
                 String idParam = request.getParameter("orderId");
@@ -109,47 +128,159 @@ public class OrderManagementServlet extends HttpServlet {
                     Order1 order = orderFacade.find(orderId);
 
                     if (order != null) {
-
-                        // 1️⃣ Tính tiền hoàn (70%)
                         BigDecimal refundAmount = order.getFinalAmount()
                                 .multiply(new BigDecimal("0.7"));
 
-                        // 2️⃣ Cập nhật trạng thái
                         order.setStatus("CANCELLED");
-
-                        // 3️⃣ LƯU TIỀN HOÀN (QUAN TRỌNG NHẤT)
                         order.setRefundAmount(refundAmount);
-
-                        // 4️⃣ Tắt cờ yêu cầu hủy
                         order.setCancellationRequested(false);
-                        
-                        // 5️⃣ Cập nhật thời gian
                         order.setUpdatedAt(new Date());
 
-                        // 6️⃣ Lưu DB
                         orderFacade.edit(order);
                         
-                        // 7️⃣ ✅ CẬP NHẬT TRẠNG THÁI VÉ THÀNH "CANCELLED"
                         updateTicketsStatusToCancelled(orderId);
                     }
 
-                    // Xử lý xong thì quay lại trang chi tiết đơn hàng đó
                     response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
                     return;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            // Nếu lỗi thì về trang danh sách
             response.sendRedirect(request.getContextPath() + "/admin/orders");
             return;
         }
 
-        // Nếu không phải action đặc biệt của POST, chuyển về doGet xử lý tiếp
+        // ✅ XỬ LÝ ĐỔI GHẾ
+        if ("processSeatChange".equals(action)) {
+            handleSeatChange(request, response);
+            return;
+        }
+
         doGet(request, response);
     }
 
-    // --- CÁC HÀM PHỤ TRỢ (Tách ra cho gọn) ---
+    // ===== XỬ LÝ ĐỔI GHẾ =====
+    private void handleSeatChange(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException, ServletException {
+        
+        HttpSession session = request.getSession();
+        
+        try {
+            String orderIdStr = request.getParameter("orderId");
+            String newSeatIdStr = request.getParameter("newSeatId");
+            String adminNote = request.getParameter("adminNote");
+            String actionType = request.getParameter("actionType"); // APPROVE or REJECT
+            
+            if (orderIdStr == null || actionType == null) {
+                session.setAttribute("error", "Thiếu thông tin!");
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                return;
+            }
+            
+            int orderId = Integer.parseInt(orderIdStr);
+            Order1 order = orderFacade.find(orderId);
+            
+            if (order == null) {
+                session.setAttribute("error", "Không tìm thấy đơn hàng!");
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                return;
+            }
+            
+            // ===== TỪ CHỐI =====
+            if ("REJECT".equals(actionType)) {
+                order.setSeatChangeStatus("REJECTED");
+                order.setSeatChangeRequested(false);
+                order.setAdminNote(adminNote != null ? adminNote : "Yêu cầu đổi ghế đã bị từ chối.");
+                order.setUpdatedAt(new Date());
+                
+                orderFacade.edit(order);
+                
+                session.setAttribute("success", "Đã từ chối yêu cầu đổi ghế!");
+                
+                System.out.println("❌ Admin từ chối yêu cầu đổi ghế Order #" + orderId);
+                
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
+                return;
+            }
+            
+            // ===== DUYỆT ĐỔI GHẾ =====
+            if ("APPROVE".equals(actionType)) {
+                if (newSeatIdStr == null) {
+                    session.setAttribute("error", "Vui lòng chọn ghế mới!");
+                    response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
+                    return;
+                }
+                
+                int newSeatId = Integer.parseInt(newSeatIdStr);
+                Seat newSeat = seatFacade.find(newSeatId);
+                
+                if (newSeat == null || !newSeat.getIsActive()) {
+                    session.setAttribute("error", "Ghế mới không hợp lệ!");
+                    response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
+                    return;
+                }
+                
+                // Tìm OrderDetail có ghế bị hỏng
+                List<OrderDetail> details = orderDetailFacade.findByOrderId(orderId);
+                OrderDetail brokenSeatDetail = null;
+                
+                for (OrderDetail detail : details) {
+                    if (!detail.getSeatID().getIsActive()) {
+                        brokenSeatDetail = detail;
+                        break;
+                    }
+                }
+                
+                if (brokenSeatDetail == null) {
+                    session.setAttribute("error", "Không tìm thấy ghế bảo trì!");
+                    response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
+                    return;
+                }
+                
+                // ✅ CẬP NHẬT GHẾ MỚI
+                String oldSeatNumber = brokenSeatDetail.getSeatID().getSeatNumber();
+                brokenSeatDetail.setSeatID(newSeat);
+                orderDetailFacade.edit(brokenSeatDetail);
+                
+                // ✅ CẬP NHẬT VÉ (QR CODE MỚI)
+                List<Ticket> tickets = ticketFacade.findByOrderDetailId(brokenSeatDetail.getOrderDetailID());
+                for (Ticket ticket : tickets) {
+                    // Tạo QR code mới với ghế mới
+                    String newQrCode = "TICKET-" + orderId + "-" + 
+                                     brokenSeatDetail.getOrderDetailID() + "-" + 
+                                     UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+                    ticket.setQRCode(newQrCode);
+                    ticket.setUpdatedAt(new Date());
+                    ticketFacade.edit(ticket);
+                }
+                
+                // ✅ CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG
+                order.setSeatChangeStatus("APPROVED");
+                order.setSeatChangeRequested(false);
+                order.setAdminNote(adminNote != null ? adminNote : 
+                    "Đã đổi ghế " + oldSeatNumber + " → " + newSeat.getSeatNumber());
+                order.setUpdatedAt(new Date());
+                
+                orderFacade.edit(order);
+                
+                session.setAttribute("success", "Đã đổi ghế thành công: " + 
+                                    oldSeatNumber + " → " + newSeat.getSeatNumber());
+                
+                System.out.println("✅ Admin đổi ghế Order #" + orderId + ": " + 
+                                 oldSeatNumber + " → " + newSeat.getSeatNumber());
+                
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
+                return;
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            session.setAttribute("error", "Lỗi xử lý: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/admin/orders");
+        }
+    }
+
     private void handleUpdateStatus(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String idParam = request.getParameter("id");
         String status = request.getParameter("status");
@@ -162,9 +293,6 @@ public class OrderManagementServlet extends HttpServlet {
                     order.setStatus(status);
                     order.setUpdatedAt(new Date());
                     orderFacade.edit(order);
-                    
-                    // ✅ REMOVED: Không còn tạo vé thủ công nữa
-                    // Vé đã được tạo tự động ở CheckoutServlet
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -185,8 +313,6 @@ public class OrderManagementServlet extends HttpServlet {
                     order.setPaymentStatus(paymentStatus);
                     order.setUpdatedAt(new Date());
                     orderFacade.edit(order);
-                    
-                    // ✅ REMOVED: Không còn tạo vé thủ công nữa
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -202,7 +328,6 @@ public class OrderManagementServlet extends HttpServlet {
                 int orderId = Integer.parseInt(idParam);
                 Order1 order = orderFacade.find(orderId);
                 if (order != null) {
-                    // Xóa tickets trước
                     List<OrderDetail> orderDetails = orderDetailFacade.findByOrderId(orderId);
                     for (OrderDetail detail : orderDetails) {
                         List<Ticket> tickets = ticketFacade.findByOrderDetailId(detail.getOrderDetailID());
@@ -220,7 +345,6 @@ public class OrderManagementServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/admin/orders");
     }
     
-    // ✅ PHƯƠNG THỨC MỚI: Cập nhật trạng thái vé khi đơn bị hủy
     private void updateTicketsStatusToCancelled(int orderId) {
         try {
             List<OrderDetail> details = orderDetailFacade.findByOrderId(orderId);
@@ -238,11 +362,8 @@ public class OrderManagementServlet extends HttpServlet {
             System.out.println("✅ Đã cập nhật trạng thái vé thành CANCELLED cho Order #" + orderId);
             
         } catch (Exception e) {
-            System.err.println("❌ LỖI khi cập nhật trạng thái vé: " + e.getMessage());
+            System.err.println("❌ Lỗi khi cập nhật trạng thái vé: " + e.getMessage());
             e.printStackTrace();
         }
     }
-
-    // ✅ REMOVED: Method createTicketsForOrder() đã không còn cần thiết
-    // Vé được tạo tự động ở CheckoutServlet ngay sau khi thanh toán thành công
 }

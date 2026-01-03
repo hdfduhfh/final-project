@@ -8,13 +8,11 @@
     <meta charset="UTF-8">
     <title>Vé của tôi | BookingStage</title>
     
-    <!-- Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
     
-    <!-- ✅ LINK CSS -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/my-ticket.css">
 </head>
 <body>
@@ -103,87 +101,130 @@
                                         </span>
                                     </div>
 
-                                    <c:if test="${hasBrokenSeat}">
-                                        <div class="seat-warning">
-                                            <i class="fa-solid fa-triangle-exclamation"></i> 
-                                            <strong>Cảnh báo:</strong> Đơn hàng này có ghế đang bảo trì/hỏng.
-                                            <div class="warning-text">
-                                                Vui lòng liên hệ nhân viên tại quầy để được hỗ trợ đổi ghế mới.
-                                            </div>
-                                        </div>
+                                    <%-- ✅ CHỈ HIỂN THỊ CẢNH BÁO CHO VÉ CONFIRMED --%>
+                                    <c:if test="${order.status == 'CONFIRMED' && hasBrokenSeat}">
+                                        <%-- Kiểm tra trạng thái yêu cầu đổi ghế --%>
+                                        <c:choose>
+                                            <c:when test="${order.seatChangeStatus == 'APPROVED'}">
+                                                <%-- ✅ ĐÃ ĐỔI GHẾ THÀNH CÔNG --%>
+                                                <div class="seat-success">
+                                                    <i class="fa-solid fa-circle-check"></i> 
+                                                    <strong>Ghế đã được đổi thành công!</strong>
+                                                    <c:if test="${not empty order.adminNote}">
+                                                        <div class="admin-note">
+                                                            <i class="fa-solid fa-comment-dots"></i> ${order.adminNote}
+                                                        </div>
+                                                    </c:if>
+                                                </div>
+                                            </c:when>
+                                            <c:when test="${order.seatChangeStatus == 'PENDING'}">
+                                                <%-- ⏳ ĐANG CHỜ XỬ LÝ --%>
+                                                <div class="seat-pending">
+                                                    <i class="fa-solid fa-clock"></i> 
+                                                    <strong>Yêu cầu đổi ghế đang được xử lý</strong>
+                                                    <div class="warning-text">
+                                                        Admin sẽ xử lý trong thời gian sớm nhất.
+                                                    </div>
+                                                </div>
+                                            </c:when>
+                                            <c:when test="${order.seatChangeStatus == 'REJECTED'}">
+                                                <%-- ❌ BỊ TỪ CHỐI --%>
+                                                <div class="seat-rejected">
+                                                    <i class="fa-solid fa-circle-xmark"></i> 
+                                                    <strong>Yêu cầu đổi ghế đã bị từ chối</strong>
+                                                    <c:if test="${not empty order.adminNote}">
+                                                        <div class="admin-note">
+                                                            <i class="fa-solid fa-comment-dots"></i> ${order.adminNote}
+                                                        </div>
+                                                    </c:if>
+                                                </div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <%-- ⚠️ CẢNH BÁO GHẾ BẢO TRÌ --%>
+                                                <div class="seat-warning">
+                                                    <i class="fa-solid fa-triangle-exclamation"></i> 
+                                                    <strong>Cảnh báo:</strong> Đơn hàng này có ghế đang bảo trì/hỏng.
+                                                    <div class="warning-text">
+                                                        Vui lòng gửi yêu cầu đổi ghế để admin xử lý.
+                                                    </div>
+                                                </div>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </c:if>
                                 </div>
 
-<div class="ticket-actions">
-    <!-- ✅ HIỂN THỊ GIÁ THEO TRẠNG THÁI -->
-    <c:choose>
-        <c:when test="${order.status == 'CANCELLED' && order.refundAmount != null && order.refundAmount > 0}">
-            <!-- Vé đã hủy → Hiện tiền hoàn -->
-            <div class="price-tag" style="color: #2ecc71;">
-                <i class="fa-solid fa-money-bill-wave"></i>
-                <fmt:formatNumber value="${order.refundAmount}" type="number" maxFractionDigits="0"/> đ
-            </div>
-            <small style="color: #2ecc71; font-size: 0.75rem; margin-top: -5px;">
-                Tiền hoàn
-            </small>
-        </c:when>
-        <c:otherwise>
-            <!-- Vé bình thường → Hiện giá gốc -->
-            <div class="price-tag">
-                <fmt:formatNumber value="${order.finalAmount}" type="number" maxFractionDigits="0"/> đ
-            </div>
-        </c:otherwise>
-    </c:choose>
-    
-    <c:choose>
-        <c:when test="${order.status == 'CANCELLED'}">
-            <span class="status-badge st-cancel">Đã hủy</span>
-        </c:when>
-        <c:when test="${order.cancellationRequested}">
-            <span class="status-badge st-pending">Chờ hủy</span>
-        </c:when>
-        <c:when test="${order.status == 'CONFIRMED'}">
-            <button class="btn-view-ticket" 
-                    onclick="openViewTicketModal(
-                        '${firstDetail.scheduleID.showID.showName}',
-                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="dd/MM/yyyy"/>',
-                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="HH:mm"/>',
-                        '${seatListString}',
-                        '${order.orderDetailCollection.size()}',
-                        '${encodedQrUrl}',
-                        '${isoShowTime}'
-                    )">
-                <i class="fa-solid fa-ticket"></i> Xem vé
-            </button>
-        </c:when>
-        <c:otherwise>
-            <span class="status-badge st-pending">Chờ xử lý</span>
-        </c:otherwise>
-    </c:choose>
+                                <div class="ticket-actions">
+                                    <c:choose>
+                                        <c:when test="${order.status == 'CANCELLED' && order.refundAmount != null && order.refundAmount > 0}">
+                                            <div class="price-tag" style="color: #2ecc71;">
+                                                <i class="fa-solid fa-money-bill-wave"></i>
+                                                <fmt:formatNumber value="${order.refundAmount}" type="number" maxFractionDigits="0"/> đ
+                                            </div>
+                                            <small style="color: #2ecc71; font-size: 0.75rem; margin-top: -5px;">
+                                                Tiền hoàn
+                                            </small>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="price-tag">
+                                                <fmt:formatNumber value="${order.finalAmount}" type="number" maxFractionDigits="0"/> đ
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
+                                    
+                                    <c:choose>
+                                        <c:when test="${order.status == 'CANCELLED'}">
+                                            <span class="status-badge st-cancel">Đã hủy</span>
+                                        </c:when>
+                                        <c:when test="${order.cancellationRequested}">
+                                            <span class="status-badge st-pending">Chờ hủy</span>
+                                        </c:when>
+                                        <c:when test="${order.status == 'CONFIRMED'}">
+                                            <button class="btn-view-ticket" 
+                                                    onclick="openViewTicketModal(
+                                                        '${firstDetail.scheduleID.showID.showName}',
+                                                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="dd/MM/yyyy"/>',
+                                                        '<fmt:formatDate value="${firstDetail.scheduleID.showTime}" pattern="HH:mm"/>',
+                                                        '${seatListString}',
+                                                        '${order.orderDetailCollection.size()}',
+                                                        '${encodedQrUrl}',
+                                                        '${isoShowTime}'
+                                                    )">
+                                                <i class="fa-solid fa-ticket"></i> Xem vé
+                                            </button>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="status-badge st-pending">Chờ xử lý</span>
+                                        </c:otherwise>
+                                    </c:choose>
 
-    <!-- ✅ CÁC NÚT THAO TÁC -->
-    <c:if test="${order.status == 'CONFIRMED'}">
-        <!-- Nút Hủy vé -->
-<button class="btn-action btn-cancel-req" 
-        onclick="openCancelModal(
-            ${order.orderID}, 
-            ${showTimeMillis}, 
-            ${originalTotal}, 
-            ${order.finalAmount},
-            ${order.discountAmount != null ? order.discountAmount : 0}
-        )">
-    Hủy
-</button>
-        
-        <!-- ✅ NÚT ĐÁNH GIÁ - Chỉ hiện SAU KHI XEM XONG -->
-        <c:if test="${diffMinutes < 0}">
-            <button class="btn-action btn-feedback" 
-                    onclick="openFeedbackModal(${firstDetail.scheduleID.scheduleID}, '${firstDetail.scheduleID.showID.showName}')">
-                <i class="fa-solid fa-star"></i> Đánh giá
-            </button>
-        </c:if>
-    </c:if>
-</div>
+                                    <c:if test="${order.status == 'CONFIRMED'}">
+                                        <%-- ✅ NÚT YÊU CẦU ĐỔI GHẾ - CHỈ HIỆN KHI CÓ GHẾ BẢO TRÌ VÀ CHƯA GỬI YÊU CẦU --%>
+                                        <c:if test="${hasBrokenSeat && (order.seatChangeRequested == null || !order.seatChangeRequested)}">
+                                            <button class="btn-action btn-seat-change" 
+                                                    onclick="openSeatChangeModal(${order.orderID})">
+                                                <i class="fa-solid fa-sync"></i> Yêu cầu đổi ghế
+                                            </button>
+                                        </c:if>
+
+                                        <button class="btn-action btn-cancel-req" 
+                                                onclick="openCancelModal(
+                                                    ${order.orderID}, 
+                                                    ${showTimeMillis}, 
+                                                    ${originalTotal}, 
+                                                    ${order.finalAmount},
+                                                    ${order.discountAmount != null ? order.discountAmount : 0}
+                                                )">
+                                            Hủy
+                                        </button>
+                                        
+                                        <c:if test="${diffMinutes < 0}">
+                                            <button class="btn-action btn-feedback" 
+                                                    onclick="openFeedbackModal(${firstDetail.scheduleID.scheduleID}, '${firstDetail.scheduleID.showID.showName}')">
+                                                <i class="fa-solid fa-star"></i> Đánh giá
+                                            </button>
+                                        </c:if>
+                                    </c:if>
+                                </div>
                             </div>
                         </div>
                     </c:forEach>
@@ -194,7 +235,7 @@
         <div id="pagination" class="pagination"></div>
     </div>
 
-    <!-- ===== VIEW TICKET MODAL ===== -->
+    <%-- VIEW TICKET MODAL --%>
     <div id="viewTicketModal" class="modal">
         <div style="position: relative;">
             <div class="close-ticket" onclick="closeViewTicketModal()">&times;</div>
@@ -239,7 +280,7 @@
         </div>
     </div>
 
-    <!-- ===== CANCEL MODAL ===== -->
+    <%-- CANCEL MODAL --%>
     <div id="cancelModal" class="modal">
         <div class="cancel-content">
             <span onclick="closeCancelModal()" style="position:absolute; right:20px; top:15px; cursor:pointer; font-size:24px; color: #777;">&times;</span>
@@ -257,7 +298,32 @@
         </div>
     </div>
 
-    <!-- ===== FEEDBACK MODAL ===== -->
+    <%-- ✅ SEAT CHANGE REQUEST MODAL --%>
+    <div id="seatChangeModal" class="modal">
+        <div class="cancel-content">
+            <span onclick="closeSeatChangeModal()" style="position:absolute; right:20px; top:15px; cursor:pointer; font-size:24px; color: #777;">&times;</span>
+            <h3 style="color: var(--gold-primary); margin-top:0; font-family: 'Playfair Display';">
+                <i class="fa-solid fa-sync"></i> Yêu cầu đổi ghế
+            </h3>
+            <div style="background:rgba(212,175,55,0.1); padding:15px; border-radius:8px; margin-bottom:15px; border: 1px solid rgba(212,175,55,0.3);">
+                <p style="margin:0; color: #ccc; font-size: 0.9em;">
+                    <i class="fa-solid fa-info-circle"></i> 
+                    Ghế của bạn đang bảo trì. Vui lòng mô tả vấn đề để admin hỗ trợ đổi ghế mới.
+                </p>
+            </div>
+            <form id="seatChangeForm">
+                <input type="hidden" id="seatChangeOrderId" name="orderId">
+                <p style="margin-bottom:8px; color: #ccc;">Lý do yêu cầu đổi ghế:</p>
+                <textarea name="reason" id="seatChangeReason" placeholder="Ví dụ: Ghế A1 đang bảo trì, không thể sử dụng..." required style="width: 100%; background: #111; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; resize: vertical; min-height: 100px;"></textarea>
+                <button type="submit" class="btn-confirm" style="margin-top: 15px;">
+                    <i class="fa-solid fa-paper-plane"></i> Gửi yêu cầu
+                </button>
+            </form>
+            <div id="seatChangeMessage" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px; text-align: center;"></div>
+        </div>
+    </div>
+
+    <%-- FEEDBACK MODAL --%>
     <div id="feedbackModal" class="modal">
         <div class="feedback-content">
             <span onclick="closeFeedbackModal()" style="position:absolute; right:20px; top:15px; cursor:pointer; font-size:24px; color: #777;">&times;</span>
@@ -273,7 +339,6 @@
             <form id="feedbackForm">
                 <input type="hidden" id="feedbackScheduleId" name="scheduleId">
                 
-                <!-- Rating Stars -->
                 <div style="text-align: center; margin-bottom: 25px;">
                     <div class="star-rating">
                         <i class="fa-solid fa-star" data-rating="1"></i>
@@ -288,7 +353,6 @@
                     </p>
                 </div>
                 
-                <!-- Comment -->
                 <div style="margin-bottom: 20px;">
                     <label style="color: #ccc; display: block; margin-bottom: 8px; font-size: 0.9rem;">
                         Chia sẻ trải nghiệm của bạn:
@@ -312,7 +376,6 @@
         </div>
     </div>
 
-    <!-- ✅ LINK JAVASCRIPT -->
     <script src="${pageContext.request.contextPath}/js/my-ticket.js"></script>
 </body>
 </html>

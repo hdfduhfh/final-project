@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 <header class="site-header">
+    
     <div class="header-inner">
         <a href="${pageContext.request.contextPath}/" class="brand">
             <img src="${pageContext.request.contextPath}/assets/images/logo.jpg"
@@ -43,18 +44,20 @@
                 </li>
                 <li class="nav-item"><a href="${pageContext.request.contextPath}/new">Tin tức</a></li>
                 <li class="nav-item"><a href="${pageContext.request.contextPath}/job">Tuyển dụng</a></li>
+                        <!-- ✅ THÊM LINK VÉ VÀO ĐÂY (CHỈ CHECK user, BỎ userOrders) -->
+        <c:if test="${not empty sessionScope.user}">
+            <li class="nav-item">
+                <a href="${pageContext.request.contextPath}/my-tickets">
+                    🎫 
+                </a>
+            </li>
+        </c:if>
             </ul>
         </nav>
 
         <div class="auth">
             <c:choose>
                 <c:when test="${not empty sessionScope.user}">
-                    <!-- Link Vé của tôi -->
-                    <c:if test="${not empty sessionScope.userOrders}">
-                        <li class="nav-item">
-                            <a href="${pageContext.request.contextPath}/my-tickets">🎫</a>
-                        </li>
-                    </c:if>
 
                     <a href="${pageContext.request.contextPath}/profile"
                        class="user-greeting">

@@ -37,4 +37,18 @@ public interface ShowFacadeLocal {
 
     List<Show> findLatestShows(int limit);
 
+    // ✅ THÊM MỚI: Kiểm tra Show có đơn hàng không
+    /**
+     * Kiểm tra Show có lịch diễn nào đã được đặt vé chưa
+     * @param showId ID của Show
+     * @return true nếu có đơn hàng, false nếu không
+     */
+    boolean hasOrdersForShow(Integer showId);
+
+    /**
+     * Đếm số lượng đơn hàng của Show
+     * @param showId ID của Show
+     * @return Số lượng đơn hàng
+     */
+    Long countOrdersForShow(Integer showId);
 }

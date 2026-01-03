@@ -15,6 +15,8 @@ import mypack.ArtistFacadeLocal;
 import mypack.ShowArtist;
 import mypack.ShowArtistFacadeLocal;
 
+import mypack.utils.ShowTrashStore;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -26,7 +28,11 @@ import java.util.regex.Pattern;
             "/admin/show",
             "/admin/show/add",
             "/admin/show/edit",
-            "/admin/show/delete"
+            "/admin/show/delete",
+            // ✅ NEW: soft delete + trash
+            "/admin/show/soft-delete",
+            "/admin/show/trash",
+            "/admin/show/restore"
         }
 )
 @MultipartConfig
@@ -45,7 +51,7 @@ public class ShowManagementServlet extends HttpServlet {
     private static final Pattern NO_SPECIAL_PATTERN
             = Pattern.compile("^[\\p{L}\\d\\s]+$");
 
-    // ✅ NEW: cho mô tả có dấu . , và xuống dòng (không coi là "số thập phân" nữa)
+    // ✅ NEW: cho mô tả có dấu . , và xuống dòng
     private static final Pattern DESCRIPTION_PATTERN
             = Pattern.compile("^[\\p{L}\\d\\s\\.,\\r\\n]+$");
 
@@ -199,7 +205,7 @@ public class ShowManagementServlet extends HttpServlet {
         return null;
     }
 
-    // ✅ NEW: validate mô tả KHÔNG check thập phân nữa, cho phép . , và xuống dòng
+    // ✅ validate mô tả KHÔNG check thập phân nữa
     private String validateDescription(String val, String emptyMsg, String negativeMsg, String specialMsg) {
         String t = val == null ? "" : val.trim();
         if (t.isEmpty()) {
@@ -214,7 +220,7 @@ public class ShowManagementServlet extends HttpServlet {
         return null;
     }
 
-    // ✅ NEW: 60 <= x <= 180
+    // ✅ 60 <= x <= 180
     private String validateDuration(String s) {
         String t = s == null ? "" : s.trim();
 
@@ -250,9 +256,7 @@ public class ShowManagementServlet extends HttpServlet {
     }
 
     /* =====================================================
-       ✅ NEW: CHECK DUPLICATE NAME / POSTER
-       - name: case-insensitive + trim + collapse spaces
-       - poster: trim
+       ✅ CHECK DUPLICATE NAME / POSTER
     ===================================================== */
     private String normalizeName(String s) {
         if (s == null) {
@@ -343,8 +347,20 @@ public class ShowManagementServlet extends HttpServlet {
                 showEditForm(req, resp);
                 break;
             case "/admin/show/delete":
-                deleteShow(req, resp);
+                deleteShow(req, resp); // hard delete
                 break;
+
+            // ✅ NEW
+            case "/admin/show/soft-delete":
+                softDeleteShow(req, resp);
+                break;
+            case "/admin/show/restore":
+                restoreShow(req, resp);
+                break;
+            case "/admin/show/trash":
+                showTrash(req, resp);
+                break;
+
             default:
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
@@ -376,7 +392,35 @@ public class ShowManagementServlet extends HttpServlet {
     }
 
     /* =====================================================
-       ✅ LIST: FIX POPUP DETAIL + NO CACHE + SEARCH
+       ✅ AUTO CLEAN EXPIRED (quá 30 ngày => hard delete)
+       - Không DB, không timer: tự dọn khi admin mở list/trash
+    ===================================================== */
+    private void cleanupExpiredTrashQuietly() {
+        try {
+            List<Integer> expired = ShowTrashStore.expiredTrashIds();
+            if (expired == null || expired.isEmpty()) {
+                return;
+            }
+
+            for (Integer id : expired) {
+                try {
+                    // xóa vĩnh viễn trong DB bằng method cũ
+                    showFacade.deleteHard(id);
+                } catch (Exception ignored) {
+                }
+                try {
+                    // remove khỏi trash file
+                    ShowTrashStore.restore(id);
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    /* =====================================================
+       ✅ LIST: SEARCH + DATE + STATUS (lọc trước khi phân trang)
+       + ✅ loại bỏ show đang trong thùng rác (soft delete)
     ===================================================== */
     private void showList(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -386,6 +430,9 @@ public class ShowManagementServlet extends HttpServlet {
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
 
+        // ✅ auto clean expired
+        cleanupExpiredTrashQuietly();
+
         // ✅ SEARCH
         String keyword = req.getParameter("keyword");
         if (keyword == null || keyword.trim().isEmpty()) {
@@ -393,13 +440,109 @@ public class ShowManagementServlet extends HttpServlet {
         }
         keyword = (keyword == null) ? "" : keyword.trim();
 
-        System.out.println("[ShowList] keyword = " + keyword);
+        // ✅ STATUS (ALL / Ongoing / Upcoming / Cancelled)
+        String statusParam = req.getParameter("status");
+        statusParam = (statusParam == null) ? "ALL" : statusParam.trim();
+        if (statusParam.isEmpty()) {
+            statusParam = "ALL";
+        }
+        req.setAttribute("status", statusParam);
 
+        // ✅ DATE RANGE (yyyy-MM-dd)
+        String fromDateStr = req.getParameter("fromDate");
+        String toDateStr = req.getParameter("toDate");
+        fromDateStr = (fromDateStr == null) ? "" : fromDateStr.trim();
+        toDateStr = (toDateStr == null) ? "" : toDateStr.trim();
+
+        req.setAttribute("fromDate", fromDateStr);
+        req.setAttribute("toDate", toDateStr);
+
+        System.out.println("[ShowList] keyword=" + keyword
+                + " status=" + statusParam
+                + " fromDate=" + fromDateStr + " toDate=" + toDateStr);
+
+        // ✅ lấy list theo keyword trước
         List<Show> allShows;
         if (!keyword.isEmpty()) {
             allShows = showFacade.searchByName(keyword);
         } else {
             allShows = showFacade.findAll();
+        }
+        if (allShows == null) {
+            allShows = new ArrayList<>();
+        }
+
+        // ✅ FILTER SOFT DELETE (loại show đang ở thùng rác)
+        try {
+            Set<Integer> trashed = ShowTrashStore.activeTrashIds();
+            if (trashed != null && !trashed.isEmpty()) {
+                allShows.removeIf(s -> s != null && s.getShowID() != null && trashed.contains(s.getShowID()));
+            }
+        } catch (Exception ignored) {
+        }
+
+        // ✅ PARSE DATE RANGE (lọc trước khi phân trang)
+        Date fromDate = null;     // inclusive
+        Date toDateExcl = null;   // exclusive (to + 1 day 00:00)
+
+        try {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            sdf.setLenient(false);
+
+            if (!fromDateStr.isEmpty()) {
+                fromDate = sdf.parse(fromDateStr);
+            }
+            if (!toDateStr.isEmpty()) {
+                Date to = sdf.parse(toDateStr);
+                java.util.Calendar cal = java.util.Calendar.getInstance();
+                cal.setTime(to);
+                cal.add(java.util.Calendar.DAY_OF_MONTH, 1);
+                toDateExcl = cal.getTime();
+            }
+        } catch (Exception e) {
+            fromDate = null;
+            toDateExcl = null;
+        }
+
+        // ✅ LỌC STATUS + DATE TRÊN TOÀN BỘ allShows (trước pagination)
+        if (!allShows.isEmpty()) {
+            List<Show> filtered = new ArrayList<>();
+
+            boolean filterStatus = (statusParam != null
+                    && !statusParam.equalsIgnoreCase("ALL"));
+
+            for (Show s : allShows) {
+                if (s == null) {
+                    continue;
+                }
+
+                // ---- filter STATUS
+                if (filterStatus) {
+                    String st = (s.getStatus() == null) ? "" : s.getStatus().trim();
+                    if (!st.equalsIgnoreCase(statusParam)) {
+                        continue;
+                    }
+                }
+
+                // ---- filter DATE
+                if (fromDate != null || toDateExcl != null) {
+                    Date created = s.getCreatedAt();
+                    if (created == null) {
+                        continue;
+                    }
+
+                    if (fromDate != null && created.before(fromDate)) {
+                        continue;
+                    }
+                    if (toDateExcl != null && !created.before(toDateExcl)) {
+                        continue;
+                    }
+                }
+
+                filtered.add(s);
+            }
+
+            allShows = filtered;
         }
 
         // ✅ PAGINATION (4 show / 1 page)
@@ -417,7 +560,7 @@ public class ShowManagementServlet extends HttpServlet {
             page = 1;
         }
 
-        int totalItems = (allShows == null) ? 0 : allShows.size();
+        int totalItems = allShows.size();
         int totalPages = (int) Math.ceil(totalItems * 1.0 / pageSize);
         if (totalPages < 1) {
             totalPages = 1;
@@ -462,7 +605,6 @@ public class ShowManagementServlet extends HttpServlet {
 
                     String name = artist.getName();
                     String role = artist.getRole() != null ? artist.getRole().toLowerCase() : "";
-
                     if (name == null || name.trim().isEmpty()) {
                         continue;
                     }
@@ -510,7 +652,7 @@ public class ShowManagementServlet extends HttpServlet {
     }
 
     /* =====================================================
-       ✅ EDIT FORM: tick lại director + actors
+       EDIT FORM
     ===================================================== */
     private void showEditForm(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -523,6 +665,10 @@ public class ShowManagementServlet extends HttpServlet {
         }
 
         req.setAttribute("show", show);
+
+        // ✅ NEW: để edit.jsp selected sẵn status
+        req.setAttribute("statusValue", show.getStatus());
+
         req.setAttribute("artists", getActorsOnly());
         req.setAttribute("directors", getDirectors());
         req.setAttribute("imageFiles", loadShowImageFiles(req));
@@ -540,7 +686,6 @@ public class ShowManagementServlet extends HttpServlet {
                     if (sa.getShowID().getShowID() == null) {
                         continue;
                     }
-
                     if (!sa.getShowID().getShowID().equals(id)) {
                         continue;
                     }
@@ -567,8 +712,9 @@ public class ShowManagementServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/admin/show/edit.jsp").forward(req, resp);
     }
 
+
     /* =====================================================
-       ✅ CREATE
+       CREATE
     ===================================================== */
     private void createShow(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -581,14 +727,12 @@ public class ShowManagementServlet extends HttpServlet {
         String[] artistIds = req.getParameterValues("artistIds");
         String showImage = req.getParameter("showImageDropdown");
 
-        // bấm create mà không điền gì
         if (allBlank(showName, description, durationStr, status, directorIdStr, showImage)
                 && (artistIds == null || artistIds.length == 0)) {
             forwardAddError(req, resp, "Thông tin cho vở diễn không được để trống");
             return;
         }
 
-        // TÊN
         String err = validateText(
                 showName,
                 "Tên vở diễn không được để trống",
@@ -601,13 +745,11 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // không cho trùng tên
         if (isDuplicateShowName(null, showName)) {
             forwardAddError(req, resp, "Tên của show bạn vừa nhập không được trùng với show bạn đã tạo");
             return;
         }
 
-        // ✅ MÔ TẢ: bỏ ràng buộc số thập phân (cho phép . ,)
         err = validateDescription(
                 description,
                 "Mô tả vở diễn không được để trống",
@@ -619,13 +761,11 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // TRẠNG THÁI
         if (status == null || status.trim().isEmpty()) {
             forwardAddError(req, resp, "Trạng thái cho vở diễn không được bỏ trống");
             return;
         }
 
-        // THỜI LƯỢNG
         err = validateDuration(durationStr);
         if (err != null) {
             forwardAddError(req, resp, err);
@@ -633,7 +773,6 @@ public class ShowManagementServlet extends HttpServlet {
         }
         int duration = Integer.parseInt(durationStr.trim());
 
-        // ĐẠO DIỄN
         if (directorIdStr == null || directorIdStr.trim().isEmpty()) {
             forwardAddError(req, resp, "Đạo diễn cho vở diễn chưa được chọn");
             return;
@@ -644,7 +783,6 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // DIỄN VIÊN
         if (artistIds == null || artistIds.length == 0) {
             forwardAddError(req, resp, "Diễn viên cho vở diễn chưa được chọn");
             return;
@@ -654,19 +792,16 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // POSTER
         if (showImage == null || showImage.trim().isEmpty()) {
             forwardAddError(req, resp, "Hình ảnh cho vở diễn không được chọn");
             return;
         }
 
-        // không cho trùng poster
         if (isDuplicatePoster(null, showImage)) {
             forwardAddError(req, resp, "Poster phim bạn chọn không được trùng với poster phim đã tạo");
             return;
         }
 
-        // SAVE
         Show s = new Show();
         s.setShowName(showName.trim());
         s.setDescription(description.trim());
@@ -677,7 +812,6 @@ public class ShowManagementServlet extends HttpServlet {
 
         showFacade.create(s);
 
-        // RELATION
         Set<Integer> used = new HashSet<>();
         ShowArtist saD = new ShowArtist();
         saD.setShowID(s);
@@ -703,7 +837,7 @@ public class ShowManagementServlet extends HttpServlet {
     }
 
     /* =====================================================
-       ✅ UPDATE
+       UPDATE
     ===================================================== */
     private void updateShow(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -724,7 +858,6 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // TÊN
         String err = validateText(
                 showName,
                 "Tên vở diễn không được để trống",
@@ -737,13 +870,11 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // không cho trùng tên (loại trừ chính show đang sửa)
         if (isDuplicateShowName(show.getShowID(), showName)) {
             forwardEditError(req, resp, show, "Tên của show bạn vừa nhập không được trùng với show bạn đã tạo");
             return;
         }
 
-        // ✅ MÔ TẢ: bỏ ràng buộc số thập phân (cho phép . ,)
         err = validateDescription(
                 description,
                 "Mô tả vở diễn không được để trống",
@@ -755,13 +886,11 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // TRẠNG THÁI
         if (status == null || status.trim().isEmpty()) {
             forwardEditError(req, resp, show, "Trạng thái cho vở diễn không được bỏ trống");
             return;
         }
 
-        // THỜI LƯỢNG
         err = validateDuration(durationStr);
         if (err != null) {
             forwardEditError(req, resp, show, err);
@@ -769,13 +898,11 @@ public class ShowManagementServlet extends HttpServlet {
         }
         int duration = Integer.parseInt(durationStr.trim());
 
-        // ĐẠO DIỄN
         if (directorIdStr == null || directorIdStr.trim().isEmpty()) {
             forwardEditError(req, resp, show, "Đạo diễn cho vở diễn chưa được chọn");
             return;
         }
 
-        // DIỄN VIÊN
         if (artistIds == null || artistIds.length == 0) {
             forwardEditError(req, resp, show, "Diễn viên cho vở diễn chưa được chọn");
             return;
@@ -785,19 +912,16 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        // POSTER
         if (showImage == null || showImage.trim().isEmpty()) {
             forwardEditError(req, resp, show, "Hình ảnh cho vở diễn không được chọn");
             return;
         }
 
-        // không cho trùng poster (loại trừ chính show đang sửa)
         if (isDuplicatePoster(show.getShowID(), showImage)) {
             forwardEditError(req, resp, show, "Poster phim bạn chọn không được trùng với poster phim đã tạo");
             return;
         }
 
-        // UPDATE
         show.setShowName(showName.trim());
         show.setDescription(description.trim());
         show.setDurationMinutes(duration);
@@ -806,7 +930,6 @@ public class ShowManagementServlet extends HttpServlet {
 
         showFacade.edit(show);
 
-        // xóa quan hệ cũ rồi add lại
         showArtistFacade.removeByShow(show);
 
         Set<Integer> used = new HashSet<>();
@@ -842,7 +965,6 @@ public class ShowManagementServlet extends HttpServlet {
             throws ServletException, IOException {
         req.setAttribute("error", msg);
 
-        // ✅ GIỮ LẠI TRẠNG THÁI USER ĐÃ CHỌN
         String status = req.getParameter("status");
         if (status != null && !status.trim().isEmpty()) {
             req.setAttribute("statusValue", status.trim());
@@ -862,7 +984,6 @@ public class ShowManagementServlet extends HttpServlet {
         req.setAttribute("artists", getActorsOnly());
         req.setAttribute("directors", getDirectors());
 
-        // tick lại selected ids
         try {
             Integer id = show != null ? show.getShowID() : null;
             if (id != null) {
@@ -903,17 +1024,172 @@ public class ShowManagementServlet extends HttpServlet {
     }
 
     /* =====================================================
-       DELETE
+       ✅ SOFT DELETE: chuyển vào thùng rác (KHÔNG DB)
     ===================================================== */
-    private void deleteShow(HttpServletRequest req, HttpServletResponse resp)
+    private void softDeleteShow(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
         Integer id = Integer.parseInt(req.getParameter("id"));
-        showFacade.deleteHard(id);
+        try {
+            ShowTrashStore.softDelete(id);
+        } catch (Exception ignored) {
+        }
 
-        String msg = urlEncodeUtf8("Xóa show thành công");
+        resp.sendRedirect(req.getContextPath()
+                + "/admin/show?success=" + urlEncodeUtf8("Đã chuyển show vào thùng rác")
+                + "&v=" + System.currentTimeMillis());
+    }
+
+    /* =====================================================
+       ✅ RESTORE: khôi phục từ thùng rác
+    ===================================================== */
+    private void restoreShow(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
+        Integer id = Integer.parseInt(req.getParameter("id"));
+        try {
+            ShowTrashStore.restore(id);
+        } catch (Exception ignored) {
+        }
+
+        resp.sendRedirect(req.getContextPath()
+                + "/admin/show/trash?success=" + urlEncodeUtf8("Đã khôi phục show")
+                + "&v=" + System.currentTimeMillis());
+    }
+
+    /* =====================================================
+       ✅ TRASH PAGE
+    ===================================================== */
+    private void showTrash(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        // auto clean expired
+        cleanupExpiredTrashQuietly();
+
+        Map<Integer, Long> trashMap;
+        try {
+            trashMap = ShowTrashStore.readTrash();
+        } catch (Exception e) {
+            trashMap = new HashMap<>();
+        }
+
+        long now = System.currentTimeMillis();
+        long retention = ShowTrashStore.getRetentionMs();
+
+        // chỉ lấy show còn hạn
+        List<Show> trashShows = new ArrayList<>();
+
+// ✅ FIX: dùng Date để fmt:formatDate chạy được
+        Map<Integer, Date> deletedAtMap = new HashMap<>();
+
+        Map<Integer, Integer> remainDaysMap = new HashMap<>();
+
+        for (Map.Entry<Integer, Long> e : trashMap.entrySet()) {
+            Integer id = e.getKey();
+            Long deletedAt = e.getValue();
+            if (id == null || deletedAt == null) {
+                continue;
+            }
+
+            long age = now - deletedAt;
+            if (age > retention) {
+                continue;
+            }
+
+            Show s = null;
+            try {
+                s = showFacade.find(id);
+            } catch (Exception ignored) {
+            }
+            if (s == null) {
+                continue;
+            }
+
+            trashShows.add(s);
+
+            // ✅ FIX: Long millis -> Date
+            deletedAtMap.put(id, new Date(deletedAt));
+
+            long remainMs = Math.max(0, retention - age);
+            int remainDays = (int) Math.ceil(remainMs / (24.0 * 60 * 60 * 1000));
+            remainDaysMap.put(id, remainDays);
+        }
+
+// sort theo deletedAt mới nhất lên trước
+        trashShows.sort((a, b) -> {
+            Date da = deletedAtMap.get(a.getShowID());
+            Date db = deletedAtMap.get(b.getShowID());
+            if (da == null) {
+                da = new Date(0);
+            }
+            if (db == null) {
+                db = new Date(0);
+            }
+            return db.compareTo(da); // mới nhất trước
+        });
+
+        req.setAttribute("trashShows", trashShows);
+        req.setAttribute("trashDeletedAtMap", deletedAtMap);
+        req.setAttribute("trashRemainDaysMap", remainDaysMap);
+
+        req.getRequestDispatcher("/WEB-INF/views/admin/show/trash.jsp").forward(req, resp);
+
+    }
+
+    /* =====================================================
+       ✅ HARD DELETE (giữ nguyên)
+       - Nếu xóa từ thùng rác => cũng remove khỏi trash file cho sạch
+    ===================================================== */
+    // ✅ FIX METHOD deleteShow() - CHẶN XÓA NẾU CÓ ĐƠN HÀNG
+
+private void deleteShow(HttpServletRequest req, HttpServletResponse resp)
+        throws IOException {
+
+    Integer id = Integer.parseInt(req.getParameter("id"));
+    
+    // ✅ BƯỚC 1: KIỂM TRA SHOW CÓ LỊCH DIỄN NÀO ĐÃ CÓ ĐƠN HÀNG CHƯA
+    boolean hasOrders = showFacade.hasOrdersForShow(id);
+    
+    if (hasOrders) {
+        // ❌ CHẶN XÓA - KHÔNG CHO XÓA KỂ CẢ SAU 30 NGÀY
+        String back = req.getParameter("back");
+        String msg = urlEncodeUtf8(
+            "⚠️ KHÔNG THỂ XÓA! Show này có " + 
+            showFacade.countOrdersForShow(id) + 
+            " đơn hàng đã được đặt vé. " +
+            "Dữ liệu này được bảo vệ vĩnh viễn để đảm bảo tính toàn vẹn của hệ thống."
+        );
+        
+        if ("trash".equalsIgnoreCase(back)) {
+            resp.sendRedirect(req.getContextPath() + 
+                "/admin/show/trash?error=" + msg);
+        } else {
+            resp.sendRedirect(req.getContextPath() + 
+                "/admin/show?error=" + msg);
+        }
+        return;
+    }
+    
+    // ✅ BƯỚC 2: NẾU KHÔNG CÓ ĐƠN HÀNG → CHO PHÉP XÓA
+    showFacade.deleteHard(id);
+
+    // Remove from trash file
+    try {
+        ShowTrashStore.restore(id);
+    } catch (Exception ignored) {
+    }
+
+    String back = req.getParameter("back");
+    String msg = urlEncodeUtf8("✅ Xóa show vĩnh viễn thành công");
+
+    if ("trash".equalsIgnoreCase(back)) {
+        resp.sendRedirect(req.getContextPath()
+                + "/admin/show/trash?success=" + msg
+                + "&v=" + System.currentTimeMillis());
+    } else {
         resp.sendRedirect(req.getContextPath()
                 + "/admin/show?success=" + msg
                 + "&v=" + System.currentTimeMillis());
     }
+}
 }

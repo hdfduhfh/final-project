@@ -169,7 +169,7 @@
                                        class="form-control qr-input"
                                        placeholder="Nhập hoặc quét QR..."
                                        autofocus
-                                       required>
+                                       >
                             </div>
                         </div>
 

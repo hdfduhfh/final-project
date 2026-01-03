@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <jsp:include page="/WEB-INF/views/layout/header.jsp" />
 
@@ -200,54 +201,74 @@
         }
     }
     .btn-view-reviews {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    background: transparent;
-    border: 2px solid var(--gold-primary);
-    color: var(--gold-primary);
-    text-decoration: none;
-    border-radius: 25px;
-    font-weight: 600;
-    transition: all 0.3s;
-}
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: transparent;
+        border: 2px solid var(--gold-primary);
+        color: var(--gold-primary);
+        text-decoration: none;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
 
-.btn-view-reviews:hover {
-    background: var(--gold-primary);
-    color: #000;
-    transform: translateY(-2px);
-}
+    .btn-view-reviews:hover {
+        background: var(--gold-primary);
+        color: #000;
+        transform: translateY(-2px);
+    }
 </style>
 
 <c:if test="${not empty show}">
-    <c:set var="imageUrl" value="${not empty show.showImage ? pageContext.request.contextPath.concat('/').concat(show.showImage) : 'https://via.placeholder.com/400x600/111/fff?text=No+Poster'}" />
+    <!-- ===== Build imageUrl an toàn ===== -->
+    <c:set var="imgPath" value="${show.showImage}" />
+    <c:if test="${not empty imgPath and not fn:startsWith(imgPath, '/')}">
+        <c:set var="imgPath" value="/${imgPath}" />
+    </c:if>
+
+    <c:choose>
+        <c:when test="${not empty imgPath}">
+            <c:url var="imageUrl" value="${imgPath}" />
+        </c:when>
+        <c:otherwise>
+            <c:set var="imageUrl" value="https://via.placeholder.com/400x600/111/fff?text=No+Poster" />
+        </c:otherwise>
+    </c:choose>
+
+    <!-- ✅ Ongoing flag -->
+    <c:set var="isOngoing" value="${show.status == 'Ongoing'}" />
 
     <div class="backdrop-blur" style="background-image: url('${imageUrl}');"></div>
 
     <div class="detail-container">
+
+        <!-- ✅ CỘT ẢNH (ĐỪNG XÓA / ĐỪNG ĐỂ '...') -->
         <div class="poster-col" id="posterContainer">
             <img src="${imageUrl}" alt="${show.showName}" class="poster-img" id="posterImage" />
             <div class="magnifying-lens" id="magnifyingLens"></div>
         </div>
 
+        <!-- ===== CỘT THÔNG TIN ===== -->
         <div class="info-col">
             <h1 class="show-title">${show.showName}</h1>
+
             <div class="tags-row">
                 <c:choose>
                     <c:when test="${show.status == 'Ongoing'}">
                         <div class="tag-item st-active">
-                            <span class="dot"></span> ĐANG DIỄN RA
+                            <span class="dot"></span> ĐANG HOẠT ĐỘNG
                         </div>
                     </c:when>
                     <c:when test="${show.status == 'Upcoming'}">
                         <div class="tag-item st-upcoming">
-                            <span class="dot"></span> SẮP CHIẾU
+                            <span class="dot"></span> SẮP HOẠT ĐỘNG
                         </div>
                     </c:when>
                     <c:when test="${show.status == 'Cancelled'}">
                         <div class="tag-item st-cancelled">
-                            <span class="dot"></span> ĐÃ HỦY
+                            <span class="dot"></span> TẠM NGƯNG
                         </div>
                     </c:when>
                     <c:otherwise>
@@ -256,54 +277,70 @@
                         </div>
                     </c:otherwise>
                 </c:choose>
+
                 <div class="tag-item"><span>⏳</span> ${show.durationMinutes} PHÚT</div>
                 <div class="tag-item"><span>📅</span> <fmt:formatDate value="${show.createdAt}" pattern="dd/MM/yyyy" /></div>
             </div>
+
             <div class="description-box">${show.description}</div>
 
-            <div style="margin-top: 40px;">
-                <h3 style="color:#d4af37; margin-bottom:15px; font-family: 'Playfair Display', serif;">
-                    🎭 Suất chiếu
-                </h3>
+            <c:if test="${not isOngoing}">
+                <div class="tag-item st-inactive" style="margin-top:15px;">
+                    <span class="dot"></span>
+                    Hiện tại vở diễn chưa mở bán vé. Vui lòng quay lại sau.
+                </div>
+            </c:if>
 
-                <c:if test="${empty schedules}">
-                    <p style="color:#aaa;">
-                        Hiện chưa có suất chiếu cho vở diễn này
-                    </p>
-                </c:if>
+            <!-- ✅ CHỈ HIỆN SUẤT CHIẾU KHI ONGOING -->
+            <c:if test="${isOngoing}">
+                <div style="margin-top: 40px;">
+                    <h3 style="color:#d4af37; margin-bottom:15px; font-family: 'Playfair Display', serif;">
+                        🎭 Suất chiếu
+                    </h3>
 
-                <c:forEach items="${schedules}" var="sc">
-                    <div class="tag-item" style="margin-bottom:10px;">
-                        🕒 
-                        <fmt:formatDate value="${sc.showTime}" pattern="dd/MM/yyyy HH:mm"/>
-                        &nbsp; | &nbsp;
+                    <c:if test="${empty schedules}">
+                        <p style="color:#aaa;">Hiện chưa có suất chiếu cho vở diễn này</p>
+                    </c:if>
 
-                        <c:choose>
-                            <c:when test="${sc.status == 'Active'}">
-                                <span style="color:#2ecc71;">Đang mở bán</span>
-                            </c:when>
-                            <c:when test="${sc.status == 'Cancelled'}">
-                                <span style="color:#e74c3c;">Đã hủy</span>
-                            </c:when>
-                            <c:otherwise>
-                                <span style="color:#aaa;">${sc.status}</span>
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                </c:forEach>
-            </div>
-            <a href="${pageContext.request.contextPath}/show-feedback?showId=${show.showID}" 
+                    <c:forEach items="${schedules}" var="sc">
+                        <div class="tag-item" style="margin-bottom:10px;">
+                            🕒 <fmt:formatDate value="${sc.showTime}" pattern="dd/MM/yyyy HH:mm"/>
+                            &nbsp; | &nbsp;
+
+                            <c:choose>
+                                <c:when test="${sc.status == 'Active'}">
+                                    <span style="color:#2ecc71;">Đang mở bán</span>
+                                </c:when>
+                                <c:when test="${sc.status == 'Cancelled'}">
+                                    <span style="color:#e74c3c;">Đã hủy</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span style="color:#aaa;">${sc.status}</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </c:forEach>
+                </div>
+            </c:if>
+
+            <a href="${pageContext.request.contextPath}/show-feedback?showId=${show.showID}"
                class="btn-view-reviews">
                 <i class="fa-solid fa-star"></i>
                 Xem đánh giá (${totalFeedback})
             </a>
+
             <div class="action-bar">
-                <a href="${pageContext.request.contextPath}/seats/layout" class="btn-book">ĐẶT VÉ NGAY</a>
+                <c:if test="${isOngoing}">
+                    <a href="${pageContext.request.contextPath}/seats/layout" class="btn-book">ĐẶT VÉ NGAY</a>
+                </c:if>
+
                 <a href="${pageContext.request.contextPath}/shows" class="btn-back">← Quay lại danh sách</a>
             </div>
         </div>
     </div>
 </c:if>
+
+
 
 <c:if test="${empty show}">
     <div style="text-align: center; padding: 100px; color: #fff;">

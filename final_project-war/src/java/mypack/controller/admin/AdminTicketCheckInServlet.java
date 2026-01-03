@@ -63,11 +63,20 @@ public class AdminTicketCheckInServlet extends HttpServlet {
                 break;
 
             case "TOO_EARLY":
-                long minutes = diff / (60 * 1000);
-                long seconds = (diff % (60 * 1000)) / 1000;
+                long totalSeconds = diff / 1000;
+                long seconds = totalSeconds % 60;
+                long totalMinutes = totalSeconds / 60;
+                long minutes = totalMinutes % 60;
+                long totalHours = totalMinutes / 60;
+                long hours = totalHours % 24;
+                long days = totalHours / 24;
+
                 request.setAttribute(
                         "error",
-                        "⏳ Chưa tới giờ check-in. Còn " + minutes + " phút " + seconds + " giây"
+                        String.format(
+                                "⏳ Chưa tới giờ check-in. Còn %d ngày %d giờ %d phút %d giây",
+                                days, hours, minutes, seconds
+                        )
                 );
                 break;
 

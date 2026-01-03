@@ -8,16 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi tiết đơn hàng #${order.orderID}</title>
     
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin/orders-view.css">
 </head>
 <body>
     <div class="admin-wrap">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="brand">
                 <div class="logo"><i class="fa-solid fa-masks-theater"></i></div>
@@ -29,9 +25,7 @@
             <hr style="border-color: var(--line);">
         </aside>
 
-        <!-- CONTENT -->
         <main class="content">
-            <!-- TOPBAR -->
             <div class="topbar">
                 <div class="page-h">
                     <div class="d-none d-md-grid" style="place-items:center; width:44px; height:44px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid var(--line);">
@@ -44,9 +38,42 @@
                 </div>
             </div>
 
-            <!-- INFO GRID -->
+            <%-- ✅ YÊU CẦU ĐỔI GHẾ --%>
+            <c:if test="${order.seatChangeRequested && order.seatChangeStatus == 'PENDING'}">
+                <div class="alert alert-warning d-flex align-items-start gap-3" style="border-radius: 16px; border: 1px solid rgba(245,158,11,.3);">
+                    <i class="fa-solid fa-triangle-exclamation fa-2x text-warning"></i>
+                    <div class="flex-fill">
+                        <h5 class="alert-heading mb-2">
+                            <i class="fa-solid fa-sync me-2"></i>Yêu cầu đổi ghế
+                        </h5>
+                        <p class="mb-2">
+                            <strong>Lý do:</strong> ${order.seatChangeReason}
+                        </p>
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#seatChangeModal">
+                            <i class="fa-solid fa-check me-1"></i>Xử lý yêu cầu
+                        </button>
+                    </div>
+                </div>
+            </c:if>
+
+            <%-- SUCCESS/ERROR MESSAGES --%>
+            <c:if test="${not empty sessionScope.success}">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fa-solid fa-check-circle me-2"></i>${sessionScope.success}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <c:remove var="success" scope="session"/>
+            </c:if>
+            
+            <c:if test="${not empty sessionScope.error}">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fa-solid fa-circle-xmark me-2"></i>${sessionScope.error}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <c:remove var="error" scope="session"/>
+            </c:if>
+
             <div class="grid">
-                <!-- ORDER INFO -->
                 <section class="cardx">
                     <div class="cardx-h">
                         <h3><i class="fa-solid fa-box"></i> Thông tin đơn hàng</h3>
@@ -110,7 +137,6 @@
                     </div>
                 </section>
 
-                <!-- CUSTOMER INFO -->
                 <section class="cardx">
                     <div class="cardx-h">
                         <h3><i class="fa-solid fa-user"></i> Thông tin khách hàng</h3>
@@ -138,7 +164,6 @@
                 </section>
             </div>
 
-            <!-- ORDER DETAILS TABLE -->
             <div class="table-wrap">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -150,6 +175,7 @@
                                 <th>Vở diễn</th>
                                 <th>Suất diễn</th>
                                 <th>Giá</th>
+                                <th>Trạng thái</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -174,6 +200,20 @@
                                     <td class="fw-bold">
                                         <fmt:formatNumber value="${detail.price}" type="number" maxFractionDigits="0"/> đ
                                     </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${!detail.seatID.isActive}">
+                                                <span class="badge text-bg-danger">
+                                                    <i class="fa-solid fa-tools"></i> Bảo trì
+                                                </span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge text-bg-success">
+                                                    <i class="fa-solid fa-check"></i> Hoạt động
+                                                </span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
                                 </tr>
                             </c:forEach>
                         </tbody>
@@ -181,7 +221,6 @@
                 </div>
             </div>
 
-            <!-- TOTALS -->
             <div class="total-box">
                 <div class="total-row">
                     <span>Tổng cộng</span>
@@ -197,7 +236,6 @@
                 </div>
             </div>
 
-            <!-- ACTIONS -->
             <div class="actions">
                 <c:if test="${hasTickets}">
                     <div class="alert alert-success">
@@ -248,7 +286,68 @@
         </main>
     </div>
 
-    <!-- MODALS -->
+    <%-- SEAT CHANGE MODAL --%>
+    <div class="modal fade" id="seatChangeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fa-solid fa-sync text-warning me-2"></i>
+                        Xử lý yêu cầu đổi ghế - Order #${order.orderID}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="${pageContext.request.contextPath}/admin/orders" method="post">
+                    <input type="hidden" name="action" value="processSeatChange">
+                    <input type="hidden" name="orderId" value="${order.orderID}">
+                    <input type="hidden" name="actionType" id="actionType">
+                    
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <strong>Lý do khách hàng:</strong><br>
+                            ${order.seatChangeReason}
+                        </div>
+                        
+                        <c:if test="${not empty availableSeats}">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Chọn ghế mới:</label>
+                                <select name="newSeatId" class="form-select" id="newSeatSelect">
+                                    <option value="">-- Chọn ghế --</option>
+                                    <c:forEach var="seat" items="${availableSeats}">
+                                        <option value="${seat.seatID}">
+                                            ${seat.seatNumber} - ${seat.seatType} - 
+                                            <fmt:formatNumber value="${seat.price}" type="number" maxFractionDigits="0"/>đ
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                        </c:if>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ghi chú của admin (tùy chọn):</label>
+                            <textarea name="adminNote" class="form-control" rows="3" 
+                                      placeholder="Ví dụ: Đã đổi ghế A1 sang A5 theo yêu cầu..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-xmark me-1"></i> Đóng
+                        </button>
+                        <button type="submit" class="btn btn-danger" onclick="document.getElementById('actionType').value='REJECT';">
+                            <i class="fa-solid fa-ban me-1"></i> Từ chối
+                        </button>
+                        <button type="submit" class="btn btn-success" onclick="document.getElementById('actionType').value='APPROVE';" 
+                                ${empty availableSeats ? 'disabled' : ''}>
+                            <i class="fa-solid fa-check me-1"></i> Duyệt đổi ghế
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <%-- OTHER MODALS --%>
     <div class="modal fade" id="confirmMarkPaidModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -311,9 +410,7 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
     <script src="${pageContext.request.contextPath}/js/admin/orders-view.js"></script>
 </body>
 </html>

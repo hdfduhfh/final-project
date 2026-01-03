@@ -4,6 +4,7 @@ import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -114,22 +115,27 @@ public class TicketFacade extends AbstractFacade<Ticket> implements TicketFacade
 
     @Override
     public List<Ticket> findWithPaging(int offset, int limit) {
-        return em.createQuery("SELECT t FROM Ticket t ORDER BY t.ticketID DESC", Ticket.class)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
-                .getResultList();
-    }
+    return em.createQuery(
+        "SELECT t FROM Ticket t WHERE t.status != 'DELETED' ORDER BY t.ticketID DESC", 
+        Ticket.class
+    )
+    .setFirstResult(offset)
+    .setMaxResults(limit)
+    .getResultList();
+}
 
     @Override
-    public int countAll() {
-        return ((Long) em.createQuery("SELECT COUNT(t) FROM Ticket t").getSingleResult()).intValue();
-    }
+public int countAll() {
+    return ((Long) em.createQuery(
+        "SELECT COUNT(t) FROM Ticket t WHERE t.status != 'DELETED'"
+    ).getSingleResult()).intValue();
+}
 
     // NEW: Advanced search implementation
     @Override
     public List<Ticket> searchTickets(String qrCode, String status, String customerName, 
                                      Date fromDate, Date toDate, int offset, int limit) {
-        StringBuilder jpql = new StringBuilder("SELECT t FROM Ticket t WHERE 1=1");
+        StringBuilder jpql = new StringBuilder("SELECT t FROM Ticket t WHERE t.status != 'DELETED'");
         
         if (qrCode != null && !qrCode.trim().isEmpty()) {
             jpql.append(" AND LOWER(t.qRCode) LIKE LOWER(:qrCode)");
@@ -214,4 +220,20 @@ public class TicketFacade extends AbstractFacade<Ticket> implements TicketFacade
         
         return query.getSingleResult().intValue();
     }
+    // Thêm vào TicketFacade.java
+
+@Override
+public List<Ticket> findByStatus(String status) {
+    try {
+        return em.createQuery(
+            "SELECT t FROM Ticket t WHERE t.status = :status ORDER BY t.deletedAt DESC",
+            Ticket.class
+        )
+        .setParameter("status", status)
+        .getResultList();
+    } catch (Exception e) {
+        e.printStackTrace();
+        return new ArrayList<>();
+    }
+}
 }

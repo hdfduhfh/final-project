@@ -251,12 +251,12 @@
 
                                 <div class="col-12">
                                     <label class="form-label">Tên khuyến mãi <span class="text-danger">*</span></label>
-                                    <input type="text" name="name" value="${oldName}" required class="form-control" placeholder="Ví dụ: Sale cuối tuần">
+                                    <input type="text" name="name" value="${oldName}" class="form-control" placeholder="Ví dụ: Sale cuối tuần">
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">Mã khuyến mãi (Code) <span class="text-danger">*</span></label>
-                                    <input type="text" name="code" value="${oldCode}" required class="form-control" placeholder="Ví dụ: SALE50">
+                                    <input type="text" name="code" value="${oldCode}"  class="form-control" placeholder="Ví dụ: SALE50">
                                     <div class="helper mt-1">
                                         Gợi ý: viết HOA, không dấu, không khoảng trắng.
                                     </div>
@@ -272,7 +272,7 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label">Loại giảm giá <span class="text-danger">*</span></label>
-                                    <select name="discountType" required class="form-select" id="discountType">
+                                    <select name="discountType" class="form-select" id="discountType">
                                         <option value="PERCENT" ${oldType == 'PERCENT' ? 'selected' : ''}>Phần trăm (%)</option>
                                         <option value="FIXED" ${oldType == 'FIXED' ? 'selected' : ''}>Số tiền cố định (VNĐ)</option>
                                     </select>
@@ -280,7 +280,7 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label">Giá trị giảm <span class="text-danger">*</span></label>
-                                    <input type="number" step="0.01" name="discountValue" value="${oldValue}" required class="form-control"
+                                    <input type="number" step="0.01" name="discountValue" value="${oldValue}" class="form-control"
                                            placeholder="Nhập số % hoặc số tiền">
                                     <div class="helper mt-1" id="discountValueHelp"></div>
                                 </div>
@@ -299,12 +299,12 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
-                                    <input type="datetime-local" name="startDate" value="${oldStartDate}" required class="form-control">
+                                    <input type="datetime-local" name="startDate" value="${oldStartDate}"  class="form-control">
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">Ngày kết thúc <span class="text-danger">*</span></label>
-                                    <input type="datetime-local" name="endDate" value="${oldEndDate}" required class="form-control">
+                                    <input type="datetime-local" name="endDate" value="${oldEndDate}"  class="form-control">
                                 </div>
 
                                 <div class="col-md-6">

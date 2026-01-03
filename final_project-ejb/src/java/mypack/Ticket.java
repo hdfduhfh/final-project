@@ -65,6 +65,40 @@ public class Ticket implements Serializable {
     @JoinColumn(name = "OrderDetailID", referencedColumnName = "OrderDetailID", nullable = false)
     @ManyToOne(optional = false)
     private OrderDetail orderDetailID;
+    @Column(name = "DeletedAt")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date deletedAt;
+
+    @Column(name = "DeletedBy", length = 100)
+    private String deletedBy; // Admin nào xóa
+
+    @Column(name = "DeleteReason", length = 500)
+    private String deleteReason; // Lý do xóa
+
+// Getters & Setters
+    public Date getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Date deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public String getDeletedBy() {
+        return deletedBy;
+    }
+
+    public void setDeletedBy(String deletedBy) {
+        this.deletedBy = deletedBy;
+    }
+
+    public String getDeleteReason() {
+        return deleteReason;
+    }
+
+    public void setDeleteReason(String deleteReason) {
+        this.deleteReason = deleteReason;
+    }
 
     public Ticket() {
     }
@@ -168,5 +202,5 @@ public class Ticket implements Serializable {
     public String toString() {
         return "mypack.Ticket[ ticketID=" + ticketID + " ]";
     }
-    
+
 }

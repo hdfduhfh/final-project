@@ -328,9 +328,9 @@
                                         <option value="" <c:if test="${empty stVal}">selected</c:if>>-- Chọn trạng thái --</option>
                                         <option value="Ongoing" <c:if test="${stVal eq 'Ongoing'}">selected</c:if>>Đang chiếu</option>
                                         <option value="Upcoming" <c:if test="${stVal eq 'Upcoming'}">selected</c:if>>Sắp chiếu</option>
-                                        <option value="Cancelled" <c:if test="${stVal eq 'Cancelled'}">selected</c:if>>Bị hủy</option>
                                         </select>
                                     </div>
+
 
                                     <!-- Mô tả -->
                                     <div class="col-12">
@@ -432,8 +432,8 @@
                                         <i class="fa-regular fa-image"></i> Ảnh sẽ dùng làm poster cho vở diễn.
                                     </div>
                                 </div>
-                                
-                                          <!-- Preview (optional - tự đổi khi select) -->
+
+                                <!-- Preview (optional - tự đổi khi select) -->
                                 <div class="col-lg-6">
                                     <label class="form-label fw-bold">Xem trước</label>
                                     <div class="preview" id="imgPreviewBox" style="display:none;">
@@ -546,7 +546,7 @@
 
                     // Giả định ảnh nằm trong cùng cấu trúc bạn đang dùng khi render: contextPath + "/" + file
                     // Nếu bạn lưu trong folder như "images/artists/xxx.jpg" thì file đã có path sẵn.
-                 const url = '${pageContext.request.contextPath}/' + file;
+                    const url = '${pageContext.request.contextPath}/' + file;
 
                     img.src = url;
                     text.textContent = file;

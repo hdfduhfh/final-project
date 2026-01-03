@@ -349,3 +349,82 @@ CREATE INDEX IX_EventRegistration_UserID ON dbo.EventRegistration(UserID);
 CREATE INDEX IX_EventRegistration_EventID ON dbo.EventRegistration(EventID);
 CREATE INDEX IX_EventRegistration_Status ON dbo.EventRegistration(Status);
 
+-- Thêm columns vào bảng Ticket
+ALTER TABLE Ticket ADD DeletedAt DATETIME NULL;
+ALTER TABLE Ticket ADD DeletedBy NVARCHAR(100) NULL;
+ALTER TABLE Ticket ADD DeleteReason NVARCHAR(500) NULL;
+
+-- Kiểm tra và thêm cột SeatChangeRequested
+IF NOT EXISTS (SELECT * FROM sys.columns 
+               WHERE object_id = OBJECT_ID(N'[dbo].[Order]') 
+               AND name = 'SeatChangeRequested')
+BEGIN
+    ALTER TABLE [dbo].[Order]
+    ADD SeatChangeRequested BIT DEFAULT 0;
+    PRINT 'Added column: SeatChangeRequested';
+END
+ELSE
+BEGIN
+    PRINT 'Column SeatChangeRequested already exists';
+END
+GO
+
+-- Kiểm tra và thêm cột SeatChangeReason
+IF NOT EXISTS (SELECT * FROM sys.columns 
+               WHERE object_id = OBJECT_ID(N'[dbo].[Order]') 
+               AND name = 'SeatChangeReason')
+BEGIN
+    ALTER TABLE [dbo].[Order]
+    ADD SeatChangeReason NVARCHAR(500) NULL;
+    PRINT 'Added column: SeatChangeReason';
+END
+ELSE
+BEGIN
+    PRINT 'Column SeatChangeReason already exists';
+END
+GO
+
+-- Kiểm tra và thêm cột SeatChangeStatus
+IF NOT EXISTS (SELECT * FROM sys.columns 
+               WHERE object_id = OBJECT_ID(N'[dbo].[Order]') 
+               AND name = 'SeatChangeStatus')
+BEGIN
+    ALTER TABLE [dbo].[Order]
+    ADD SeatChangeStatus NVARCHAR(20) NULL;
+    PRINT 'Added column: SeatChangeStatus';
+END
+ELSE
+BEGIN
+    PRINT 'Column SeatChangeStatus already exists';
+END
+GO
+
+-- Kiểm tra và thêm cột AdminNote
+IF NOT EXISTS (SELECT * FROM sys.columns 
+               WHERE object_id = OBJECT_ID(N'[dbo].[Order]') 
+               AND name = 'AdminNote')
+BEGIN
+    ALTER TABLE [dbo].[Order]
+    ADD AdminNote NVARCHAR(500) NULL;
+    PRINT 'Added column: AdminNote';
+END
+ELSE
+BEGIN
+    PRINT 'Column AdminNote already exists';
+END
+GO
+
+-- Hiển thị kết quả
+SELECT 
+    c.name AS ColumnName,
+    t.name AS DataType,
+    c.max_length AS MaxLength,
+    c.is_nullable AS IsNullable
+FROM sys.columns c
+INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+WHERE c.object_id = OBJECT_ID(N'[dbo].[Order]')
+AND c.name IN ('SeatChangeRequested', 'SeatChangeReason', 'SeatChangeStatus', 'AdminNote')
+ORDER BY c.column_id;
+GO
+
+PRINT 'Update completed successfully!';

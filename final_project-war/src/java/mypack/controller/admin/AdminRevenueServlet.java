@@ -49,12 +49,6 @@ public class AdminRevenueServlet extends HttpServlet {
             request.setAttribute("revenueByMonth", revenueByMonth);
 
             // ===== LOG ĐỂ DEBUG =====
-            System.out.println("=== ADMIN REVENUE PAGE ===");
-            System.out.println("Total Revenue: " + totalRevenue);
-            System.out.println("Total Refund: " + totalRefund);
-            System.out.println("Cancelled Orders: " + totalCancelledOrder);
-            System.out.println("Daily Records: " + revenueByDate.size());
-
             request.getRequestDispatcher("/WEB-INF/views/admin/revenue/list.jsp")
                     .forward(request, response);
 
