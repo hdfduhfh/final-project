@@ -38,4 +38,6 @@ public interface OrderDetailFacadeLocal {
 
     // ✅ Đếm số lượng đơn hàng của suất chiếu
     Long countOrdersBySchedule(Integer scheduleId);
+    
+    
 }

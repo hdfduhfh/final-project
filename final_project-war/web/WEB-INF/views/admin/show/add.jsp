@@ -326,8 +326,8 @@
                                     <c:set var="stVal" value="${not empty statusValue ? statusValue : ''}" />
                                     <select name="status" class="form-select" required>
                                         <option value="" <c:if test="${empty stVal}">selected</c:if>>-- Chọn trạng thái --</option>
-                                        <option value="Ongoing" <c:if test="${stVal eq 'Ongoing'}">selected</c:if>>Đang chiếu</option>
-                                        <option value="Upcoming" <c:if test="${stVal eq 'Upcoming'}">selected</c:if>>Sắp chiếu</option>
+                                        <option value="Ongoing" <c:if test="${stVal eq 'Ongoing'}">selected</c:if>>Đang hoạt động</option>
+                                        <option value="Upcoming" <c:if test="${stVal eq 'Upcoming'}">selected</c:if>>Sắp hoạt động</option>
                                         </select>
                                     </div>
 

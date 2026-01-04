@@ -155,7 +155,6 @@
                 font-weight:900;
             }
 
-            /* Custom dropdown (giữ id) */
             .multi-select-dropdown{
                 position: relative;
                 display: inline-block;
@@ -242,7 +241,6 @@
     <body>
         <div class="admin-wrap">
 
-            <!-- SIDEBAR -->
             <aside class="sidebar">
                 <div class="brand">
                     <div class="logo"><i class="fa-solid fa-masks-theater"></i></div>
@@ -255,10 +253,8 @@
                 <hr style="border-color: var(--line);">
             </aside>
 
-            <!-- CONTENT -->
             <main class="content">
 
-                <!-- TOPBAR -->
                 <div class="topbar">
                     <div class="page-h">
                         <div class="d-none d-md-grid" style="place-items:center; width:44px; height:44px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid var(--line);">
@@ -271,7 +267,6 @@
                     </div>
                 </div>
 
-                <!-- Server-side messages -->
                 <c:if test="${not empty globalMessage}">
                     <div class="alert alert-danger mt-3 mb-0 d-flex align-items-center gap-2">
                         <i class="fa-solid fa-circle-xmark"></i>
@@ -286,7 +281,6 @@
                     </div>
                 </c:if>
 
-                <!-- Client side error blocks giữ nguyên id -->
                 <div id="clientError" class="alert alert-danger mt-3 mb-0 d-none"></div>
 
                 <div id="clientErrors"
@@ -296,7 +290,6 @@
                     <ul id="clientErrorsList" class="mt-2 mb-0"></ul>
                 </div>
 
-                <!-- FORM CARD -->
                 <div class="card-form mt-3">
                     <div class="card-header">
                         <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa thông tin vở diễn
@@ -308,11 +301,9 @@
                               enctype="multipart/form-data"
                               onsubmit="return validateShowForm();" novalidate>
 
-                            <!-- BẮT BUỘC -->
                             <input type="hidden" name="showID" value="${show.showID}" />
 
                             <div class="row g-3">
-                                <!-- Tên show -->
                                 <div class="col-lg-6">
                                     <label class="form-label fw-bold">
                                         Tên vở diễn <span class="req">*</span>
@@ -324,7 +315,6 @@
                                            required/>
                                 </div>
 
-                                <!-- Thời lượng -->
                                 <div class="col-lg-3">
                                     <label class="form-label fw-bold">
                                         Thời lượng (phút) <span class="req">*</span>
@@ -337,28 +327,57 @@
                                            required/>
                                 </div>
 
-                                                           <!-- Trạng thái -->
+                                <!-- ✅ Trạng thái (CHỈ CHỈNH disable theo rule, không đổi CSS) -->
                                 <div class="col-lg-3">
                                     <label class="form-label fw-bold">
                                         Trạng thái <span class="req">*</span>
                                     </label>
-                                    <c:set var="stVal" value="${not empty statusValue ? statusValue : ''}" />
+
+                                    <c:set var="stVal" value="${not empty statusValue ? statusValue : show.status}" />
+                                    <c:set var="curSt" value="${not empty currentShowStatus ? currentShowStatus : show.status}" />
+                                    <c:set var="canCancel" value="${canCancel}" />
+
                                     <select name="status" class="form-select" required>
                                         <option value="" <c:if test="${empty stVal}">selected</c:if>>-- Chọn trạng thái --</option>
-                                        <option value="Ongoing" <c:if test="${stVal eq 'Ongoing'}">selected</c:if>>Đang chiếu</option>
-                                        <option value="Upcoming" <c:if test="${stVal eq 'Upcoming'}">selected</c:if>>Sắp chiếu</option>
-                                        <option value="Cancelled" <c:if test="${stVal eq 'Cancelled'}">selected</c:if>>Bị hủy</option>
-                                        </select>
-                                    </div>
-                                    <!-- Mô tả -->
-                                    <div class="col-12">
-                                        <label class="form-label fw-bold">
-                                            Mô tả <span class="req">*</span>
-                                        </label>
-                                        <textarea name="description"
-                                                  rows="5"
-                                                  class="form-control"
-                                                  required>${not empty param.description ? param.description : show.description}</textarea>
+
+                                        <!-- Ongoing: nếu show hiện tại là Upcoming thì disable -->
+                                        <option value="Ongoing"
+                                                <c:if test="${stVal eq 'Ongoing'}">selected</c:if>
+                                                <c:if test="${curSt eq 'Upcoming'}">disabled</c:if>>
+                                            ĐANG HOẠT ĐỘNG
+                                        </option>
+
+                                        <!-- Upcoming: nếu show hiện tại là Ongoing thì disable -->
+                                        <option value="Upcoming"
+                                                <c:if test="${stVal eq 'Upcoming'}">selected</c:if>
+                                                <c:if test="${curSt eq 'Ongoing'}">disabled</c:if>>
+                                            SẮP HOẠT ĐỘNG
+                                        </option>
+
+                                        <!-- Cancelled: chỉ enable khi canCancel = true hoặc đang Cancelled -->
+                                        <option value="Cancelled"
+                                                <c:if test="${stVal eq 'Cancelled'}">selected</c:if>
+                                                <c:if test="${(curSt ne 'Cancelled') and (not canCancel)}">disabled</c:if>>
+                                            TẠM NGƯNG
+                                        </option>
+                                    </select>
+
+                                    <c:if test="${(curSt ne 'Cancelled') and (not canCancel)}">
+                                        <div class="form-text text-danger mt-1">
+                                            <i class="fa-solid fa-circle-info"></i>
+                                            Chỉ được chuyển sang TẠM NGƯNG khi show đã xong toàn bộ lịch diễn.
+                                        </div>
+                                    </c:if>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">
+                                        Mô tả <span class="req">*</span>
+                                    </label>
+                                    <textarea name="description"
+                                              rows="5"
+                                              class="form-control"
+                                              required>${not empty param.description ? param.description : show.description}</textarea>
                                 </div>
 
                                 <!-- Đạo diễn -->
@@ -379,14 +398,12 @@
                                             <c:forEach var="d" items="${directors}">
                                                 <c:set var="directorChecked" value="false"/>
 
-                                                <!-- Ưu tiên param khi submit lỗi -->
                                                 <c:if test="${not empty param.directorId}">
                                                     <c:if test="${param.directorId == d.artistID}">
                                                         <c:set var="directorChecked" value="true"/>
                                                     </c:if>
                                                 </c:if>
 
-                                                <!-- Nếu không có param -> tick theo DB (selectedDirectorId) -->
                                                 <c:if test="${empty param.directorId and not empty selectedDirectorId}">
                                                     <c:if test="${selectedDirectorId == d.artistID}">
                                                         <c:set var="directorChecked" value="true"/>
@@ -428,7 +445,6 @@
                                             <c:forEach var="a" items="${artists}">
                                                 <c:set var="checked" value="false"/>
 
-                                                <!-- Ưu tiên paramValues khi submit lỗi -->
                                                 <c:if test="${not empty paramValues.artistIds}">
                                                     <c:forEach var="aid" items="${paramValues.artistIds}">
                                                         <c:if test="${aid == a.artistID}">
@@ -437,7 +453,6 @@
                                                     </c:forEach>
                                                 </c:if>
 
-                                                <!-- Nếu không có paramValues -> tick theo DB (selectedArtistIds) -->
                                                 <c:if test="${empty paramValues.artistIds and not empty selectedArtistIds}">
                                                     <c:forEach var="aidDb" items="${selectedArtistIds}">
                                                         <c:if test="${aidDb == a.artistID}">
@@ -486,7 +501,6 @@
                                     <c:set var="currentImage"
                                            value="${not empty param.showImageDropdown ? param.showImageDropdown : show.showImage}" />
 
-                                    <!-- ✅ thêm id để JS preview bắt được -->
                                     <select name="showImageDropdown" class="form-select" id="showImageDropdownSelect" required>
                                         <option value="">Chọn hình ảnh từ thư mục</option>
 
@@ -502,7 +516,6 @@
                                         <i class="fa-solid fa-circle-info"></i> Chọn ảnh mới để thay thế poster hiện tại.
                                     </div>
 
-                                    <!-- ✅ Preview poster mới -->
                                     <div class="mt-3">
                                         <label class="form-label fw-bold">Xem trước poster mới</label>
 
@@ -517,7 +530,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Actions -->
                                 <div class="col-12 d-flex gap-2 mt-2">
                                     <button type="submit" class="btn btn-success fw-bold" style="border-radius:14px;">
                                         <i class="fa-solid fa-floppy-disk"></i> Cập nhật
@@ -537,64 +549,54 @@
             </main>
         </div>
 
-        <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
-                                                                   // ===== dropdown helper (chỉ 1 bản) =====
-                                                                   function toggleDropdown(listId) {
-                                                                       var list = document.getElementById(listId);
-                                                                       if (!list)
-                                                                           return;
-                                                                       list.style.display = (list.style.display === "block") ? "none" : "block";
-                                                                   }
+            function toggleDropdown(listId) {
+                var list = document.getElementById(listId);
+                if (!list) return;
+                list.style.display = (list.style.display === "block") ? "none" : "block";
+            }
 
-                                                                   function updateDirectorSelectedText(listId, textId) {
-                                                                       var list = document.getElementById(listId);
-                                                                       var textSpan = document.getElementById(textId);
-                                                                       if (!list || !textSpan)
-                                                                           return;
+            function updateDirectorSelectedText(listId, textId) {
+                var list = document.getElementById(listId);
+                var textSpan = document.getElementById(textId);
+                if (!list || !textSpan) return;
 
-                                                                       var checked = list.querySelector("input[name='directorId']:checked");
-                                                                       textSpan.textContent = checked ? checked.getAttribute("data-director-name") : "Chọn đạo diễn...";
-                                                                   }
+                var checked = list.querySelector("input[name='directorId']:checked");
+                textSpan.textContent = checked ? checked.getAttribute("data-director-name") : "Chọn đạo diễn...";
+            }
 
-                                                                   function updateArtistSelectedText(listId, textId) {
-                                                                       var list = document.getElementById(listId);
-                                                                       var textSpan = document.getElementById(textId);
-                                                                       if (!list || !textSpan)
-                                                                           return;
+            function updateArtistSelectedText(listId, textId) {
+                var list = document.getElementById(listId);
+                var textSpan = document.getElementById(textId);
+                if (!list || !textSpan) return;
 
-                                                                       var selected = [];
-                                                                       var checkedBoxes = list.querySelectorAll("input[type='checkbox'][name='artistIds']:checked");
-                                                                       checkedBoxes.forEach(function (cb) {
-                                                                           selected.push(cb.getAttribute("data-artist-name"));
-                                                                       });
+                var selected = [];
+                var checkedBoxes = list.querySelectorAll("input[type='checkbox'][name='artistIds']:checked");
+                checkedBoxes.forEach(function (cb) {
+                    selected.push(cb.getAttribute("data-artist-name"));
+                });
 
-                                                                       textSpan.textContent = (selected.length > 0) ? selected.join(", ") : "Chọn nghệ sĩ...";
-                                                                   }
+                textSpan.textContent = (selected.length > 0) ? selected.join(", ") : "Chọn nghệ sĩ...";
+            }
 
-                                                                   // init load (submit lỗi vẫn đúng)
-                                                                   window.addEventListener("load", function () {
-                                                                       updateDirectorSelectedText('directorDropdownListAdd', 'directorSelectedTextAdd');
-                                                                       updateArtistSelectedText('artistDropdownListAdd', 'artistSelectedTextAdd');
-                                                                   });
+            window.addEventListener("load", function () {
+                updateDirectorSelectedText('directorDropdownListAdd', 'directorSelectedTextAdd');
+                updateArtistSelectedText('artistDropdownListAdd', 'artistSelectedTextAdd');
+            });
 
-                                                                   // click outside -> close
-                                                                   document.addEventListener("click", function (e) {
-                                                                       var dContainer = document.getElementById("directorContainerAdd");
-                                                                       var dList = document.getElementById("directorDropdownListAdd");
-                                                                       if (dContainer && dList && !dContainer.contains(e.target))
-                                                                           dList.style.display = "none";
+            document.addEventListener("click", function (e) {
+                var dContainer = document.getElementById("directorContainerAdd");
+                var dList = document.getElementById("directorDropdownListAdd");
+                if (dContainer && dList && !dContainer.contains(e.target)) dList.style.display = "none";
 
-                                                                       var aContainer = document.getElementById("artistContainerAdd");
-                                                                       var aList = document.getElementById("artistDropdownListAdd");
-                                                                       if (aContainer && aList && !aContainer.contains(e.target))
-                                                                           aList.style.display = "none";
-                                                                   });
+                var aContainer = document.getElementById("artistContainerAdd");
+                var aList = document.getElementById("artistDropdownListAdd");
+                if (aContainer && aList && !aContainer.contains(e.target)) aList.style.display = "none";
+            });
         </script>
 
-        <!-- ✅ Preview poster mới theo dropdown (Edit Show) -->
         <script>
             (function () {
                 const select = document.getElementById('showImageDropdownSelect');
@@ -603,15 +605,12 @@
                 const text = document.getElementById('imgPreviewText');
                 const hint = document.getElementById('imgPreviewHint');
 
-                if (!select || !box || !img || !text || !hint)
-                    return;
+                if (!select || !box || !img || !text || !hint) return;
 
                 function normalizePath(p) {
                     p = (p || '').trim();
-                    if (!p)
-                        return '';
-                    if (p.startsWith('/'))
-                        p = p.substring(1);
+                    if (!p) return '';
+                    if (p.startsWith('/')) p = p.substring(1);
                     return p;
                 }
 
@@ -645,7 +644,7 @@
                 }
 
                 select.addEventListener('change', updatePreview);
-                updatePreview(); // init khi load (nếu đang selected)
+                updatePreview();
             })();
         </script>
 

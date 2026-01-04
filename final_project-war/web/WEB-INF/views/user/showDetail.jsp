@@ -169,6 +169,18 @@
         box-shadow: 0 15px 35px rgba(212, 175, 55, 0.6);
         background: linear-gradient(45deg, #f1c40f, #ffd700);
     }
+
+    /* ✅ nút disabled mà không phá style btn-book */
+    .btn-book.disabled,
+    .btn-book[aria-disabled="true"] {
+        opacity: .55;
+        cursor: not-allowed;
+        pointer-events: none;
+        box-shadow: none;
+        transform: none;
+        filter: grayscale(0.2);
+    }
+
     .btn-back {
         color: #888;
         text-decoration: none;
@@ -237,20 +249,22 @@
         </c:otherwise>
     </c:choose>
 
-    <!-- ✅ Ongoing flag -->
+    <!-- ✅ LOGIC FLAGS -->
     <c:set var="isOngoing" value="${show.status == 'Ongoing'}" />
+    <c:set var="hasSchedules" value="${not empty schedules}" />
+    <c:set var="canBook" value="${isOngoing and hasSchedules}" />
 
     <div class="backdrop-blur" style="background-image: url('${imageUrl}');"></div>
 
     <div class="detail-container">
 
-        <!-- ✅ CỘT ẢNH (ĐỪNG XÓA / ĐỪNG ĐỂ '...') -->
+        <!-- CỘT ẢNH -->
         <div class="poster-col" id="posterContainer">
-            <img src="${imageUrl}" alt="${show.showName}" class="poster-img" id="posterImage" />
+            <img src="${imageUrl}" alt="${fn:escapeXml(show.showName)}" class="poster-img" id="posterImage" />
             <div class="magnifying-lens" id="magnifyingLens"></div>
         </div>
 
-        <!-- ===== CỘT THÔNG TIN ===== -->
+        <!-- CỘT THÔNG TIN -->
         <div class="info-col">
             <h1 class="show-title">${show.showName}</h1>
 
@@ -271,11 +285,6 @@
                             <span class="dot"></span> TẠM NGƯNG
                         </div>
                     </c:when>
-                    <c:otherwise>
-                        <div class="tag-item st-unknown">
-                            <span class="dot"></span> KHÔNG XÁC ĐỊNH
-                        </div>
-                    </c:otherwise>
                 </c:choose>
 
                 <div class="tag-item"><span>⏳</span> ${show.durationMinutes} PHÚT</div>
@@ -284,44 +293,72 @@
 
             <div class="description-box">${show.description}</div>
 
+            <!-- ✅ THÔNG BÁO THEO TRẠNG THÁI -->
             <c:if test="${not isOngoing}">
                 <div class="tag-item st-inactive" style="margin-top:15px;">
                     <span class="dot"></span>
-                    Hiện tại vở diễn chưa mở bán vé. Vui lòng quay lại sau.
+                    Hiện tại vở diễn chưa mở bán vé.
                 </div>
             </c:if>
 
-            <!-- ✅ CHỈ HIỆN SUẤT CHIẾU KHI ONGOING -->
-            <c:if test="${isOngoing}">
+            <c:if test="${isOngoing and not hasSchedules}">
+                <div class="tag-item" style="margin-top:15px; border-color: rgba(212,175,55,0.25);">
+                    <span class="dot" style="background:#d4af37; box-shadow: 0 0 10px rgba(212,175,55,0.55);"></span>
+                    Vở diễn này sẽ sớm được cập nhật lịch diễn. Xin quý khách vui lòng quay lại .
+                </div>
+            </c:if>
+
+            <!-- ✅ CHỈ HIỆN SUẤT CHIẾU KHI: ONGOING + CÓ LỊCH -->
+            <c:if test="${canBook}">
                 <div style="margin-top: 40px;">
                     <h3 style="color:#d4af37; margin-bottom:15px; font-family: 'Playfair Display', serif;">
                         🎭 Suất chiếu
                     </h3>
 
-                    <c:if test="${empty schedules}">
-                        <p style="color:#aaa;">Hiện chưa có suất chiếu cho vở diễn này</p>
-                    </c:if>
-
                     <c:forEach items="${schedules}" var="sc">
-                        <div class="tag-item" style="margin-bottom:10px;">
-                            🕒 <fmt:formatDate value="${sc.showTime}" pattern="dd/MM/yyyy HH:mm"/>
-                            &nbsp; | &nbsp;
+                        <div class="tag-item" style="margin-bottom:10px; display:block;">
+                            <div>
+                                🕒 <fmt:formatDate value="${sc.showTime}" pattern="dd/MM/yyyy HH:mm"/>
+                                &nbsp; | &nbsp;
 
-                            <c:choose>
-                                <c:when test="${sc.status == 'Active'}">
-                                    <span style="color:#2ecc71;">Đang mở bán</span>
-                                </c:when>
-                                <c:when test="${sc.status == 'Cancelled'}">
-                                    <span style="color:#e74c3c;">Đã hủy</span>
-                                </c:when>
-                                <c:otherwise>
-                                    <span style="color:#aaa;">${sc.status}</span>
-                                </c:otherwise>
-                            </c:choose>
+                                <c:choose>
+                                    <c:when test="${sc.status == 'Active'}">
+                                        <span style="color:#2ecc71;">Đang mở bán</span>
+                                    </c:when>
+                                    <c:when test="${sc.status == 'Cancelled'}">
+                                        <span style="color:#e74c3c;">FINISHED</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span style="color:#aaa;">${sc.status}</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+
+                            <!-- ✅ Nghệ sĩ xuất hiện (lấy từ ShowArtist của show) -->
+                            <div style="margin-top:6px; color:#ddd; font-size:.95rem;">
+                                👥 Nghệ sĩ xuất hiện:
+                                <c:choose>
+                                    <c:when test="${empty showArtists}">
+                                        <span style="color:#aaa;">(Chưa có nghệ sĩ)</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:forEach var="sa" items="${showArtists}" varStatus="st">
+                                            <span style="color:#fff; font-weight:700;">
+                                                ${sa.artistID.name}
+                                            </span>
+                                            <c:if test="${not empty sa.artistID.role}">
+                                                <span style="color:#c9b37a;">(${sa.artistID.role})</span>
+                                            </c:if>
+                                            <c:if test="${!st.last}">, </c:if>
+                                        </c:forEach>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
                         </div>
                     </c:forEach>
                 </div>
             </c:if>
+
 
             <a href="${pageContext.request.contextPath}/show-feedback?showId=${show.showID}"
                class="btn-view-reviews">
@@ -330,17 +367,24 @@
             </a>
 
             <div class="action-bar">
-                <c:if test="${isOngoing}">
-                    <a href="${pageContext.request.contextPath}/seats/layout" class="btn-book">ĐẶT VÉ NGAY</a>
-                </c:if>
+                <!-- ✅ NÚT MUA VÉ: chỉ enable khi canBook -->
+                <c:choose>
+                    <c:when test="${canBook}">
+                        <a href="${pageContext.request.contextPath}/seats/layout" class="btn-book">ĐẶT VÉ NGAY</a>
+                    </c:when>
+                    <c:otherwise>
+                        <!-- giữ style y chang, chỉ disabled -->
+                        <a href="javascript:void(0)" class="btn-book disabled" aria-disabled="true" title="Chưa có lịch chiếu">
+                            ĐẶT VÉ NGAY
+                        </a>
+                    </c:otherwise>
+                </c:choose>
 
                 <a href="${pageContext.request.contextPath}/shows" class="btn-back">← Quay lại danh sách</a>
             </div>
         </div>
     </div>
 </c:if>
-
-
 
 <c:if test="${empty show}">
     <div style="text-align: center; padding: 100px; color: #fff;">
@@ -380,7 +424,7 @@
 
                 lens.style.left = lensX + 'px';
                 lens.style.top = lensY + 'px';
-                lens.style.backgroundSize = (img.width * zoomLevel) + "px " + (img.height * zoomLevel) + "px";
+                lens.style.backgroundSize = (img.width * zoomLevel) + "px " + (img.height * zoomLevel) + "px " + (img.height * zoomLevel) + "px";
 
                 const bgX = -((x * zoomLevel) - lens.offsetWidth / 2);
                 const bgY = -((y * zoomLevel) - lens.offsetHeight / 2);

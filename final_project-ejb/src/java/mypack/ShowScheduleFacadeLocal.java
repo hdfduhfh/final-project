@@ -1,17 +1,10 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package mypack;
 
 import jakarta.ejb.Local;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
-/**
- *
- * @author DANG KHOA
- */
 @Local
 public interface ShowScheduleFacadeLocal {
 
@@ -31,13 +24,10 @@ public interface ShowScheduleFacadeLocal {
 
     List<ShowSchedule> searchByShowNameKeyword(String keyword);
 
-    // Tìm theo ShowID
     List<ShowSchedule> findByShowId(Integer showId);
 
-    // Tìm theo khoảng ngày giờ
     List<ShowSchedule> findByShowTimeRange(Date from, Date to);
 
-    // Tìm theo keyword (tên show hoặc status)
     List<ShowSchedule> searchByKeyword(String keyword);
 
     boolean existsByShowId(Integer showId);
@@ -57,4 +47,21 @@ public interface ShowScheduleFacadeLocal {
     int countUpcoming();
 
     List<ShowSchedule> findActiveSchedules();
+
+    List<ShowSchedule> findInRange(Date startInclusive, Date endExclusive);
+
+    int countByShowIdAndDateExcept(Integer showId, LocalDate day, Integer excludeScheduleId);
+
+    // ✅ dùng cho trang user theo logic status (Ongoing/Upcoming)
+    List<ShowSchedule> findByStatusIn(List<String> statuses, int offset, int limit);
+
+    int countByStatusIn(List<String> statuses);
+
+    // ✅ NEW: Sync realtime statuses cho Schedule + Show
+    void syncRealtimeStatuses();
+
+    List<ShowSchedule> findPublicSchedulesByShow(Integer showId, Date now);
+
+    List<ShowSchedule> findUpcomingByShowIds(List<Integer> showIds);
+
 }

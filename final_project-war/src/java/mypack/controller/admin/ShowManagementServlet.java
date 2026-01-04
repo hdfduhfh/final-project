@@ -15,6 +15,9 @@ import mypack.ArtistFacadeLocal;
 import mypack.ShowArtist;
 import mypack.ShowArtistFacadeLocal;
 
+import mypack.ShowSchedule;
+import mypack.ShowScheduleFacadeLocal;
+
 import mypack.utils.ShowTrashStore;
 
 import java.io.File;
@@ -29,7 +32,6 @@ import java.util.regex.Pattern;
             "/admin/show/add",
             "/admin/show/edit",
             "/admin/show/delete",
-            // ✅ NEW: soft delete + trash
             "/admin/show/soft-delete",
             "/admin/show/trash",
             "/admin/show/restore"
@@ -47,17 +49,12 @@ public class ShowManagementServlet extends HttpServlet {
     @EJB
     private ShowArtistFacadeLocal showArtistFacade;
 
-    // chỉ cho chữ (kể cả tiếng Việt), số, khoảng trắng
-    private static final Pattern NO_SPECIAL_PATTERN
-            = Pattern.compile("^[\\p{L}\\d\\s]+$");
+    @EJB
+    private ShowScheduleFacadeLocal showScheduleFacade;
 
-    // ✅ NEW: cho mô tả có dấu . , và xuống dòng
-    private static final Pattern DESCRIPTION_PATTERN
-            = Pattern.compile("^[\\p{L}\\d\\s\\.,\\r\\n]+$");
+    private static final Pattern NO_SPECIAL_PATTERN = Pattern.compile("^[\\p{L}\\d\\s]+$");
+    private static final Pattern DESCRIPTION_PATTERN = Pattern.compile("^[\\p{L}\\d\\s\\.,\\r\\n]+$");
 
-    /* =====================================================
-       UTF-8
-    ===================================================== */
     private void setUtf8(HttpServletRequest req, HttpServletResponse resp) {
         try {
             req.setCharacterEncoding("UTF-8");
@@ -67,9 +64,6 @@ public class ShowManagementServlet extends HttpServlet {
         resp.setContentType("text/html; charset=UTF-8");
     }
 
-    /* =====================================================
-       ✅ LOAD IMAGES FROM /assets/images/show/
-    ===================================================== */
     private List<String> loadShowImageFiles(HttpServletRequest request) {
         List<String> imageFiles = new ArrayList<>();
         try {
@@ -92,7 +86,6 @@ public class ShowManagementServlet extends HttpServlet {
                 if (!f.isFile()) {
                     continue;
                 }
-
                 String name = f.getName().toLowerCase();
                 if (name.endsWith(".jpg") || name.endsWith(".jpeg")
                         || name.endsWith(".png") || name.endsWith(".gif")
@@ -107,9 +100,6 @@ public class ShowManagementServlet extends HttpServlet {
         return imageFiles;
     }
 
-    /* =====================================================
-       HELPER: ROLE
-    ===================================================== */
     private boolean isDirectorRole(String role) {
         if (role == null) {
             return false;
@@ -157,17 +147,11 @@ public class ShowManagementServlet extends HttpServlet {
         req.setAttribute("directors", directors);
         req.setAttribute("imageFiles", imageFiles);
 
-        // alias phòng JSP dùng tên khác
         req.setAttribute("actorList", actors);
         req.setAttribute("artistList", actors);
         req.setAttribute("directorList", directors);
-
-        System.out.println("[ShowAdd] actors=" + actors.size() + ", directors=" + directors.size());
     }
 
-    /* =====================================================
-       VALIDATION HELPERS
-    ===================================================== */
     private boolean allBlank(String... vals) {
         if (vals == null) {
             return true;
@@ -205,7 +189,6 @@ public class ShowManagementServlet extends HttpServlet {
         return null;
     }
 
-    // ✅ validate mô tả KHÔNG check thập phân nữa
     private String validateDescription(String val, String emptyMsg, String negativeMsg, String specialMsg) {
         String t = val == null ? "" : val.trim();
         if (t.isEmpty()) {
@@ -220,7 +203,6 @@ public class ShowManagementServlet extends HttpServlet {
         return null;
     }
 
-    // ✅ 60 <= x <= 180
     private String validateDuration(String s) {
         String t = s == null ? "" : s.trim();
 
@@ -244,20 +226,15 @@ public class ShowManagementServlet extends HttpServlet {
         if (v <= 0) {
             return "Thời lượng diễn không được bằng 0";
         }
-
         if (v < 60) {
             return "Thời lượng diễn không được thấp hơn 60 phút";
         }
         if (v > 180) {
             return "Thời lượng diễn không được lớn hơn 180 phút";
         }
-
         return null;
     }
 
-    /* =====================================================
-       ✅ CHECK DUPLICATE NAME / POSTER
-    ===================================================== */
     private String normalizeName(String s) {
         if (s == null) {
             return "";
@@ -328,13 +305,16 @@ public class ShowManagementServlet extends HttpServlet {
         return false;
     }
 
-    /* =====================================================
-       DO GET / POST
-    ===================================================== */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         setUtf8(req, resp);
+
+        // ✅ sync realtime trước khi render danh sách show (để show status nhảy đúng)
+        try {
+            showScheduleFacade.syncRealtimeStatuses();
+        } catch (Exception ignored) {
+        }
 
         switch (req.getServletPath()) {
             case "/admin/show":
@@ -347,10 +327,8 @@ public class ShowManagementServlet extends HttpServlet {
                 showEditForm(req, resp);
                 break;
             case "/admin/show/delete":
-                deleteShow(req, resp); // hard delete
+                deleteShow(req, resp);
                 break;
-
-            // ✅ NEW
             case "/admin/show/soft-delete":
                 softDeleteShow(req, resp);
                 break;
@@ -360,7 +338,6 @@ public class ShowManagementServlet extends HttpServlet {
             case "/admin/show/trash":
                 showTrash(req, resp);
                 break;
-
             default:
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
@@ -391,10 +368,6 @@ public class ShowManagementServlet extends HttpServlet {
         }
     }
 
-    /* =====================================================
-       ✅ AUTO CLEAN EXPIRED (quá 30 ngày => hard delete)
-       - Không DB, không timer: tự dọn khi admin mở list/trash
-    ===================================================== */
     private void cleanupExpiredTrashQuietly() {
         try {
             List<Integer> expired = ShowTrashStore.expiredTrashIds();
@@ -404,12 +377,10 @@ public class ShowManagementServlet extends HttpServlet {
 
             for (Integer id : expired) {
                 try {
-                    // xóa vĩnh viễn trong DB bằng method cũ
                     showFacade.deleteHard(id);
                 } catch (Exception ignored) {
                 }
                 try {
-                    // remove khỏi trash file
                     ShowTrashStore.restore(id);
                 } catch (Exception ignored) {
                 }
@@ -418,29 +389,21 @@ public class ShowManagementServlet extends HttpServlet {
         }
     }
 
-    /* =====================================================
-       ✅ LIST: SEARCH + DATE + STATUS (lọc trước khi phân trang)
-       + ✅ loại bỏ show đang trong thùng rác (soft delete)
-    ===================================================== */
     private void showList(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // ✅ chống cache
         resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
 
-        // ✅ auto clean expired
         cleanupExpiredTrashQuietly();
 
-        // ✅ SEARCH
         String keyword = req.getParameter("keyword");
         if (keyword == null || keyword.trim().isEmpty()) {
             keyword = req.getParameter("search");
         }
         keyword = (keyword == null) ? "" : keyword.trim();
 
-        // ✅ STATUS (ALL / Ongoing / Upcoming / Cancelled)
         String statusParam = req.getParameter("status");
         statusParam = (statusParam == null) ? "ALL" : statusParam.trim();
         if (statusParam.isEmpty()) {
@@ -448,7 +411,6 @@ public class ShowManagementServlet extends HttpServlet {
         }
         req.setAttribute("status", statusParam);
 
-        // ✅ DATE RANGE (yyyy-MM-dd)
         String fromDateStr = req.getParameter("fromDate");
         String toDateStr = req.getParameter("toDate");
         fromDateStr = (fromDateStr == null) ? "" : fromDateStr.trim();
@@ -457,11 +419,6 @@ public class ShowManagementServlet extends HttpServlet {
         req.setAttribute("fromDate", fromDateStr);
         req.setAttribute("toDate", toDateStr);
 
-        System.out.println("[ShowList] keyword=" + keyword
-                + " status=" + statusParam
-                + " fromDate=" + fromDateStr + " toDate=" + toDateStr);
-
-        // ✅ lấy list theo keyword trước
         List<Show> allShows;
         if (!keyword.isEmpty()) {
             allShows = showFacade.searchByName(keyword);
@@ -472,7 +429,6 @@ public class ShowManagementServlet extends HttpServlet {
             allShows = new ArrayList<>();
         }
 
-        // ✅ FILTER SOFT DELETE (loại show đang ở thùng rác)
         try {
             Set<Integer> trashed = ShowTrashStore.activeTrashIds();
             if (trashed != null && !trashed.isEmpty()) {
@@ -481,9 +437,8 @@ public class ShowManagementServlet extends HttpServlet {
         } catch (Exception ignored) {
         }
 
-        // ✅ PARSE DATE RANGE (lọc trước khi phân trang)
-        Date fromDate = null;     // inclusive
-        Date toDateExcl = null;   // exclusive (to + 1 day 00:00)
+        Date fromDate = null;
+        Date toDateExcl = null;
 
         try {
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
@@ -494,9 +449,9 @@ public class ShowManagementServlet extends HttpServlet {
             }
             if (!toDateStr.isEmpty()) {
                 Date to = sdf.parse(toDateStr);
-                java.util.Calendar cal = java.util.Calendar.getInstance();
+                Calendar cal = Calendar.getInstance();
                 cal.setTime(to);
-                cal.add(java.util.Calendar.DAY_OF_MONTH, 1);
+                cal.add(Calendar.DAY_OF_MONTH, 1);
                 toDateExcl = cal.getTime();
             }
         } catch (Exception e) {
@@ -504,19 +459,15 @@ public class ShowManagementServlet extends HttpServlet {
             toDateExcl = null;
         }
 
-        // ✅ LỌC STATUS + DATE TRÊN TOÀN BỘ allShows (trước pagination)
         if (!allShows.isEmpty()) {
             List<Show> filtered = new ArrayList<>();
-
-            boolean filterStatus = (statusParam != null
-                    && !statusParam.equalsIgnoreCase("ALL"));
+            boolean filterStatus = (statusParam != null && !statusParam.equalsIgnoreCase("ALL"));
 
             for (Show s : allShows) {
                 if (s == null) {
                     continue;
                 }
 
-                // ---- filter STATUS
                 if (filterStatus) {
                     String st = (s.getStatus() == null) ? "" : s.getStatus().trim();
                     if (!st.equalsIgnoreCase(statusParam)) {
@@ -524,7 +475,6 @@ public class ShowManagementServlet extends HttpServlet {
                     }
                 }
 
-                // ---- filter DATE
                 if (fromDate != null || toDateExcl != null) {
                     Date created = s.getCreatedAt();
                     if (created == null) {
@@ -545,7 +495,6 @@ public class ShowManagementServlet extends HttpServlet {
             allShows = filtered;
         }
 
-        // ✅ PAGINATION (4 show / 1 page)
         final int pageSize = 4;
 
         int page = 1;
@@ -585,7 +534,6 @@ public class ShowManagementServlet extends HttpServlet {
         req.setAttribute("pageSize", pageSize);
         req.setAttribute("totalItems", totalItems);
 
-        // ✅ build popup detail data từ ShowArtist
         Map<Integer, String> directorMap = new HashMap<>();
         Map<Integer, String> actorMap = new HashMap<>();
 
@@ -628,7 +576,6 @@ public class ShowManagementServlet extends HttpServlet {
         req.setAttribute("directorMap", directorMap);
         req.setAttribute("actorMap", actorMap);
 
-        // ✅ THỐNG KÊ THEO STATUS
         long statTotal = showFacade.count();
         long statOngoing = showFacade.countByStatus("Ongoing");
         long statUpcoming = showFacade.countByStatus("Upcoming");
@@ -642,18 +589,71 @@ public class ShowManagementServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/admin/show/list.jsp").forward(req, resp);
     }
 
-    /* =====================================================
-       ADD FORM
-    ===================================================== */
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         prepareAddFormData(request);
         request.getRequestDispatcher("/WEB-INF/views/admin/show/add.jsp").forward(request, response);
     }
 
-    /* =====================================================
-       EDIT FORM
-    ===================================================== */
+    // ✅ rule: chỉ cho Cancelled khi show có lịch và tất cả đã xong
+    private boolean canSetShowToCancelled(Show show) {
+        try {
+            if (show == null || show.getShowID() == null) {
+                return false;
+            }
+
+            List<ShowSchedule> lst = showScheduleFacade.findByShowId(show.getShowID());
+            if (lst == null || lst.isEmpty()) {
+                return false;
+            }
+
+            Date now = new Date();
+
+            for (ShowSchedule sc : lst) {
+                if (sc == null || sc.getShowTime() == null) {
+                    continue;
+                }
+
+                // còn suất tương lai => chưa xong
+                if (sc.getShowTime().after(now)) {
+                    return false;
+                }
+
+                String st = sc.getStatus() != null ? sc.getStatus().trim() : "";
+                if ("Ongoing".equalsIgnoreCase(st) || "Upcoming".equalsIgnoreCase(st)) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // ✅ NEW: chỉ ép schedule Cancelled khi show Cancelled (admin cố tình tạm ngưng)
+    private void cancelAllSchedulesOfShow(Show show) {
+        try {
+            if (show == null || show.getShowID() == null) {
+                return;
+            }
+            List<ShowSchedule> lst = showScheduleFacade.findByShowId(show.getShowID());
+            if (lst == null || lst.isEmpty()) {
+                return;
+            }
+
+            for (ShowSchedule sc : lst) {
+                if (sc == null) {
+                    continue;
+                }
+                if (!"Cancelled".equalsIgnoreCase(sc.getStatus())) {
+                    sc.setStatus("Cancelled");
+                    showScheduleFacade.edit(sc);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     private void showEditForm(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
@@ -665,9 +665,10 @@ public class ShowManagementServlet extends HttpServlet {
         }
 
         req.setAttribute("show", show);
-
-        // ✅ NEW: để edit.jsp selected sẵn status
         req.setAttribute("statusValue", show.getStatus());
+
+        req.setAttribute("currentShowStatus", show.getStatus());
+        req.setAttribute("canCancel", canSetShowToCancelled(show));
 
         req.setAttribute("artists", getActorsOnly());
         req.setAttribute("directors", getDirectors());
@@ -712,10 +713,6 @@ public class ShowManagementServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/admin/show/edit.jsp").forward(req, resp);
     }
 
-
-    /* =====================================================
-       CREATE
-    ===================================================== */
     private void createShow(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
@@ -733,13 +730,11 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        String err = validateText(
-                showName,
+        String err = validateText(showName,
                 "Tên vở diễn không được để trống",
                 "Tên vở diễn không được chứa số âm",
                 "Tên vở diễn không được chứa số thập phân",
-                "Tên vở diễn không được chứa kí tự đặc biệt"
-        );
+                "Tên vở diễn không được chứa kí tự đặc biệt");
         if (err != null) {
             forwardAddError(req, resp, err);
             return;
@@ -750,12 +745,10 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        err = validateDescription(
-                description,
+        err = validateDescription(description,
                 "Mô tả vở diễn không được để trống",
                 "Mô tả vở diễn không được chứa số âm",
-                "Mô tả vở diễn không được chứa kí tự đặc biệt"
-        );
+                "Mô tả vở diễn không được chứa kí tự đặc biệt");
         if (err != null) {
             forwardAddError(req, resp, err);
             return;
@@ -796,7 +789,6 @@ public class ShowManagementServlet extends HttpServlet {
             forwardAddError(req, resp, "Hình ảnh cho vở diễn không được chọn");
             return;
         }
-
         if (isDuplicatePoster(null, showImage)) {
             forwardAddError(req, resp, "Poster phim bạn chọn không được trùng với poster phim đã tạo");
             return;
@@ -806,10 +798,9 @@ public class ShowManagementServlet extends HttpServlet {
         s.setShowName(showName.trim());
         s.setDescription(description.trim());
         s.setDurationMinutes(duration);
-        s.setStatus(status);
+        s.setStatus(status.trim());
         s.setShowImage(showImage.trim());
         s.setCreatedAt(new Date());
-
         showFacade.create(s);
 
         Set<Integer> used = new HashSet<>();
@@ -832,13 +823,16 @@ public class ShowManagementServlet extends HttpServlet {
             }
         }
 
+        // ✅ sync realtime để show/status chuẩn
+        try {
+            showScheduleFacade.syncRealtimeStatuses();
+        } catch (Exception ignored) {
+        }
+
         String msg = java.net.URLEncoder.encode("Đã tạo show thành công", "UTF-8");
         resp.sendRedirect(req.getContextPath() + "/admin/show?success=" + msg + "&v=" + System.currentTimeMillis());
     }
 
-    /* =====================================================
-       UPDATE
-    ===================================================== */
     private void updateShow(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
@@ -858,13 +852,11 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        String err = validateText(
-                showName,
+        String err = validateText(showName,
                 "Tên vở diễn không được để trống",
                 "Tên vở diễn không được chứa số âm",
                 "Tên vở diễn không được chứa số thập phân",
-                "Tên vở diễn không được chứa kí tự đặc biệt"
-        );
+                "Tên vở diễn không được chứa kí tự đặc biệt");
         if (err != null) {
             forwardEditError(req, resp, show, err);
             return;
@@ -875,12 +867,10 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
 
-        err = validateDescription(
-                description,
+        err = validateDescription(description,
                 "Mô tả vở diễn không được để trống",
                 "Mô tả vở diễn không được chứa số âm",
-                "Mô tả vở diễn không được chứa kí tự đặc biệt"
-        );
+                "Mô tả vở diễn không được chứa kí tự đặc biệt");
         if (err != null) {
             forwardEditError(req, resp, show, err);
             return;
@@ -908,7 +898,7 @@ public class ShowManagementServlet extends HttpServlet {
             return;
         }
         if (artistIds.length < 4) {
-            forwardAddError(req, resp, "Diễn viên cho vở diễn không được dưới 4 người");
+            forwardEditError(req, resp, show, "Diễn viên cho vở diễn không được dưới 4 người");
             return;
         }
 
@@ -916,20 +906,64 @@ public class ShowManagementServlet extends HttpServlet {
             forwardEditError(req, resp, show, "Hình ảnh cho vở diễn không được chọn");
             return;
         }
-
         if (isDuplicatePoster(show.getShowID(), showImage)) {
             forwardEditError(req, resp, show, "Poster phim bạn chọn không được trùng với poster phim đã tạo");
             return;
         }
 
+        // ✅ RÀNG BUỘC status theo rule bạn đã có + FIX: cho phép Cancelled -> Upcoming/Ongoing
+        String currentStatus = (show.getStatus() == null) ? "" : show.getStatus().trim();
+        String newStatus = status.trim();
+
+        boolean canCancel = canSetShowToCancelled(show);
+
+        // =========================
+        // FIX RULE UPDATE STATUS
+        // =========================
+        // 1) Nếu show đang Ongoing: không cho hạ xuống Upcoming
+        if ("Ongoing".equalsIgnoreCase(currentStatus) && "Upcoming".equalsIgnoreCase(newStatus)) {
+            forwardEditError(req, resp, show, "❌ Show đang HOẠT ĐỘNG nên KHÔNG thể cập nhật sang SẮP HOẠT ĐỘNG.");
+            return;
+        }
+
+        // 2) Nếu show đang Upcoming: không cho nâng lên Ongoing thủ công (vì realtime sẽ sync)
+        if ("Upcoming".equalsIgnoreCase(currentStatus) && "Ongoing".equalsIgnoreCase(newStatus)) {
+            forwardEditError(req, resp, show, "❌ Show đang SẮP HOẠT ĐỘNG nên KHÔNG thể cập nhật sang ĐANG HOẠT ĐỘNG thủ công.");
+            return;
+        }
+
+        // 3) Nếu chuyển sang Cancelled: phải thỏa canCancel
+        if ("Cancelled".equalsIgnoreCase(newStatus) && !canCancel) {
+            forwardEditError(req, resp, show, "❌ Chỉ được chuyển sang TẠM NGƯNG khi show đã xong toàn bộ lịch diễn.");
+            return;
+        }
+
+        // ✅ NEW: Cho phép Cancelled -> Upcoming/Ongoing
+        // (không chặn nữa, admin có thể mở lại show)
+        // Nếu bạn muốn "Cancelled -> Ongoing" bị chặn như cũ thì bỏ đoạn này.
+        // Ở đây: ALLOW.
+
+        // UPDATE show
         show.setShowName(showName.trim());
         show.setDescription(description.trim());
         show.setDurationMinutes(duration);
-        show.setStatus(status);
+        show.setStatus(newStatus);
         show.setShowImage(showImage.trim());
 
         showFacade.edit(show);
 
+        // ✅ CHỈ ép schedule Cancelled khi admin chuyển show Cancelled
+        if ("Cancelled".equalsIgnoreCase(newStatus)) {
+            cancelAllSchedulesOfShow(show);
+        }
+
+        // ✅ sync realtime lại để show/status tổng hợp đúng
+        try {
+            showScheduleFacade.syncRealtimeStatuses();
+        } catch (Exception ignored) {
+        }
+
+        // giữ logic update show-artist
         showArtistFacade.removeByShow(show);
 
         Set<Integer> used = new HashSet<>();
@@ -958,9 +992,6 @@ public class ShowManagementServlet extends HttpServlet {
                 + "&v=" + System.currentTimeMillis());
     }
 
-    /* =====================================================
-       ERROR HELPERS
-    ===================================================== */
     private void forwardAddError(HttpServletRequest req, HttpServletResponse resp, String msg)
             throws ServletException, IOException {
         req.setAttribute("error", msg);
@@ -983,6 +1014,9 @@ public class ShowManagementServlet extends HttpServlet {
         req.setAttribute("imageFiles", loadShowImageFiles(req));
         req.setAttribute("artists", getActorsOnly());
         req.setAttribute("directors", getDirectors());
+
+        req.setAttribute("currentShowStatus", show != null ? show.getStatus() : null);
+        req.setAttribute("canCancel", canSetShowToCancelled(show));
 
         try {
             Integer id = show != null ? show.getShowID() : null;
@@ -1023,29 +1057,105 @@ public class ShowManagementServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/admin/show/edit.jsp").forward(req, resp);
     }
 
-    /* =====================================================
-       ✅ SOFT DELETE: chuyển vào thùng rác (KHÔNG DB)
-    ===================================================== */
-    private void softDeleteShow(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
+ 
+// ===== CẬP NHẬT PHẦN SOFT DELETE TRONG ShowManagementServlet.java =====
 
-        Integer id = Integer.parseInt(req.getParameter("id"));
-        try {
-            ShowTrashStore.softDelete(id);
-        } catch (Exception ignored) {
-        }
+/**
+ * ✅ RULE MỚI CHO SOFT DELETE:
+ * 1. Show ONGOING → CHẶN hoàn toàn
+ * 2. Show CANCELLED → CHO PHÉP (kể cả có đơn hàng)
+ * 3. Show khác (Upcoming) → CHO PHÉP nếu không có đơn hàng
+ */
+private void softDeleteShow(HttpServletRequest req, HttpServletResponse resp)
+        throws IOException {
 
+    Integer id = Integer.parseInt(req.getParameter("id"));
+    Show show = null;
+    try {
+        show = showFacade.find(id);
+    } catch (Exception ignored) {}
+
+    if (show == null) {
         resp.sendRedirect(req.getContextPath()
-                + "/admin/show?success=" + urlEncodeUtf8("Đã chuyển show vào thùng rác")
+                + "/admin/show?error=" + urlEncodeUtf8("❌ Không tìm thấy show!")
                 + "&v=" + System.currentTimeMillis());
+        return;
     }
 
-    /* =====================================================
-       ✅ RESTORE: khôi phục từ thùng rác
-    ===================================================== */
+    String status = (show.getStatus() != null) ? show.getStatus().trim() : "";
+
+    // ========================================
+    // 🔴 RULE 1: CHẶN ONGOING HOÀN TOÀN
+    // ========================================
+    if ("Ongoing".equalsIgnoreCase(status)) {
+        resp.sendRedirect(req.getContextPath()
+                + "/admin/show?error=" + urlEncodeUtf8(
+                    "❌ KHÔNG THỂ XÓA! Show đang HOẠT ĐỘNG (Ongoing). " +
+                    "Vui lòng đợi show kết thúc hoặc chuyển sang Cancelled.")
+                + "&v=" + System.currentTimeMillis());
+        return;
+    }
+
+    // ========================================
+    // ✅ RULE 2: CANCELLED → CHO PHÉP LUÔN
+    // ========================================
+    if ("Cancelled".equalsIgnoreCase(status)) {
+        try {
+            ShowTrashStore.softDelete(id);
+            
+            System.out.println("✅ Đã chuyển Show #" + id + " (CANCELLED) vào thùng rác");
+            
+            resp.sendRedirect(req.getContextPath()
+                    + "/admin/show?success=" + urlEncodeUtf8(
+                        "✅ Đã chuyển show vào thùng rác. " +
+                        "Show đã kết thúc nên có thể xóa an toàn.")
+                    + "&v=" + System.currentTimeMillis());
+            return;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.sendRedirect(req.getContextPath()
+                    + "/admin/show?error=" + urlEncodeUtf8("❌ Lỗi khi chuyển vào thùng rác!")
+                    + "&v=" + System.currentTimeMillis());
+            return;
+        }
+    }
+
+    // ========================================
+    // 📋 RULE 3: UPCOMING/KHÁC → KIỂM TRA ĐƠN HÀNG
+    // ========================================
+    boolean hasOrders = showFacade.hasOrdersForShow(id);
+    
+    if (hasOrders) {
+        Long orderCount = showFacade.countOrdersForShow(id);
+        
+        resp.sendRedirect(req.getContextPath()
+                + "/admin/show?error=" + urlEncodeUtf8(
+                    "⚠️ KHÔNG THỂ XÓA! Show này có " + orderCount + " đơn hàng đã đặt vé. " +
+                    "Chỉ có thể xóa khi show chuyển sang trạng thái Cancelled.")
+                + "&v=" + System.currentTimeMillis());
+        return;
+    }
+
+    // ✅ UPCOMING + KHÔNG CÓ ĐƠN HÀNG → CHO PHÉP
+    try {
+        ShowTrashStore.softDelete(id);
+        
+        System.out.println("✅ Đã chuyển Show #" + id + " (NO ORDERS) vào thùng rác");
+        
+        resp.sendRedirect(req.getContextPath()
+                + "/admin/show?success=" + urlEncodeUtf8("✅ Đã chuyển show vào thùng rác")
+                + "&v=" + System.currentTimeMillis());
+        
+    } catch (Exception e) {
+        e.printStackTrace();
+        resp.sendRedirect(req.getContextPath()
+                + "/admin/show?error=" + urlEncodeUtf8("❌ Lỗi khi chuyển vào thùng rác!")
+                + "&v=" + System.currentTimeMillis());
+    }
+}
     private void restoreShow(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
-
         Integer id = Integer.parseInt(req.getParameter("id"));
         try {
             ShowTrashStore.restore(id);
@@ -1057,13 +1167,9 @@ public class ShowManagementServlet extends HttpServlet {
                 + "&v=" + System.currentTimeMillis());
     }
 
-    /* =====================================================
-       ✅ TRASH PAGE
-    ===================================================== */
     private void showTrash(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // auto clean expired
         cleanupExpiredTrashQuietly();
 
         Map<Integer, Long> trashMap;
@@ -1076,12 +1182,8 @@ public class ShowManagementServlet extends HttpServlet {
         long now = System.currentTimeMillis();
         long retention = ShowTrashStore.getRetentionMs();
 
-        // chỉ lấy show còn hạn
         List<Show> trashShows = new ArrayList<>();
-
-// ✅ FIX: dùng Date để fmt:formatDate chạy được
         Map<Integer, Date> deletedAtMap = new HashMap<>();
-
         Map<Integer, Integer> remainDaysMap = new HashMap<>();
 
         for (Map.Entry<Integer, Long> e : trashMap.entrySet()) {
@@ -1106,8 +1208,6 @@ public class ShowManagementServlet extends HttpServlet {
             }
 
             trashShows.add(s);
-
-            // ✅ FIX: Long millis -> Date
             deletedAtMap.put(id, new Date(deletedAt));
 
             long remainMs = Math.max(0, retention - age);
@@ -1115,7 +1215,6 @@ public class ShowManagementServlet extends HttpServlet {
             remainDaysMap.put(id, remainDays);
         }
 
-// sort theo deletedAt mới nhất lên trước
         trashShows.sort((a, b) -> {
             Date da = deletedAtMap.get(a.getShowID());
             Date db = deletedAtMap.get(b.getShowID());
@@ -1125,7 +1224,7 @@ public class ShowManagementServlet extends HttpServlet {
             if (db == null) {
                 db = new Date(0);
             }
-            return db.compareTo(da); // mới nhất trước
+            return db.compareTo(da);
         });
 
         req.setAttribute("trashShows", trashShows);
@@ -1133,63 +1232,110 @@ public class ShowManagementServlet extends HttpServlet {
         req.setAttribute("trashRemainDaysMap", remainDaysMap);
 
         req.getRequestDispatcher("/WEB-INF/views/admin/show/trash.jsp").forward(req, resp);
-
     }
 
-    /* =====================================================
-       ✅ HARD DELETE (giữ nguyên)
-       - Nếu xóa từ thùng rác => cũng remove khỏi trash file cho sạch
-    ===================================================== */
-    // ✅ FIX METHOD deleteShow() - CHẶN XÓA NẾU CÓ ĐƠN HÀNG
-
+   // ========================================
+// 🗑️ HARD DELETE (XÓA VĨNH VIỄN)
+// ========================================
+/**
+ * ✅ RULE HARD DELETE:
+ * 1. ONGOING → CHẶN hoàn toàn
+ * 2. CANCELLED + CÓ ĐƠN HÀNG → CHẶN (bảo vệ dữ liệu)
+ * 3. CANCELLED + KHÔNG ĐƠN HÀNG → CHO PHÉP
+ * 4. UPCOMING + KHÔNG ĐƠN HÀNG → CHO PHÉP
+ */
 private void deleteShow(HttpServletRequest req, HttpServletResponse resp)
         throws IOException {
 
     Integer id = Integer.parseInt(req.getParameter("id"));
+    Show show = null;
     
-    // ✅ BƯỚC 1: KIỂM TRA SHOW CÓ LỊCH DIỄN NÀO ĐÃ CÓ ĐƠN HÀNG CHƯA
-    boolean hasOrders = showFacade.hasOrdersForShow(id);
-    
-    if (hasOrders) {
-        // ❌ CHẶN XÓA - KHÔNG CHO XÓA KỂ CẢ SAU 30 NGÀY
+    try {
+        show = showFacade.find(id);
+    } catch (Exception ignored) {}
+
+    if (show == null) {
         String back = req.getParameter("back");
-        String msg = urlEncodeUtf8(
-            "⚠️ KHÔNG THỂ XÓA! Show này có " + 
-            showFacade.countOrdersForShow(id) + 
-            " đơn hàng đã được đặt vé. " +
-            "Dữ liệu này được bảo vệ vĩnh viễn để đảm bảo tính toàn vẹn của hệ thống."
-        );
+        String msg = urlEncodeUtf8("❌ Không tìm thấy show!");
         
         if ("trash".equalsIgnoreCase(back)) {
-            resp.sendRedirect(req.getContextPath() + 
-                "/admin/show/trash?error=" + msg);
+            resp.sendRedirect(req.getContextPath() + "/admin/show/trash?error=" + msg);
         } else {
-            resp.sendRedirect(req.getContextPath() + 
-                "/admin/show?error=" + msg);
+            resp.sendRedirect(req.getContextPath() + "/admin/show?error=" + msg);
         }
         return;
     }
-    
-    // ✅ BƯỚC 2: NẾU KHÔNG CÓ ĐƠN HÀNG → CHO PHÉP XÓA
-    showFacade.deleteHard(id);
 
-    // Remove from trash file
-    try {
-        ShowTrashStore.restore(id);
-    } catch (Exception ignored) {
+    String status = (show.getStatus() != null) ? show.getStatus().trim() : "";
+
+    // ========================================
+    // 🔴 RULE 1: CHẶN ONGOING
+    // ========================================
+    if ("Ongoing".equalsIgnoreCase(status)) {
+        String back = req.getParameter("back");
+        String msg = urlEncodeUtf8(
+            "❌ KHÔNG THỂ XÓA! Show đang HOẠT ĐỘNG (Ongoing). " +
+            "Vui lòng đợi show kết thúc."
+        );
+        
+        if ("trash".equalsIgnoreCase(back)) {
+            resp.sendRedirect(req.getContextPath() + "/admin/show/trash?error=" + msg);
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/admin/show?error=" + msg);
+        }
+        return;
     }
 
-    String back = req.getParameter("back");
-    String msg = urlEncodeUtf8("✅ Xóa show vĩnh viễn thành công");
+    // ========================================
+    // 🔒 RULE 2: CANCELLED + CÓ ĐƠN HÀNG → BẢO VỆ
+    // ========================================
+    boolean hasOrders = showFacade.hasOrdersForShow(id);
+    
+    if (hasOrders) {
+        Long orderCount = showFacade.countOrdersForShow(id);
+        String back = req.getParameter("back");
+        String msg = urlEncodeUtf8(
+            "🔒 KHÔNG THỂ XÓA VĨNH VIỄN! Show này có " + orderCount + " đơn hàng đã đặt vé. " +
+            "Dữ liệu này được bảo vệ vĩnh viễn để đảm bảo tính toàn vẹn của hệ thống."
+        );
 
-    if ("trash".equalsIgnoreCase(back)) {
-        resp.sendRedirect(req.getContextPath()
-                + "/admin/show/trash?success=" + msg
-                + "&v=" + System.currentTimeMillis());
-    } else {
-        resp.sendRedirect(req.getContextPath()
-                + "/admin/show?success=" + msg
-                + "&v=" + System.currentTimeMillis());
+        if ("trash".equalsIgnoreCase(back)) {
+            resp.sendRedirect(req.getContextPath() + "/admin/show/trash?error=" + msg);
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/admin/show?error=" + msg);
+        }
+        return;
+    }
+
+    // ========================================
+    // ✅ RULE 3: KHÔNG CÓ ĐƠN HÀNG → CHO PHÉP XÓA
+    // ========================================
+    try {
+        showFacade.deleteHard(id);
+        ShowTrashStore.restore(id); // Xóa khỏi trash store
+        
+        System.out.println("✅ Đã xóa vĩnh viễn Show #" + id + " (NO ORDERS)");
+        
+        String back = req.getParameter("back");
+        String msg = urlEncodeUtf8("✅ Xóa show vĩnh viễn thành công");
+
+        if ("trash".equalsIgnoreCase(back)) {
+            resp.sendRedirect(req.getContextPath() + "/admin/show/trash?success=" + msg + "&v=" + System.currentTimeMillis());
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/admin/show?success=" + msg + "&v=" + System.currentTimeMillis());
+        }
+        
+    } catch (Exception e) {
+        e.printStackTrace();
+        
+        String back = req.getParameter("back");
+        String msg = urlEncodeUtf8("❌ Lỗi khi xóa: " + e.getMessage());
+        
+        if ("trash".equalsIgnoreCase(back)) {
+            resp.sendRedirect(req.getContextPath() + "/admin/show/trash?error=" + msg);
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/admin/show?error=" + msg);
+        }
     }
 }
 }

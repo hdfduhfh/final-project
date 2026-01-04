@@ -54,6 +54,7 @@
                         
                         <c:forEach var="detail" items="${order.orderDetailCollection}" varStatus="loop">
                             <c:set var="seatListString" value="${seatListString}${detail.seatID.seatNumber}${!loop.last ? ', ' : ''}" />
+                            <%-- ✅ KIỂM TRA GHẾ CÓ BẢO TRÌ KHÔNG --%>
                             <c:if test="${!detail.seatID.isActive}">
                                 <c:set var="hasBrokenSeat" value="true" />
                             </c:if>
@@ -101,12 +102,51 @@
                                         </span>
                                     </div>
 
-                                    <%-- ✅ CHỈ HIỂN THỊ CẢNH BÁO CHO VÉ CONFIRMED --%>
-                                    <c:if test="${order.status == 'CONFIRMED' && hasBrokenSeat}">
-                                        <%-- Kiểm tra trạng thái yêu cầu đổi ghế --%>
+                                    <%-- ✅ LOGIC HIỂN THỊ TRẠNG THÁI GHẾ --%>
+                                    <c:if test="${order.status == 'CONFIRMED'}">
                                         <c:choose>
-                                            <c:when test="${order.seatChangeStatus == 'APPROVED'}">
-                                                <%-- ✅ ĐÃ ĐỔI GHẾ THÀNH CÔNG --%>
+                                            <%-- ✅ CÓ GHẾ BẢO TRÌ (bất kể trạng thái trước đó) --%>
+                                            <c:when test="${hasBrokenSeat && diffMinutes > 0}">
+                                                <c:choose>
+                                                    <%-- Đang chờ xử lý --%>
+                                                    <c:when test="${order.seatChangeStatus == 'PENDING'}">
+                                                        <div class="seat-pending">
+                                                            <i class="fa-solid fa-clock"></i> 
+                                                            <strong>Yêu cầu đổi ghế đang được xử lý</strong>
+                                                            <div class="warning-text">
+                                                                Admin sẽ xử lý trong thời gian sớm nhất.
+                                                            </div>
+                                                        </div>
+                                                    </c:when>
+                                                    
+                                                    <%-- Mặc định: Hiện cảnh báo cần đổi ghế --%>
+                                                    <c:otherwise>
+                                                        <div class="seat-warning">
+                                                            <i class="fa-solid fa-triangle-exclamation"></i> 
+                                                            <strong>Cảnh báo:</strong> Đơn hàng này có ghế đang bảo trì/hỏng.
+                                                            <div class="warning-text">
+                                                                <c:choose>
+                                                                    <c:when test="${order.seatChangeStatus == 'REJECTED'}">
+                                                                        Yêu cầu trước đã bị từ chối. Vui lòng gửi yêu cầu mới.
+                                                                        <c:if test="${not empty order.adminNote}">
+                                                                            <br><i class="fa-solid fa-comment-dots"></i> <em>${order.adminNote}</em>
+                                                                        </c:if>
+                                                                    </c:when>
+                                                                    <c:when test="${order.seatChangeStatus == 'APPROVED'}">
+                                                                        Ghế mới lại bị bảo trì. Vui lòng gửi yêu cầu đổi lại.
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        Vui lòng gửi yêu cầu đổi ghế để admin xử lý.
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </div>
+                                                        </div>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </c:when>
+                                            
+                                            <%-- ✅ KHÔNG CÒN GHẾ BẢO TRÌ + ĐÃ DUYỆT = Thành công --%>
+                                            <c:when test="${!hasBrokenSeat && order.seatChangeStatus == 'APPROVED'}">
                                                 <div class="seat-success">
                                                     <i class="fa-solid fa-circle-check"></i> 
                                                     <strong>Ghế đã được đổi thành công!</strong>
@@ -117,38 +157,6 @@
                                                     </c:if>
                                                 </div>
                                             </c:when>
-                                            <c:when test="${order.seatChangeStatus == 'PENDING'}">
-                                                <%-- ⏳ ĐANG CHỜ XỬ LÝ --%>
-                                                <div class="seat-pending">
-                                                    <i class="fa-solid fa-clock"></i> 
-                                                    <strong>Yêu cầu đổi ghế đang được xử lý</strong>
-                                                    <div class="warning-text">
-                                                        Admin sẽ xử lý trong thời gian sớm nhất.
-                                                    </div>
-                                                </div>
-                                            </c:when>
-                                            <c:when test="${order.seatChangeStatus == 'REJECTED'}">
-                                                <%-- ❌ BỊ TỪ CHỐI --%>
-                                                <div class="seat-rejected">
-                                                    <i class="fa-solid fa-circle-xmark"></i> 
-                                                    <strong>Yêu cầu đổi ghế đã bị từ chối</strong>
-                                                    <c:if test="${not empty order.adminNote}">
-                                                        <div class="admin-note">
-                                                            <i class="fa-solid fa-comment-dots"></i> ${order.adminNote}
-                                                        </div>
-                                                    </c:if>
-                                                </div>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <%-- ⚠️ CẢNH BÁO GHẾ BẢO TRÌ --%>
-                                                <div class="seat-warning">
-                                                    <i class="fa-solid fa-triangle-exclamation"></i> 
-                                                    <strong>Cảnh báo:</strong> Đơn hàng này có ghế đang bảo trì/hỏng.
-                                                    <div class="warning-text">
-                                                        Vui lòng gửi yêu cầu đổi ghế để admin xử lý.
-                                                    </div>
-                                                </div>
-                                            </c:otherwise>
                                         </c:choose>
                                     </c:if>
                                 </div>
@@ -198,11 +206,21 @@
                                     </c:choose>
 
                                     <c:if test="${order.status == 'CONFIRMED'}">
-                                        <%-- ✅ NÚT YÊU CẦU ĐỔI GHẾ - CHỈ HIỆN KHI CÓ GHẾ BẢO TRÌ VÀ CHƯA GỬI YÊU CẦU --%>
-                                        <c:if test="${hasBrokenSeat && (order.seatChangeRequested == null || !order.seatChangeRequested)}">
+                                        <%-- ✅ NÚT YÊU CẦU ĐỔI GHẾ - HIỆN KHI CÓ GHẾ BẢO TRÌ VÀ KHÔNG ĐANG PENDING --%>
+                                        <c:if test="${hasBrokenSeat && 
+                                                     diffMinutes > 0 && 
+                                                     order.seatChangeStatus != 'PENDING'}">
                                             <button class="btn-action btn-seat-change" 
                                                     onclick="openSeatChangeModal(${order.orderID})">
-                                                <i class="fa-solid fa-sync"></i> Yêu cầu đổi ghế
+                                                <i class="fa-solid fa-sync"></i> 
+                                                <c:choose>
+                                                    <c:when test="${order.seatChangeStatus == 'REJECTED' || order.seatChangeStatus == 'APPROVED'}">
+                                                        Yêu cầu đổi lại
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        Yêu cầu đổi ghế
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </button>
                                         </c:if>
 

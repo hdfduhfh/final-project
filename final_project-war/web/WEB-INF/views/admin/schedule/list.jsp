@@ -1,7 +1,9 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:setTimeZone value="Asia/Ho_Chi_Minh"/>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -144,7 +146,7 @@
                 border-radius: 12px;
             }
 
-            /* ===== POPUP DETAIL SCHEDULE (theme) ===== */
+            /* Popup detail */
             .detail-overlay{
                 position:fixed;
                 inset:0;
@@ -200,8 +202,6 @@
                 overflow-y:auto;
                 background:#fff;
                 color:#111827;
-                -webkit-font-smoothing: antialiased;
-                text-rendering: geometricPrecision;
             }
             .detail-title{
                 font-size: 22px;
@@ -232,15 +232,9 @@
             }
 
             @media (max-width: 992px){
-                .sidebar{
-                    display:none;
-                }
-                .detail-modal{
-                    flex-direction:column;
-                }
-                .detail-left{
-                    flex: none;
-                }
+                .sidebar{ display:none; }
+                .detail-modal{ flex-direction:column; }
+                .detail-left{ flex:none; }
             }
         </style>
     </head>
@@ -273,6 +267,9 @@
                         </a>
                         <a class="btn btn-light fw-bold" href="${pageContext.request.contextPath}/admin/schedule/add" style="border-radius:14px;">
                             <i class="fa-solid fa-circle-plus"></i> Thêm lịch chiếu mới
+                        </a>
+                        <a class="btn btn-warning fw-bold" href="${pageContext.request.contextPath}/admin/schedule/cancelled" style="border-radius:14px;">
+                            <i class="fa-solid fa-archive"></i> Kho lưu trữ Schedule
                         </a>
                     </div>
                 </div>
@@ -336,10 +333,7 @@
                                            value="${kw}"
                                            style="padding-right:48px;"/>
 
-                                    <!-- ✅ status hidden để filter server-side -->
                                     <input type="hidden" name="status" id="statusInput" value="${stt}" />
-
-                                    <!-- ✅ NEW: page hidden để filter/search ép về page=1 an toàn -->
                                     <input type="hidden" name="page" id="pageInput" value="${currentPage}" />
 
                                     <button type="submit" class="btn btn-warning fw-bold">
@@ -348,7 +342,7 @@
                                 </div>
                             </form>
 
-                            <!-- ✅ FILTER STATUS (SERVER-SIDE) -->
+                            <!-- FILTER STATUS -->
                             <div class="col-12 mt-2">
                                 <div class="btn-group btn-group-sm" role="group" aria-label="Filter status">
                                     <button type="button"
@@ -404,14 +398,12 @@
                             </thead>
 
                             <tbody>
-                                <!-- groupedSchedules: Map<showId, List<ShowSchedule>> -->
                                 <c:forEach var="entry" items="${groupedSchedules}">
                                     <c:set var="list" value="${entry.value}" />
                                     <c:set var="rowspan" value="${list.size()}" />
 
                                     <c:forEach var="sc" items="${list}" varStatus="st">
                                         <fmt:formatDate value="${sc.showTime}" pattern="dd/MM/yyyy HH:mm" var="timeFmt"/>
-
                                         <c:set var="dur" value="${sc.showID != null ? sc.showID.durationMinutes : 0}" />
 
                                         <%
@@ -420,73 +412,55 @@
                                             int _dur = 0;
                                             Object durObj = pageContext.findAttribute("dur");
                                             if (durObj != null) {
-                                                try {
-                                                    _dur = Integer.parseInt(durObj.toString());
-                                                } catch (Exception ignored) {
-                                                    _dur = 0;
-                                                }
+                                                try { _dur = Integer.parseInt(durObj.toString()); } catch (Exception ignored) {}
                                             }
 
                                             java.util.Date _start = (scObj != null) ? scObj.getShowTime() : null;
+                                            java.util.Date _created = (scObj != null) ? scObj.getCreatedAt() : null;
 
+                                            // endTime
                                             java.util.Date _end = null;
                                             if (_start != null && _dur > 0) {
-                                                java.util.Calendar cal = java.util.Calendar.getInstance();
+                                                java.util.Calendar cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
                                                 cal.setTime(_start);
                                                 cal.add(java.util.Calendar.MINUTE, _dur);
                                                 _end = cal.getTime();
                                             }
                                             pageContext.setAttribute("endTime", _end);
 
+                                            // status lấy từ servlet đã set realtime
                                             String _rtStatus = "Upcoming";
-                                            if (_start != null) {
-                                                java.util.TimeZone tz = java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
-
-                                                java.util.Calendar nowCal = java.util.Calendar.getInstance(tz);
-                                                nowCal.setTime(new java.util.Date());
-
-                                                java.util.Calendar cToday = java.util.Calendar.getInstance(tz);
-                                                cToday.setTime(nowCal.getTime());
-                                                cToday.set(java.util.Calendar.HOUR_OF_DAY, 0);
-                                                cToday.set(java.util.Calendar.MINUTE, 0);
-                                                cToday.set(java.util.Calendar.SECOND, 0);
-                                                cToday.set(java.util.Calendar.MILLISECOND, 0);
-
-                                                java.util.Calendar cShow = java.util.Calendar.getInstance(tz);
-                                                cShow.setTime(_start);
-                                                cShow.set(java.util.Calendar.HOUR_OF_DAY, 0);
-                                                cShow.set(java.util.Calendar.MINUTE, 0);
-                                                cShow.set(java.util.Calendar.SECOND, 0);
-                                                cShow.set(java.util.Calendar.MILLISECOND, 0);
-
-                                                if (cShow.before(cToday)) {
-                                                    _rtStatus = "Cancelled";
-                                                } else if (cShow.after(cToday)) {
-                                                    _rtStatus = "Upcoming";
-                                                } else {
-                                                    long nowMs = nowCal.getTimeInMillis();
-                                                    long startMs = _start.getTime();
-
-                                                    if (nowMs < startMs) {
-                                                        _rtStatus = "Upcoming";
-                                                    } else {
-                                                        if (_end != null && _dur > 0) {
-                                                            long endMs = _end.getTime();
-                                                            if (nowMs > endMs) {
-                                                                _rtStatus = "Cancelled";
-                                                            } else {
-                                                                _rtStatus = "Ongoing";
-                                                            }
-                                                        } else {
-                                                            _rtStatus = "Ongoing";
-                                                        }
-                                                    }
-                                                }
-                                            }
+                                            try {
+                                                String s = (scObj != null && scObj.getStatus() != null) ? scObj.getStatus() : "Upcoming";
+                                                _rtStatus = s;
+                                            } catch (Exception ignored) {}
                                             pageContext.setAttribute("rtStatus", _rtStatus);
+
+                                            // countdownDays = showDate - createdDate (date-only)
+                                            Integer countdownDays = null;
+                                            if (_created != null && _start != null) {
+                                                java.util.Calendar c1 = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+                                                c1.setTime(_created);
+                                                c1.set(java.util.Calendar.HOUR_OF_DAY, 0);
+                                                c1.set(java.util.Calendar.MINUTE, 0);
+                                                c1.set(java.util.Calendar.SECOND, 0);
+                                                c1.set(java.util.Calendar.MILLISECOND, 0);
+
+                                                java.util.Calendar c2 = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+                                                c2.setTime(_start);
+                                                c2.set(java.util.Calendar.HOUR_OF_DAY, 0);
+                                                c2.set(java.util.Calendar.MINUTE, 0);
+                                                c2.set(java.util.Calendar.SECOND, 0);
+                                                c2.set(java.util.Calendar.MILLISECOND, 0);
+
+                                                long ms = c2.getTimeInMillis() - c1.getTimeInMillis();
+                                                countdownDays = (int) Math.floor(ms / 86400000L);
+                                            }
+                                            pageContext.setAttribute("countdownDays", countdownDays);
                                         %>
 
                                         <fmt:formatDate value="${endTime}" pattern="dd/MM/yyyy HH:mm" var="endFmt"/>
+                                        <fmt:formatDate value="${sc.createdAt}" pattern="dd/MM/yyyy" var="startDateFmt"/>
 
                                         <tr>
                                             <c:if test="${st.first}">
@@ -514,6 +488,25 @@
                                                 <span class="badge text-bg-light border fw-bold">
                                                     <i class="fa-solid fa-tag"></i> ${rtStatus}
                                                 </span>
+
+                                                <!-- ✅ Upcoming: show countdown startDate->showDate -->
+                                                <c:if test="${rtStatus eq 'Upcoming'}">
+                                                    <c:choose>
+                                                        <c:when test="${countdownDays != null && countdownDays >= 0}">
+                                                            <div class="small fw-bold mt-1" style="color:#f59e0b;">
+                                                                <i class="fa-solid fa-hourglass-start"></i>
+                                                                Còn ${countdownDays} ngày sẽ chiếu
+                                                                <span class="text-muted fw-semibold">(từ ${startDateFmt})</span>
+                                                            </div>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="small fw-bold mt-1 text-danger">
+                                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                                Ngày bắt đầu > ngày chiếu (check lại)
+                                                            </div>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </c:if>
                                             </td>
 
                                             <td class="text-nowrap">
@@ -561,7 +554,7 @@
                     </div>
                 </div>
 
-                <!-- PAGINATION (giữ search + status trên link) -->
+                <!-- PAGINATION -->
                 <c:if test="${totalPages > 1}">
                     <div class="mt-3">
                         <nav aria-label="pagination">
@@ -597,7 +590,7 @@
             </main>
         </div>
 
-        <!-- ================= POPUP DETAIL SCHEDULE ================= -->
+        <!-- POPUP DETAIL -->
         <div id="scheduleOverlay" class="detail-overlay">
             <div class="detail-close" onclick="closeScheduleDetail()">&times;</div>
 
@@ -645,42 +638,31 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
-                            // ✅ Fix chắc chắn: submit form thay vì tự build URL
-                            function setStatusAndSubmit(status) {
-                                const form = document.getElementById('searchForm');
-                                const statusInput = document.getElementById('statusInput');
-                                const pageInput = document.getElementById('pageInput');
+            function setStatusAndSubmit(status) {
+                const form = document.getElementById('searchForm');
+                const statusInput = document.getElementById('statusInput');
+                const pageInput = document.getElementById('pageInput');
+                if (!form || !statusInput || !pageInput) return;
 
-                                if (!form || !statusInput || !pageInput)
-                                    return;
+                statusInput.value = status || 'ALL';
+                pageInput.value = '1';
+                form.submit();
+            }
 
-                                statusInput.value = status || 'ALL';
-                                pageInput.value = '1'; // đổi filter -> về trang 1
-
-                                form.submit();
-                            }
-        </script>
-
-        <script>
             function openDeleteScheduleModal(deleteUrl, showName, showTime) {
                 const nameEl = document.getElementById('deleteScheduleShowName');
                 const timeEl = document.getElementById('deleteScheduleShowTime');
                 const confirmBtn = document.getElementById('deleteScheduleConfirmBtn');
 
-                if (nameEl)
-                    nameEl.textContent = showName || '';
-                if (timeEl)
-                    timeEl.textContent = showTime || '';
-                if (confirmBtn)
-                    confirmBtn.setAttribute('href', deleteUrl || '#');
+                if (nameEl) nameEl.textContent = showName || '';
+                if (timeEl) timeEl.textContent = showTime || '';
+                if (confirmBtn) confirmBtn.setAttribute('href', deleteUrl || '#');
 
                 const modalEl = document.getElementById('deleteScheduleModal');
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
             }
-        </script>
 
-        <script>
             function openScheduleDetail(btn) {
                 document.getElementById("detailTitle").textContent = "Chi tiết lịch chiếu";
                 document.getElementById("detailShowName").textContent = btn.getAttribute("data-show-name") || "";
@@ -690,77 +672,72 @@
                 const dur = btn.getAttribute("data-duration") || "0";
 
                 let timeText = start;
-                if (end && dur && dur !== "0") {
-                    timeText = start + " – " + end + " (" + dur + " phút)";
-                }
-                document.getElementById("detailShowTime").textContent = timeText;
+                                if (end && dur && dur !== "0") {
+                                    timeText = start + " – " + end + " (" + dur + " phút)";
+                                }
+                                document.getElementById("detailShowTime").textContent = timeText;
 
-                document.getElementById("detailStatus").textContent = btn.getAttribute("data-status") || "";
-                document.getElementById("scheduleOverlay").style.display = "flex";
-            }
+                                document.getElementById("detailStatus").textContent = btn.getAttribute("data-status") || "";
+                                document.getElementById("scheduleOverlay").style.display = "flex";
+                            }
 
-            function closeScheduleDetail() {
-                document.getElementById("scheduleOverlay").style.display = "none";
-            }
+                            function closeScheduleDetail() {
+                                document.getElementById("scheduleOverlay").style.display = "none";
+                            }
 
-            document.addEventListener("click", function (e) {
-                var overlay = document.getElementById("scheduleOverlay");
-                if (!overlay)
-                    return;
-                if (overlay.style.display === "flex" && e.target === overlay) {
-                    closeScheduleDetail();
-                }
-            });
+                            document.addEventListener("click", function (e) {
+                                var overlay = document.getElementById("scheduleOverlay");
+                                if (!overlay)
+                                    return;
+                                if (overlay.style.display === "flex" && e.target === overlay)
+                                    closeScheduleDetail();
+                            });
 
-            document.addEventListener("keydown", function (e) {
-                var overlay = document.getElementById("scheduleOverlay");
-                if (e.key === "Escape" && overlay && overlay.style.display === "flex") {
-                    closeScheduleDetail();
-                }
-            });
+                            document.addEventListener("keydown", function (e) {
+                                var overlay = document.getElementById("scheduleOverlay");
+                                if (e.key === "Escape" && overlay && overlay.style.display === "flex")
+                                    closeScheduleDetail();
+                            });
+
+                            (function () {
+                                const input = document.getElementById('keywordInput');
+                                if (!input)
+                                    return;
+
+                                const group = input.closest('.input-group');
+                                if (!group)
+                                    return;
+
+                                const clearBtn = document.createElement('button');
+                                clearBtn.type = 'button';
+                                clearBtn.className = 'btn btn-outline-secondary';
+                                clearBtn.setAttribute('aria-label', 'Clear search');
+                                clearBtn.style.display = 'none';
+                                clearBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+
+                                const submitBtn = group.querySelector('button[type="submit"], input[type="submit"]');
+                                if (submitBtn)
+                                    group.insertBefore(clearBtn, submitBtn);
+                                else
+                                    group.appendChild(clearBtn);
+
+                                function toggle() {
+                                    clearBtn.style.display = input.value.trim().length ? '' : 'none';
+                                }
+
+                                clearBtn.addEventListener('click', function () {
+                                    input.value = '';
+                                    toggle();
+                                    input.focus();
+                                });
+
+                                input.addEventListener('input', toggle);
+                                input.addEventListener('change', toggle);
+                                toggle();
+                            })();
         </script>
 
-        <script>
-            (function () {
-                const input = document.getElementById('keywordInput');
-                if (!input)
-                    return;
-
-                const group = input.closest('.input-group');
-                if (!group)
-                    return;
-
-                const clearBtn = document.createElement('button');
-                clearBtn.type = 'button';
-                clearBtn.className = 'btn btn-outline-secondary';
-                clearBtn.setAttribute('aria-label', 'Clear search');
-                clearBtn.style.display = 'none';
-                clearBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-
-                const submitBtn = group.querySelector('button[type="submit"], input[type="submit"]');
-                if (submitBtn)
-                    group.insertBefore(clearBtn, submitBtn);
-                else
-                    group.appendChild(clearBtn);
-
-                function toggle() {
-                    clearBtn.style.display = input.value.trim().length ? '' : 'none';
-                }
-
-                clearBtn.addEventListener('click', function () {
-                    input.value = '';
-                    toggle();
-                    input.focus();
-                });
-
-                input.addEventListener('input', toggle);
-                input.addEventListener('change', toggle);
-
-                toggle();
-            })();
-        </script>
-
-        <!-- ===== DELETE SCHEDULE CONFIRM MODAL (Bootstrap) ===== -->
+        <!-- DELETE CONFIRM MODAL -->
         <div class="modal fade" id="deleteScheduleModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content" style="border-radius:18px; overflow:hidden;">
@@ -797,7 +774,9 @@
                         <a href="#" id="deleteScheduleConfirmBtn" class="btn btn-danger fw-bold">
                             <i class="fa-solid fa-trash"></i> Xóa
                         </a>
+                        
                     </div>
+                    
                 </div>
             </div>
         </div>

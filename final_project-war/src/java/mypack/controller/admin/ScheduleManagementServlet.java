@@ -11,19 +11,19 @@ import mypack.Show;
 import mypack.ShowFacadeLocal;
 import mypack.ShowSchedule;
 import mypack.ShowScheduleFacadeLocal;
-import mypack.OrderDetailFacadeLocal; // ✅ THÊM
+import mypack.OrderDetailFacadeLocal;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.LocalDate;
-
+import java.time.LocalDateTime;
 import java.net.URLEncoder;
+import java.util.TimeZone;
 
 @WebServlet(name = "ScheduleManagementServlet", urlPatterns = {
     "/admin/schedule",
@@ -38,13 +38,22 @@ public class ScheduleManagementServlet extends HttpServlet {
 
     @EJB
     private ShowFacadeLocal showFacade;
-    
-    // ✅ THÊM EJB MỚI
+
     @EJB
     private OrderDetailFacadeLocal orderDetailFacade;
 
     private static final SimpleDateFormat DTL = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
     private static final ZoneId APP_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
+    private static final int MIN_BUFFER_BETWEEN_SHOWS_MINUTES = 120;
+
+    private static final SimpleDateFormat VN_DDMMYYYY_HHMM = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+
+    static {
+        TimeZone vn = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
+        VN_DDMMYYYY_HHMM.setTimeZone(vn);
+        DTL.setTimeZone(vn);
+    }
 
     private void setUtf8(HttpServletRequest request, HttpServletResponse response) {
         try {
@@ -55,37 +64,213 @@ public class ScheduleManagementServlet extends HttpServlet {
         response.setContentType("text/html; charset=UTF-8");
     }
 
-    private String computeAutoStatus(Date showTime) {
-        if (showTime == null) {
+    // =========================================================
+    // REALTIME STATUS
+    // Upcoming: now < start
+    // Ongoing : start <= now < end
+    // Cancelled: now >= end
+    // =========================================================
+    private String computeRealtimeStatus(Date start, int durationMinutes) {
+        if (start == null) {
             return "Cancelled";
         }
 
         ZonedDateTime now = ZonedDateTime.now(APP_ZONE);
-        ZonedDateTime st = showTime.toInstant().atZone(APP_ZONE);
+        ZonedDateTime st = start.toInstant().atZone(APP_ZONE);
+        ZonedDateTime en = st.plusMinutes(durationMinutes);
 
-        LocalDate today = now.toLocalDate();
-        LocalDate showDate = st.toLocalDate();
-
-        if (showDate.isBefore(today)) {
-            return "Cancelled";
-        }
-        if (showDate.isAfter(today)) {
+        if (now.isBefore(st)) {
             return "Upcoming";
         }
-
-        if (st.isBefore(now)) {
-            return "Ongoing";
+        if (!now.isBefore(en)) {
+            return "Cancelled";
         }
         return "Ongoing";
     }
 
-    private boolean isBeforeNowVN(Date showTime) {
-        if (showTime == null) return true;
+    private String computeRealtimeStatus(ShowSchedule sc) {
+        if (sc == null) {
+            return "Cancelled";
+        }
+        int dur = getShowDurationMinutes(sc.getShowID());
+        return computeRealtimeStatus(sc.getShowTime(), dur);
+    }
 
-        ZonedDateTime now = ZonedDateTime.now(APP_ZONE);
-        ZonedDateTime picked = showTime.toInstant().atZone(APP_ZONE);
+    private boolean isBeforeTodayVN(Date picked) {
+        if (picked == null) {
+            return true;
+        }
+        LocalDate today = ZonedDateTime.now(APP_ZONE).toLocalDate();
+        LocalDate pickedDate = picked.toInstant().atZone(APP_ZONE).toLocalDate();
+        return pickedDate.isBefore(today);
+    }
 
-        return picked.isBefore(now);
+    private Date plusMinutes(Date d, int minutes) {
+        return new Date(d.getTime() + minutes * 60_000L);
+    }
+
+    private Date minusMinutes(Date d, int minutes) {
+        return new Date(d.getTime() - minutes * 60_000L);
+    }
+
+    private LocalDate toLocalDateVN(Date d) {
+        return d.toInstant().atZone(APP_ZONE).toLocalDate();
+    }
+
+    private Date startOfDayVN(LocalDate day) {
+        return Date.from(day.atStartOfDay(APP_ZONE).toInstant());
+    }
+
+    private Date startOfNextDayVN(LocalDate day) {
+        return Date.from(day.plusDays(1).atStartOfDay(APP_ZONE).toInstant());
+    }
+
+    private String getSafeShowName(Show s) {
+        try {
+            if (s != null && s.getShowName() != null && !s.getShowName().trim().isEmpty()) {
+                return s.getShowName().trim();
+            }
+        } catch (Exception ignored) {
+        }
+        return "(Không rõ tên show)";
+    }
+
+    private int getShowDurationMinutes(Show show) {
+        if (show == null) {
+            return 120;
+        }
+
+        try {
+            Integer v = null;
+
+            try {
+                v = (Integer) show.getClass().getMethod("getDurationMinutes").invoke(show);
+            } catch (Exception ignored) {
+            }
+            if (v == null) {
+                try {
+                    v = (Integer) show.getClass().getMethod("getDuration").invoke(show);
+                } catch (Exception ignored) {
+                }
+            }
+            if (v == null) {
+                try {
+                    v = (Integer) show.getClass().getMethod("getDurationMin").invoke(show);
+                } catch (Exception ignored) {
+                }
+            }
+
+            if (v != null && v > 0) {
+                return v;
+            }
+
+        } catch (Exception ignored) {
+        }
+
+        return 120;
+    }
+
+    private boolean isOverlap(Date startA, Date endA, Date startB, Date endB) {
+        return startA.before(endB) && startB.before(endA);
+    }
+
+    private String validateMinBufferAnyShow(Show showNew, Date startNew, Integer excludeScheduleId) {
+        if (showNew == null) {
+            return "Vở diễn chưa được chọn";
+        }
+        if (startNew == null) {
+            return "Giờ chiếu cho buổi diễn chưa hợp lệ";
+        }
+
+        LocalDate day = toLocalDateVN(startNew);
+        Date dayStart = startOfDayVN(day);
+        Date dayEndExclusive = startOfNextDayVN(day);
+
+        List<ShowSchedule> sameDaySchedules = showScheduleFacade.findInRange(dayStart, dayEndExclusive);
+
+        int durNew = getShowDurationMinutes(showNew);
+        Date endNew = plusMinutes(startNew, durNew);
+
+        for (ShowSchedule ex : sameDaySchedules) {
+            if (ex == null) {
+                continue;
+            }
+
+            if (excludeScheduleId != null && ex.getScheduleID() != null
+                    && ex.getScheduleID().intValue() == excludeScheduleId.intValue()) {
+                continue;
+            }
+
+            if (ex.getShowTime() == null || ex.getShowID() == null) {
+                continue;
+            }
+
+            Date startEx = ex.getShowTime();
+            Show showEx = ex.getShowID();
+
+            int durEx = getShowDurationMinutes(showEx);
+            Date endEx = plusMinutes(startEx, durEx);
+
+            Date startExBuf = minusMinutes(startEx, MIN_BUFFER_BETWEEN_SHOWS_MINUTES);
+            Date endExBuf = plusMinutes(endEx, MIN_BUFFER_BETWEEN_SHOWS_MINUTES);
+
+            if (isOverlap(startNew, endNew, startExBuf, endExBuf)) {
+                String newStartStr = VN_DDMMYYYY_HHMM.format(startNew);
+                String newEndStr = VN_DDMMYYYY_HHMM.format(endNew);
+
+                String exShowName = getSafeShowName(showEx);
+                String exStartStr = VN_DDMMYYYY_HHMM.format(startEx);
+                String exEndStr = VN_DDMMYYYY_HHMM.format(endEx);
+
+                return "❌ Lịch chiếu phải cách lịch hiện tại ít nhất "
+                        + MIN_BUFFER_BETWEEN_SHOWS_MINUTES + " phút. "
+                        + "Bạn chọn: [" + newStartStr + " → " + newEndStr + "]. "
+                        + "Bị quá gần: \"" + exShowName + "\" "
+                        + "suất [" + exStartStr + " → " + exEndStr + "].";
+            }
+        }
+        return null;
+    }
+
+    private String validateFormTimesInternal(Show show, List<Date> times) {
+        if (times == null || times.size() <= 1) {
+            return null;
+        }
+
+        int dur = getShowDurationMinutes(show);
+
+        for (int i = 0; i < times.size(); i++) {
+            Date si = times.get(i);
+            Date ei = plusMinutes(si, dur);
+
+            Date siBuf = minusMinutes(si, MIN_BUFFER_BETWEEN_SHOWS_MINUTES);
+            Date eiBuf = plusMinutes(ei, MIN_BUFFER_BETWEEN_SHOWS_MINUTES);
+
+            for (int j = i + 1; j < times.size(); j++) {
+                Date sj = times.get(j);
+                Date ej = plusMinutes(sj, dur);
+
+                if (isOverlap(sj, ej, siBuf, eiBuf)) {
+                    return "❌ Các suất bạn chọn trong form đang quá gần nhau. "
+                            + "Mỗi suất phải cách nhau ít nhất " + MIN_BUFFER_BETWEEN_SHOWS_MINUTES + " phút (tính từ thời điểm kết thúc). "
+                            + "Vui lòng chọn giờ khác.";
+                }
+            }
+        }
+        return null;
+    }
+
+    private Date parseDateTimeLocal(String dateTimeStr) throws ParseException {
+        if (dateTimeStr == null || dateTimeStr.trim().isEmpty()) {
+            throw new ParseException("Giờ chiếu không được để trống.", 0);
+        }
+        try {
+            LocalDateTime ldt = LocalDateTime.parse(dateTimeStr.trim());
+            ZonedDateTime zdt = ldt.atZone(APP_ZONE);
+            return Date.from(zdt.toInstant());
+        } catch (Exception ex) {
+            throw new ParseException("Giờ chiếu không hợp lệ.", 0);
+        }
     }
 
     @Override
@@ -126,16 +311,21 @@ public class ScheduleManagementServlet extends HttpServlet {
         }
     }
 
-    /* ===================== LIST ===================== */
     private void showList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         try {
+            // ✅ NEW: sync realtime status cho schedules + show
+            try {
+                showScheduleFacade.syncRealtimeStatuses();
+            } catch (Exception ignored) {
+            }
+
             String keyword = request.getParameter("search");
+            String status = request.getParameter("status");
 
-            final int pageSize = 9;
+            final int pageSize = 6;
             int page = 1;
-
             try {
                 String pageStr = request.getParameter("page");
                 if (pageStr != null && !pageStr.trim().isEmpty()) {
@@ -148,7 +338,6 @@ public class ScheduleManagementServlet extends HttpServlet {
             }
 
             List<ShowSchedule> schedules;
-
             if (keyword != null && !keyword.trim().isEmpty()) {
                 schedules = showScheduleFacade.searchByShowNameKeyword(keyword);
                 if (schedules == null) {
@@ -161,10 +350,11 @@ public class ScheduleManagementServlet extends HttpServlet {
                 }
             }
 
+            // ✅ BỎ hoàn toàn đoạn computeRealtimeStatus + syncShowByScheduleRealtime
+            // vì realtime đã sync trong facade, và sync cũ ép sai tất cả schedules thành Ongoing.
             schedules.sort((a, b) -> {
                 Integer sa = (a.getShowID() != null) ? a.getShowID().getShowID() : -1;
                 Integer sb = (b.getShowID() != null) ? b.getShowID().getShowID() : -1;
-
                 int cmp = sa.compareTo(sb);
                 if (cmp != 0) {
                     return cmp;
@@ -182,8 +372,23 @@ public class ScheduleManagementServlet extends HttpServlet {
                 return a.getShowTime().compareTo(b.getShowTime());
             });
 
-            int totalSchedules = schedules.size();
-            int totalPages = (int) Math.ceil(totalSchedules / (double) pageSize);
+            java.util.LinkedHashMap<Integer, java.util.List<ShowSchedule>> groupedAll = new java.util.LinkedHashMap<>();
+            for (ShowSchedule sc : schedules) {
+                Integer showId = (sc.getShowID() != null) ? sc.getShowID().getShowID() : -1;
+
+                if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status.trim())) {
+                    String st = (sc.getStatus() != null) ? sc.getStatus() : "";
+                    if (!st.equalsIgnoreCase(status.trim())) {
+                        continue;
+                    }
+                }
+
+                groupedAll.computeIfAbsent(showId, k -> new java.util.ArrayList<>()).add(sc);
+            }
+
+            java.util.List<Integer> showIds = new java.util.ArrayList<>(groupedAll.keySet());
+            int totalGroups = showIds.size();
+            int totalPages = (int) Math.ceil(totalGroups / (double) pageSize);
             if (totalPages < 1) {
                 totalPages = 1;
             }
@@ -192,21 +397,22 @@ public class ScheduleManagementServlet extends HttpServlet {
             }
 
             int start = (page - 1) * pageSize;
-            int end = Math.min(start + pageSize, totalSchedules);
+            int end = Math.min(start + pageSize, totalGroups);
 
-            List<ShowSchedule> pageSchedules = schedules.subList(start, end);
-
-            java.util.LinkedHashMap<Integer, java.util.List<ShowSchedule>> grouped = new java.util.LinkedHashMap<>();
-            for (ShowSchedule sc : pageSchedules) {
-                Integer showId = (sc.getShowID() != null) ? sc.getShowID().getShowID() : -1;
-                grouped.computeIfAbsent(showId, k -> new java.util.ArrayList<>()).add(sc);
+            java.util.LinkedHashMap<Integer, java.util.List<ShowSchedule>> groupedPage = new java.util.LinkedHashMap<>();
+            for (int i = start; i < end; i++) {
+                Integer showId = showIds.get(i);
+                groupedPage.put(showId, groupedAll.get(showId));
             }
 
-            request.setAttribute("groupedSchedules", grouped);
-            request.setAttribute("schedules", pageSchedules);
-            request.setAttribute("searchKeyword", keyword);
+            int totalSchedulesAfterFilter = 0;
+            for (java.util.List<ShowSchedule> lst : groupedAll.values()) {
+                totalSchedulesAfterFilter += lst.size();
+            }
 
-            request.setAttribute("totalSchedules", totalSchedules);
+            request.setAttribute("groupedSchedules", groupedPage);
+            request.setAttribute("searchKeyword", keyword);
+            request.setAttribute("totalSchedules", totalSchedulesAfterFilter);
             request.setAttribute("currentPage", page);
             request.setAttribute("totalPages", totalPages);
             request.setAttribute("pageSize", pageSize);
@@ -222,7 +428,6 @@ public class ScheduleManagementServlet extends HttpServlet {
         }
     }
 
-    /* ===================== ADD FORM ===================== */
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -247,7 +452,11 @@ public class ScheduleManagementServlet extends HttpServlet {
         }
 
         request.setAttribute("showIDValue", request.getParameter("showID"));
-        request.setAttribute("showTimeValue", request.getParameter("showTime"));
+
+        String[] times = request.getParameterValues("showTime");
+        if (times != null && times.length > 0) {
+            request.setAttribute("showTimeValue", times[0]);
+        }
 
         List<Show> shows = showFacade.findAll();
         request.setAttribute("shows", shows);
@@ -273,7 +482,6 @@ public class ScheduleManagementServlet extends HttpServlet {
                 .forward(request, response);
     }
 
-    /* ===================== CREATE ===================== */
     private void createSchedule(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -287,13 +495,24 @@ public class ScheduleManagementServlet extends HttpServlet {
             forwardAddError(request, response, "Bạn chưa chọn vở diễn và giờ chiếu.");
             return;
         }
+        if (isShowEmpty) {
+            forwardAddError(request, response, "Tên vở diễn chưa được chọn");
+            return;
+        }
+        if (isTimesEmpty) {
+            forwardAddError(request, response, "Giờ chiếu cho buổi diễn chưa được chọn");
+            return;
+        }
 
-        try {
-            if (isShowEmpty) {
-                forwardAddError(request, response, "Tên vở diễn chưa được chọn");
+        for (int i = 0; i < showTimeArr.length; i++) {
+            String tStr = (showTimeArr[i] != null) ? showTimeArr[i].trim() : "";
+            if (tStr.isEmpty()) {
+                forwardAddError(request, response, "Giờ chiếu cho buổi diễn chưa được chọn");
                 return;
             }
+        }
 
+        try {
             Integer showId;
             Show show;
             try {
@@ -305,11 +524,6 @@ public class ScheduleManagementServlet extends HttpServlet {
             }
             if (show == null) {
                 forwardAddError(request, response, "Tên vở diễn chưa được chọn");
-                return;
-            }
-
-            if (isTimesEmpty) {
-                forwardAddError(request, response, "Giờ chiếu cho buổi diễn chưa được chọn");
                 return;
             }
 
@@ -330,8 +544,8 @@ public class ScheduleManagementServlet extends HttpServlet {
                     return;
                 }
 
-                if (isBeforeNowVN(t)) {
-                    forwardAddError(request, response, "Ngày và giờ bạn chọn không được thấp hơn thời điểm hiện tại");
+                if (isBeforeTodayVN(t)) {
+                    forwardAddError(request, response, "Ngày bạn chọn không được thấp hơn ngày hôm nay");
                     return;
                 }
 
@@ -344,20 +558,35 @@ public class ScheduleManagementServlet extends HttpServlet {
                 times.add(t);
             }
 
-            int existingCount = showScheduleFacade.countByShowId(show.getShowID());
-            if (existingCount + times.size() > 3) {
-                forwardAddError(request, response,
-                        "Show bạn chọn chỉ được tối đa 3 lịch diễn. Hiện đã có " + existingCount + " lịch.");
+            String formErr = validateFormTimesInternal(show, times);
+            if (formErr != null) {
+                forwardAddError(request, response, formErr);
                 return;
+            }
+
+            for (Date t : times) {
+                String bufferErr = validateMinBufferAnyShow(show, t, null);
+                if (bufferErr != null) {
+                    forwardAddError(request, response, bufferErr);
+                    return;
+                }
             }
 
             for (Date t : times) {
                 ShowSchedule schedule = new ShowSchedule();
                 schedule.setShowID(show);
                 schedule.setShowTime(t);
-                schedule.setStatus(computeAutoStatus(t));
-                schedule.setCreatedAt(new Date());
+
+                int dur = getShowDurationMinutes(show);
+                schedule.setStatus(computeRealtimeStatus(t, dur));
+                schedule.setCreatedAt(Date.from(ZonedDateTime.now(APP_ZONE).toInstant()));
                 showScheduleFacade.create(schedule);
+            }
+
+            // ✅ sync lại sau khi tạo
+            try {
+                showScheduleFacade.syncRealtimeStatuses();
+            } catch (Exception ignored) {
             }
 
             String msg = URLEncoder.encode("Thêm lịch chiếu thành công!", "UTF-8");
@@ -369,14 +598,12 @@ public class ScheduleManagementServlet extends HttpServlet {
         }
     }
 
-    /* ===================== EDIT FORM ===================== */
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         String idStr = request.getParameter("id");
         if (idStr == null || idStr.trim().isEmpty()) {
-            response.sendRedirect(request.getContextPath()
-                    + "/admin/schedule?error=ID không hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/admin/schedule?error=ID không hợp lệ");
             return;
         }
 
@@ -384,27 +611,25 @@ public class ScheduleManagementServlet extends HttpServlet {
             Integer id = Integer.valueOf(idStr);
             ShowSchedule schedule = showScheduleFacade.find(id);
             if (schedule == null) {
-                response.sendRedirect(request.getContextPath()
-                        + "/admin/schedule?error=Không tìm thấy lịch chiếu");
+                response.sendRedirect(request.getContextPath() + "/admin/schedule?error=Không tìm thấy lịch chiếu");
                 return;
             }
+
+            schedule.setStatus(computeRealtimeStatus(schedule));
 
             List<Show> shows = showFacade.findAll();
             request.setAttribute("shows", shows);
             request.setAttribute("schedule", schedule);
-
             request.setAttribute("showTimeLocal", DTL.format(schedule.getShowTime()));
 
             request.getRequestDispatcher("/WEB-INF/views/admin/schedule/edit.jsp")
                     .forward(request, response);
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath()
-                    + "/admin/schedule?error=ID không hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/admin/schedule?error=ID không hợp lệ");
         }
     }
 
-    /* ===================== UPDATE ===================== */
     private void updateSchedule(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -418,40 +643,41 @@ public class ScheduleManagementServlet extends HttpServlet {
             Integer scheduleID = Integer.valueOf(scheduleIdStr);
             schedule = showScheduleFacade.find(scheduleID);
             if (schedule == null) {
-                response.sendRedirect(request.getContextPath()
-                        + "/admin/schedule?error=Không tìm thấy lịch chiếu");
+                response.sendRedirect(request.getContextPath() + "/admin/schedule?error=Không tìm thấy lịch chiếu");
                 return;
             }
 
-            boolean isShowEmpty = (showIdStr == null || showIdStr.trim().isEmpty());
-            boolean isTimeEmpty = (showTimeStr == null || showTimeStr.trim().isEmpty());
+            String currentRealtime = computeRealtimeStatus(schedule);
+            schedule.setStatus(currentRealtime);
 
-            if (isShowEmpty && isTimeEmpty) {
+            if ("Ongoing".equalsIgnoreCase(currentRealtime)) {
                 forwardEditError(request, response, schedule,
-                        "Vui lòng điền và chọn thông tin cần cập nhật cho lịch diễn");
+                        "❌ Lịch chiếu đang CHIẾU (Ongoing) nên KHÔNG THỂ cập nhật ngày/giờ.");
                 return;
             }
 
-            if (isShowEmpty) {
-                forwardEditError(request, response, schedule, "Vở diễn chưa được chọn");
-                return;
-            }
-
-            Integer showId;
-            Show show;
+            Integer originalShowId = (schedule.getShowID() != null) ? schedule.getShowID().getShowID() : null;
+            Integer postedShowId = null;
             try {
-                showId = Integer.valueOf(showIdStr.trim());
-                show = showFacade.find(showId);
-            } catch (NumberFormatException ex) {
-                forwardEditError(request, response, schedule, "Vở diễn chưa được chọn");
+                if (showIdStr != null && !showIdStr.trim().isEmpty()) {
+                    postedShowId = Integer.valueOf(showIdStr.trim());
+                }
+            } catch (Exception ignored) {
+            }
+
+            if (originalShowId == null || postedShowId == null || !originalShowId.equals(postedShowId)) {
+                forwardEditError(request, response, schedule,
+                        "❌ Không được đổi vở diễn khi cập nhật. Nếu muốn đổi show, hãy tạo lịch mới.");
                 return;
             }
+
+            Show show = schedule.getShowID();
             if (show == null) {
                 forwardEditError(request, response, schedule, "Vở diễn chưa được chọn");
                 return;
             }
 
-            if (isTimeEmpty) {
+            if (showTimeStr == null || showTimeStr.trim().isEmpty()) {
                 forwardEditError(request, response, schedule, "Giờ và ngày của vở diễn chưa được chọn");
                 return;
             }
@@ -464,47 +690,49 @@ public class ScheduleManagementServlet extends HttpServlet {
                 return;
             }
 
-            if (isBeforeNowVN(showTime)) {
-                forwardEditError(request, response, schedule, "Ngày và giờ bạn chọn không được thấp hơn thời điểm hiện tại");
+            if (isBeforeTodayVN(showTime)) {
+                forwardEditError(request, response, schedule, "Ngày bạn chọn không được thấp hơn ngày hôm nay");
                 return;
             }
 
             Integer currentId = schedule.getScheduleID();
 
-            int count = showScheduleFacade.countByShowIdExcept(show.getShowID(), currentId);
-            if (count >= 3) {
-                forwardEditError(request, response, schedule,
-                        "Show bạn chọn đã có tối đa 3 lịch diễn, không thể cập nhật sang show này");
+            String bufferErr = validateMinBufferAnyShow(show, showTime, currentId);
+            if (bufferErr != null) {
+                forwardEditError(request, response, schedule, bufferErr);
                 return;
             }
 
-            schedule.setShowID(show);
             schedule.setShowTime(showTime);
-            schedule.setStatus(computeAutoStatus(showTime));
+
+            int dur = getShowDurationMinutes(show);
+            schedule.setStatus(computeRealtimeStatus(showTime, dur));
 
             showScheduleFacade.edit(schedule);
+
+            // ✅ sync lại để show/schedules đúng ngay
+            try {
+                showScheduleFacade.syncRealtimeStatuses();
+            } catch (Exception ignored) {
+            }
 
             String msg = URLEncoder.encode("Cập nhật lịch chiếu thành công!", "UTF-8");
             response.sendRedirect(request.getContextPath() + "/admin/schedule?success=" + msg);
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath()
-                    + "/admin/schedule?error=ID không hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/admin/schedule?error=ID không hợp lệ");
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath()
-                    + "/admin/schedule?error=Lỗi khi cập nhật: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/admin/schedule?error=Lỗi khi cập nhật: " + e.getMessage());
         }
     }
 
-    /* ===================== DELETE ===================== */
     private void deleteSchedule(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
         String idStr = request.getParameter("id");
         if (idStr == null || idStr.trim().isEmpty()) {
-            response.sendRedirect(request.getContextPath()
-                    + "/admin/schedule?error=ID không hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/admin/schedule?error=ID không hợp lệ");
             return;
         }
 
@@ -512,42 +740,49 @@ public class ScheduleManagementServlet extends HttpServlet {
             Integer id = Integer.valueOf(idStr);
             ShowSchedule schedule = showScheduleFacade.find(id);
             if (schedule == null) {
-                response.sendRedirect(request.getContextPath()
-                        + "/admin/schedule?error=Không tìm thấy lịch chiếu");
+                response.sendRedirect(request.getContextPath() + "/admin/schedule?error=Không tìm thấy lịch chiếu");
                 return;
             }
 
-            // ✅ KIỂM TRA TRƯỚC KHI XÓA
+            String realtime = computeRealtimeStatus(schedule);
+            schedule.setStatus(realtime);
+
+            if ("Ongoing".equalsIgnoreCase(realtime)) {
+                String msg = URLEncoder.encode("❌ Không thể xóa! Lịch chiếu đang ở trạng thái Ongoing.", "UTF-8");
+                response.sendRedirect(request.getContextPath() + "/admin/schedule?error=" + msg);
+                return;
+            }
+
+            if (!"Cancelled".equalsIgnoreCase(realtime)) {
+                String msg = URLEncoder.encode("❌ Chỉ được xóa khi lịch chiếu đã diễn xong và chuyển sang Cancelled.", "UTF-8");
+                response.sendRedirect(request.getContextPath() + "/admin/schedule?error=" + msg);
+                return;
+            }
+
             if (orderDetailFacade.hasOrdersForSchedule(id)) {
                 Long orderCount = orderDetailFacade.countOrdersBySchedule(id);
-                String msg = URLEncoder.encode(
-                    "❌ Không thể xóa! Suất chiếu này đã có " + orderCount + " vé được đặt.", 
-                    "UTF-8"
-                );
+                String msg = URLEncoder.encode("❌ Không thể xóa! Suất chiếu này đã có " + orderCount + " vé được đặt.", "UTF-8");
                 response.sendRedirect(request.getContextPath() + "/admin/schedule?error=" + msg);
                 return;
             }
 
             showScheduleFacade.remove(schedule);
 
+            // ✅ sync lại sau xóa
+            try {
+                showScheduleFacade.syncRealtimeStatuses();
+            } catch (Exception ignored) {
+            }
+
             String msg = URLEncoder.encode("Xóa lịch chiếu thành công!", "UTF-8");
             response.sendRedirect(request.getContextPath() + "/admin/schedule?success=" + msg);
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath()
-                    + "/admin/schedule?error=ID không hợp lệ");
+            response.sendRedirect(request.getContextPath() + "/admin/schedule?error=ID không hợp lệ");
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath()
-                    + "/admin/schedule?error=Lỗi khi xóa: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/admin/schedule?error=Lỗi khi xóa: " + e.getMessage());
         }
-    }
-
-    private Date parseDateTimeLocal(String dateTimeStr) throws ParseException {
-        if (dateTimeStr == null || dateTimeStr.trim().isEmpty()) {
-            throw new ParseException("Giờ chiếu không được để trống.", 0);
-        }
-        return DTL.parse(dateTimeStr.trim());
     }
 
     @Override

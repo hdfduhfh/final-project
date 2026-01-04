@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -123,20 +123,38 @@
                 letter-spacing: .2px;
             }
 
-            .req{ color:#ef4444; font-weight:900; }
+            .req{
+                color:#ef4444;
+                font-weight:900;
+            }
 
-            .form-control, .form-select{ border-radius: 12px; }
-            .btn{ border-radius: 14px; }
+            .form-control, .form-select{
+                border-radius: 12px;
+            }
+            .btn{
+                border-radius: 14px;
+            }
 
             /* showtime items */
             .showtime-item{
                 display:flex;
-                align-items:center;
+                align-items:flex-start;
                 gap:10px;
                 margin-bottom:10px;
             }
-            .showtime-item input[type="datetime-local"]{
-                border-radius: 12px;
+            .showtime-col{
+                flex: 0 0 260px;
+                min-width: 240px;
+            }
+            .showtime-meta{
+                margin-top: 6px;
+                font-size: 12.5px;
+                color: #6b7280;
+                font-weight: 700;
+            }
+            .showtime-meta .badge{
+                border-radius: 999px;
+                font-weight: 800;
             }
             .icon-btn{
                 width: 40px;
@@ -147,67 +165,203 @@
             }
 
             @media (max-width: 992px){
-                .sidebar{ display:none; }
+                .sidebar{
+                    display:none;
+                }
+                .showtime-item{
+                    flex-direction:column;
+                }
+                .showtime-col{
+                    width:100%;
+                    flex: none;
+                }
             }
         </style>
 
         <script>
-            // ✅ validate client-side: chỉ check show + showTime (KHÔNG check status)
-            function validateShowForm() {
-                const showID = document.querySelector("select[name='showID']").value.trim();
+            // ✅ Không giới hạn số lượng row tạo trên UI
+            const MAX_TIMES = Number.POSITIVE_INFINITY;
 
-                const timeInputs = document.querySelectorAll("input[name='showTime']");
-                let hasEmptyTime = false;
-                timeInputs.forEach(ip => {
-                    if (!ip.value || ip.value.trim() === "") hasEmptyTime = true;
-                });
+            function showNoticeModal(title, message, type) {
+                const modalEl = document.getElementById("noticeModal");
+                if (!modalEl)
+                    return;
 
-                let error = "";
-                if (showID === "") error += "<li>Chưa chọn vở diễn</li>";
-                if (hasEmptyTime) error += "<li>Chưa chọn giờ chiếu</li>";
+                const titleEl = document.getElementById("noticeModalTitle");
+                const msgEl = document.getElementById("noticeModalMsg");
+                const iconEl = document.getElementById("noticeModalIcon");
+                const headerEl = modalEl.querySelector(".modal-header");
 
-                const box = document.getElementById("clientErrorBox");
-                const list = document.getElementById("clientErrorList");
+                titleEl.textContent = title || "Thông báo";
+                msgEl.innerHTML = message || "";
 
-                if (error !== "") {
-                    if (list) list.innerHTML = error;
-                    if (box) box.classList.remove("d-none");
-                    return false;
+                headerEl.classList.remove("text-bg-danger", "text-bg-warning", "text-bg-info", "text-bg-success");
+
+                const t = (type || "info").toLowerCase();
+                if (t === "danger") {
+                    headerEl.classList.add("text-bg-danger");
+                    iconEl.className = "fa-solid fa-circle-xmark me-2";
+                } else if (t === "warning") {
+                    headerEl.classList.add("text-bg-warning");
+                    iconEl.className = "fa-solid fa-triangle-exclamation me-2";
+                } else if (t === "success") {
+                    headerEl.classList.add("text-bg-success");
+                    iconEl.className = "fa-solid fa-circle-check me-2";
+                } else {
+                    headerEl.classList.add("text-bg-info");
+                    iconEl.className = "fa-solid fa-circle-info me-2";
                 }
-                if (box) box.classList.add("d-none");
-                return true;
+
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
             }
 
-            const MAX_TIMES = 3;
+            // ====== Bộ đếm: còn bao nhiêu ngày nữa sẽ chiếu (timezone VN) ======
+            function calcCountdownDaysVN(datetimeLocalStr) {
+                if (!datetimeLocalStr)
+                    return null;
 
+                const parts = datetimeLocalStr.split("T");
+                if (parts.length !== 2)
+                    return null;
+                const datePart = parts[0];
+
+                const todayVN = new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Ho_Chi_Minh'});
+
+                const d1 = new Date(todayVN + "T00:00:00");
+                const d2 = new Date(datePart + "T00:00:00");
+
+                const diffMs = d2.getTime() - d1.getTime();
+                const diffDays = Math.round(diffMs / 86400000);
+                return diffDays;
+            }
+
+            function renderCountdownForRow(row) {
+                const t = row.querySelector("input[name='showTime']");
+                const meta = row.querySelector(".showtime-meta");
+                if (!t || !meta)
+                    return;
+
+                const val = (t.value || "").trim();
+                if (!val) {
+                    meta.innerHTML = '<span class="text-muted"><i class="fa-regular fa-hourglass"></i> Chọn ngày & giờ chiếu để xem bộ đếm</span>';
+                    return;
+                }
+
+                const days = calcCountdownDaysVN(val);
+                if (days === null) {
+                    meta.innerHTML = '<span class="text-muted">—</span>';
+                    return;
+                }
+
+                if (days < 0) {
+                    meta.innerHTML = '<span class="badge text-bg-danger"><i class="fa-solid fa-triangle-exclamation"></i> Ngày chiếu đã qua</span>';
+                } else if (days === 0) {
+                    meta.innerHTML = '<span class="badge text-bg-success"><i class="fa-solid fa-bolt"></i> Hôm nay sẽ chiếu</span>';
+                } else if (days === 1) {
+                    meta.innerHTML = '<span class="badge text-bg-warning"><i class="fa-regular fa-clock"></i> Còn 1 ngày nữa sẽ chiếu</span>';
+                } else {
+                    meta.innerHTML = '<span class="badge text-bg-warning"><i class="fa-regular fa-clock"></i> Còn ' + days + ' ngày nữa sẽ chiếu</span>';
+                }
+            }
+
+            function renderCountdownAllRows() {
+                document.querySelectorAll(".showTimeItem").forEach(r => renderCountdownForRow(r));
+            }
+
+            // ====== wire events for row ======
+            function wireRow(row) {
+                const timeInput = row.querySelector("input[name='showTime']");
+                if (timeInput && !timeInput.__wired) {
+                    timeInput.__wired = true;
+                    timeInput.addEventListener("change", function () {
+                        renderCountdownForRow(row);
+                    });
+                    timeInput.addEventListener("input", function () {
+                        renderCountdownForRow(row);
+                    });
+                }
+            }
+
+            function wireAllRows() {
+                document.querySelectorAll(".showTimeItem").forEach(r => wireRow(r));
+            }
+
+            // ====== add/remove show time row ======
             function addShowTime() {
                 const container = document.getElementById("showTimeContainer");
                 const items = container.querySelectorAll(".showTimeItem");
-                if (items.length >= MAX_TIMES) {
-                    alert("Tối đa " + MAX_TIMES + " lịch chiếu.");
+
+                if (Number.isFinite(MAX_TIMES) && items.length >= MAX_TIMES) {
+                    showNoticeModal("Vượt giới hạn", "Bạn chỉ được tạo tối đa <b>" + MAX_TIMES + "</b> lịch chiếu.", "warning");
                     return;
                 }
 
                 const div = document.createElement("div");
                 div.className = "showTimeItem showtime-item";
-                div.innerHTML = `
-                    <input type="datetime-local" name="showTime" class="form-control" required/>
-                    <button type="button" class="btn btn-outline-danger icon-btn" onclick="removeShowTime(this)">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                `;
+
+                div.innerHTML =
+                        '<div class="showtime-col">'
+                        + '<input type="datetime-local" name="showTime" class="form-control" required/>'
+                        + '<div class="showtime-meta"><span class="text-muted"><i class="fa-regular fa-hourglass"></i> Chọn ngày & giờ chiếu để xem bộ đếm</span></div>'
+                        + '</div>'
+                        + '<button type="button" class="btn btn-outline-danger icon-btn" onclick="removeShowTime(this)" title="Xóa giờ chiếu">'
+                        + '<i class="fa-solid fa-xmark"></i>'
+                        + '</button>';
+
                 container.appendChild(div);
+                wireRow(div);
+                renderCountdownForRow(div);
             }
 
             function removeShowTime(btn) {
                 const container = document.getElementById("showTimeContainer");
                 const items = container.querySelectorAll(".showTimeItem");
                 if (items.length <= 1) {
-                    alert("Phải có ít nhất 1 lịch chiếu.");
+                    showNoticeModal("Không thể xóa", "Phải có ít nhất <b>1</b> lịch chiếu.", "danger");
                     return;
                 }
                 btn.parentElement.remove();
+                renderCountdownAllRows();
             }
+
+            // ====== validate client-side ======
+            function validateShowForm() {
+                const showID = (document.querySelector("select[name='showID']").value || "").trim();
+                const rows = document.querySelectorAll(".showTimeItem");
+
+                let error = "";
+                if (showID === "")
+                    error += "<li>Chưa chọn vở diễn</li>";
+
+                let hasEmptyTime = false;
+                rows.forEach(r => {
+                    const t = r.querySelector("input[name='showTime']");
+                    if (!t || !(t.value || "").trim())
+                        hasEmptyTime = true;
+                });
+
+                if (hasEmptyTime)
+                    error += "<li>Chưa chọn giờ chiếu</li>";
+
+                const box = document.getElementById("clientErrorBox");
+                const list = document.getElementById("clientErrorList");
+
+                if (error !== "") {
+                    if (list)
+                        list.innerHTML = error;
+                    if (box)
+                        box.classList.remove("d-none");
+                    return false;
+                }
+                if (box)
+                    box.classList.add("d-none");
+                return true;
+            }
+
+            window.addEventListener("load", function () {
+                wireAllRows();
+                renderCountdownAllRows();
+            });
         </script>
     </head>
 
@@ -223,7 +377,6 @@
                         <small>Thêm lịch chiếu</small>
                     </div>
                 </div>
-
                 <hr style="border-color: var(--line);">
             </aside>
 
@@ -283,70 +436,112 @@
                                 <select name="showID" class="form-select" required>
                                     <option value="">-- Chọn vở diễn --</option>
                                     <c:forEach var="s" items="${shows}">
-                                        <option value="${s.showID}"
-                                                <c:if test="${showIDValue == s.showID}">selected</c:if>>
+                                        <c:set var="st" value="${s.status}" />
+
+                                        <!-- ✅ CHỈ HIỂN THỊ Ongoing + Upcoming -->
+                                        <c:if test="${st eq 'Ongoing' or st eq 'Upcoming'}">
+                                            <option value="${s.showID}"
+                                        <c:if test="${showIDValue == s.showID}">selected</c:if>>
                                             ${s.showName}
+                                        <c:choose>
+                                            <c:when test="${st eq 'Ongoing'}"> (ĐANG HOẠT ĐỘNG)</c:when>
+                                            <c:when test="${st eq 'Upcoming'}"> (SẮP HOẠT ĐỘNG)</c:when>
+                                        </c:choose>
                                         </option>
-                                    </c:forEach>
-                                </select>
-                            </div>
+                                    </c:if>
+                                </c:forEach>
 
-                            <!-- Show times -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    Giờ chiếu <span class="req">*</span>
-                                </label>
+                            </select>
+                        </div>
 
-                                <div id="showTimeContainer">
-                                    <!-- item 1 -->
-                                    <div class="showTimeItem showtime-item">
+                        <!-- Show times -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                Giờ chiếu <span class="req">*</span>
+                            </label>
+
+                            <div id="showTimeContainer">
+                                <div class="showTimeItem showtime-item">
+                                    <div class="showtime-col">
                                         <input type="datetime-local"
                                                name="showTime"
                                                class="form-control"
                                                value="${showTimeValue != null ? showTimeValue : ''}"
                                                required/>
-                                        <button type="button" class="btn btn-outline-danger icon-btn" onclick="removeShowTime(this)" title="Xóa giờ chiếu">
-                                            <i class="fa-solid fa-xmark"></i>
-                                        </button>
+                                        <div class="showtime-meta">
+                                            <span class="text-muted"><i class="fa-regular fa-hourglass"></i> Chọn ngày & giờ chiếu để xem bộ đếm</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <button type="button" class="btn btn-outline-primary fw-bold mt-2" onclick="addShowTime()">
-                                    <i class="fa-solid fa-plus"></i> Thêm lịch chiếu
-                                </button>
-
-                                <div class="form-text">
-                                    <i class="fa-solid fa-circle-info"></i> Tối đa 3 lịch chiếu, tối thiểu 1 lịch chiếu.
+                                    <button type="button" class="btn btn-outline-danger icon-btn" onclick="removeShowTime(this)" title="Xóa giờ chiếu">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Status note -->
-                            <div class="alert alert-info d-flex align-items-start gap-2" style="border-radius:14px;">
-                                <i class="fa-solid fa-wand-magic-sparkles mt-1"></i>
-                                <div>
-                                    <b>Ghi chú:</b> Trạng thái sẽ được hệ thống tự gán theo ngày/giờ chiếu (không cần chọn).
-                                </div>
+                            <button type="button" class="btn btn-outline-primary fw-bold mt-2" onclick="addShowTime()">
+                                <i class="fa-solid fa-plus"></i> Thêm lịch chiếu
+                            </button>
+
+                            <div class="form-text">
+                                <i class="fa-solid fa-circle-info"></i> Tối thiểu 1 lịch chiếu. Bạn có thể thêm nhiều lịch chiếu.
                             </div>
+                        </div>
 
-                            <!-- Actions -->
-                            <div class="d-flex gap-2 mt-3">
-                                <button type="submit" class="btn btn-success fw-bold">
-                                    <i class="fa-solid fa-floppy-disk"></i> Lưu lịch chiếu
-                                </button>
-
-                                <a class="btn btn-outline-dark fw-bold" href="${pageContext.request.contextPath}/admin/schedule">
-                                    <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
-                                </a>
+                        <!-- Status note -->
+                        <div class="alert alert-info d-flex align-items-start gap-2" style="border-radius:14px;">
+                            <i class="fa-solid fa-wand-magic-sparkles mt-1"></i>
+                            <div>
+                                <b>Ghi chú:</b> Trạng thái sẽ được hệ thống tự gán theo ngày/giờ chiếu (không cần chọn).
                             </div>
+                        </div>
 
-                        </form>
-                    </div>
+                        <!-- Actions -->
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="submit" class="btn btn-success fw-bold">
+                                <i class="fa-solid fa-floppy-disk"></i> Lưu lịch chiếu
+                            </button>
+
+                            <a class="btn btn-outline-dark fw-bold" href="${pageContext.request.contextPath}/admin/schedule">
+                                <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ================= NOTICE MODAL ================= -->
+    <div class="modal fade" id="noticeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+                <div class="modal-header text-bg-info">
+                    <h5 class="modal-title fw-bold mb-0">
+                        <i id="noticeModalIcon" class="fa-solid fa-circle-info me-2"></i>
+                        <span id="noticeModalTitle">Thông báo</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
 
-            </main>
-        </div>
+                <div class="modal-body text-dark">
+                    <div id="noticeModalMsg">—</div>
+                </div>
 
-        <!-- Bootstrap JS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    </body>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
 </html>
+    

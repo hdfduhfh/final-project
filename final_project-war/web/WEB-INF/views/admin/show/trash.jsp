@@ -187,7 +187,7 @@
                 place-items:center;
                 border-radius: 12px;
             }
-            
+
             /* ✅ THÊM STYLE CHO BADGE BẢO VỆ */
             .badge-protected {
                 background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -195,8 +195,8 @@
                 box-shadow: 0 4px 12px rgba(239,68,68,.35);
                 animation: pulse-glow 2s ease-in-out infinite;
             }
-            
-            
+
+
             .badge-auto-delete {
                 background: linear-gradient(135deg, #f59e0b, #d97706);
                 border: 1px solid rgba(255,255,255,.15);
@@ -205,7 +205,7 @@
     </head>
 
     <body>
-        
+
         <div class="admin-wrap">
 
             <!-- SIDEBAR -->
@@ -302,7 +302,7 @@
                                 <c:forEach var="s" items="${trashShows}" varStatus="loop">
                                     <c:set var="deletedAt" value="${trashDeletedAtMap[s.showID]}" />
                                     <c:set var="remainDays" value="${trashRemainDaysMap[s.showID]}" />
-                                    
+
                                     <%-- ✅ KIỂM TRA CÓ ĐƠN HÀNG KHÔNG --%>
                                     <jsp:useBean id="showFacade" class="mypack.ShowFacade" scope="page"/>
                                     <c:set var="orderCount" value="${showFacade.countOrdersForShow(s.showID)}" />
@@ -410,7 +410,7 @@
 
         <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-        
+
         <!-- ✅ CONFIRM MODAL - CẬP NHẬT MESSAGE -->
         <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">

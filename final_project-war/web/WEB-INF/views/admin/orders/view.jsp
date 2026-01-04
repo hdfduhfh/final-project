@@ -38,7 +38,7 @@
                 </div>
             </div>
 
-            <%-- ✅ YÊU CẦU ĐỔI GHẾ --%>
+            <%-- ✅ YÊU CẦU ĐỔI GHẾ - CHỈ HIỆN KHI PENDING --%>
             <c:if test="${order.seatChangeRequested && order.seatChangeStatus == 'PENDING'}">
                 <div class="alert alert-warning d-flex align-items-start gap-3" style="border-radius: 16px; border: 1px solid rgba(245,158,11,.3);">
                     <i class="fa-solid fa-triangle-exclamation fa-2x text-warning"></i>
@@ -52,6 +52,36 @@
                         <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#seatChangeModal">
                             <i class="fa-solid fa-check me-1"></i>Xử lý yêu cầu
                         </button>
+                    </div>
+                </div>
+            </c:if>
+
+            <%-- ✅ ĐÃ DUYỆT ĐỔI GHẾ - HIỆN THÔNG BÁO THÀNH CÔNG --%>
+            <c:if test="${order.seatChangeStatus == 'APPROVED'}">
+                <div class="alert alert-success d-flex align-items-start gap-3" style="border-radius: 16px;">
+                    <i class="fa-solid fa-circle-check fa-2x text-success"></i>
+                    <div class="flex-fill">
+                        <h5 class="alert-heading mb-2">
+                            <i class="fa-solid fa-check me-2"></i>Đã đổi ghế thành công
+                        </h5>
+                        <p class="mb-0">
+                            <strong>Ghi chú:</strong> ${order.adminNote}
+                        </p>
+                    </div>
+                </div>
+            </c:if>
+
+            <%-- ✅ BỊ TỪ CHỐI --%>
+            <c:if test="${order.seatChangeStatus == 'REJECTED'}">
+                <div class="alert alert-danger d-flex align-items-start gap-3" style="border-radius: 16px;">
+                    <i class="fa-solid fa-circle-xmark fa-2x text-danger"></i>
+                    <div class="flex-fill">
+                        <h5 class="alert-heading mb-2">
+                            <i class="fa-solid fa-ban me-2"></i>Yêu cầu đổi ghế đã bị từ chối
+                        </h5>
+                        <p class="mb-0">
+                            <strong>Ghi chú:</strong> ${order.adminNote}
+                        </p>
                     </div>
                 </div>
             </c:if>
@@ -201,8 +231,12 @@
                                         <fmt:formatNumber value="${detail.price}" type="number" maxFractionDigits="0"/> đ
                                     </td>
                                     <td>
+                                        <%-- ✅ CHỈ HIỆN "BẢO TRÌ" KHI CHƯA ĐỔI GHẾ HOẶC BỊ TỪ CHỐI --%>
                                         <c:choose>
-                                            <c:when test="${!detail.seatID.isActive}">
+                                            <c:when test="${!detail.seatID.isActive && 
+                                                          (order.seatChangeStatus != 'APPROVED' || 
+                                                           order.seatChangeStatus == null || 
+                                                           order.seatChangeStatus == 'REJECTED')}">
                                                 <span class="badge text-bg-danger">
                                                     <i class="fa-solid fa-tools"></i> Bảo trì
                                                 </span>
@@ -297,7 +331,7 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="${pageContext.request.contextPath}/admin/orders" method="post">
+                <form action="${pageContext.request.contextPath}/admin/orders" method="post" id="seatChangeForm">
                     <input type="hidden" name="action" value="processSeatChange">
                     <input type="hidden" name="orderId" value="${order.orderID}">
                     <input type="hidden" name="actionType" id="actionType">
@@ -308,20 +342,32 @@
                             ${order.seatChangeReason}
                         </div>
                         
-                        <c:if test="${not empty availableSeats}">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Chọn ghế mới:</label>
-                                <select name="newSeatId" class="form-select" id="newSeatSelect">
-                                    <option value="">-- Chọn ghế --</option>
-                                    <c:forEach var="seat" items="${availableSeats}">
-                                        <option value="${seat.seatID}">
-                                            ${seat.seatNumber} - ${seat.seatType} - 
-                                            <fmt:formatNumber value="${seat.price}" type="number" maxFractionDigits="0"/>đ
-                                        </option>
-                                    </c:forEach>
-                                </select>
-                            </div>
-                        </c:if>
+                        <c:choose>
+                            <c:when test="${not empty availableSeats}">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">
+                                        Chọn ghế mới: <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="newSeatId" class="form-select" id="newSeatSelect">
+                                        <option value="">-- Chọn ghế --</option>
+                                        <c:forEach var="seat" items="${availableSeats}">
+                                            <option value="${seat.seatID}">
+                                                ${seat.seatNumber} - ${seat.seatType} - 
+                                                <fmt:formatNumber value="${seat.price}" type="number" maxFractionDigits="0"/>đ
+                                            </option>
+                                        </c:forEach>
+                                    </select>
+                                    <small class="text-muted">Chỉ hiển thị ghế cùng loại và chưa được đặt</small>
+                                </div>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="alert alert-warning">
+                                    <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                                    <strong>Không có ghế khả dụng!</strong><br>
+                                    Tất cả ghế cùng loại đã được đặt hoặc đang bảo trì.
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
                         
                         <div class="mb-3">
                             <label class="form-label fw-bold">Ghi chú của admin (tùy chọn):</label>
@@ -334,10 +380,10 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fa-solid fa-xmark me-1"></i> Đóng
                         </button>
-                        <button type="submit" class="btn btn-danger" onclick="document.getElementById('actionType').value='REJECT';">
+                        <button type="button" class="btn btn-danger" id="btnReject">
                             <i class="fa-solid fa-ban me-1"></i> Từ chối
                         </button>
-                        <button type="submit" class="btn btn-success" onclick="document.getElementById('actionType').value='APPROVE';" 
+                        <button type="button" class="btn btn-success" id="btnApprove" 
                                 ${empty availableSeats ? 'disabled' : ''}>
                             <i class="fa-solid fa-check me-1"></i> Duyệt đổi ghế
                         </button>
@@ -347,7 +393,7 @@
         </div>
     </div>
 
-    <%-- OTHER MODALS --%>
+    <%-- OTHER MODALS (GIỮ NGUYÊN) --%>
     <div class="modal fade" id="confirmMarkPaidModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -412,5 +458,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="${pageContext.request.contextPath}/js/admin/orders-view.js"></script>
+
+
 </body>
 </html>

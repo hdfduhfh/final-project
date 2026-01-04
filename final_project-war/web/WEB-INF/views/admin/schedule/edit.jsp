@@ -143,10 +143,14 @@
         </style>
 
         <script>
-            // ✅ validate client-side: chỉ check show + showTime (KHÔNG check status)
+            // ✅ validate client-side: showID + showTime
+            // Lưu ý: showID dropdown bị disabled nên lấy từ hidden input name="showID"
             function validateShowForm() {
-                let showID = document.querySelector("select[name='showID']").value.trim();
-                let showTime = document.querySelector("input[name='showTime']").value.trim();
+                let showIDEl = document.querySelector("input[name='showID']");
+                let showTimeEl = document.querySelector("input[name='showTime']");
+
+                let showID = showIDEl ? (showIDEl.value || "").trim() : "";
+                let showTime = showTimeEl ? (showTimeEl.value || "").trim() : "";
 
                 let error = "";
                 if (showID === "")
@@ -168,6 +172,14 @@
                     box.classList.add("d-none");
                 return true;
             }
+
+            // ✅ đảm bảo dropdown disabled vẫn hiển thị đúng option selected (UI only)
+            window.addEventListener("load", function () {
+                const lockedSelect = document.getElementById("showIDLocked");
+                if (lockedSelect) {
+                    lockedSelect.disabled = true;
+                }
+            });
         </script>
     </head>
 
@@ -244,16 +256,20 @@
 
                                 <input type="hidden" name="scheduleID" value="${schedule.scheduleID}"/>
 
+                                <!-- ✅ SHOWID: KHÓA DROPDOWN + HIDDEN để submit -->
+                                <input type="hidden" name="showID" value="${schedule.showID.showID}"/>
+
                                 <div class="row g-3">
 
-                                    <!-- Show -->
+                                    <!-- Show (LOCKED) -->
                                     <div class="col-lg-6">
                                         <label class="form-label fw-bold">
                                             Vở diễn <span class="req">*</span>
                                         </label>
-                                        <select name="showID" class="form-select" required>
-                                            <option value="">-- Chọn vở diễn --</option>
 
+                                        <!-- Dropdown bị khóa -->
+                                        <select id="showIDLocked" class="form-select" disabled>
+                                            <option value="">-- Chọn vở diễn --</option>
                                             <c:forEach var="s" items="${shows}">
                                                 <option value="${s.showID}"
                                                         <c:if test="${schedule.showID.showID == s.showID}">selected</c:if>>
@@ -261,6 +277,11 @@
                                                 </option>
                                             </c:forEach>
                                         </select>
+
+                                        <div class="form-text">
+                                            <i class="fa-solid fa-lock"></i>
+                                            Không thể đổi vở diễn khi cập nhật. Muốn đổi show hãy tạo lịch mới.
+                                        </div>
                                     </div>
 
                                     <!-- ShowTime -->

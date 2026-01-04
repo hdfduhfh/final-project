@@ -97,4 +97,5 @@ public class OrderDetailFacade extends AbstractFacade<OrderDetail> implements Or
         
         return count != null ? count : 0L;
     }
+    
 }

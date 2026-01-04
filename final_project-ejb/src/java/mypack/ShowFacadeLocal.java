@@ -51,4 +51,11 @@ public interface ShowFacadeLocal {
      * @return Số lượng đơn hàng
      */
     Long countOrdersForShow(Integer showId);
+
+    // ✅ NEW: đồng bộ trạng thái Show theo trạng thái các ShowSchedule (realtime)
+    // Rule:
+    // - Có schedule Ongoing => show Ongoing
+    // - Else có schedule Upcoming => show Upcoming
+    // - Else: không đụng tới show (giữ logic cũ)
+    void syncShowStatusFromSchedules();
 }

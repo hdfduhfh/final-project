@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import mypack.*;
+import mypack.controller.user.SeatReservationManager;
 
 @WebServlet(name = "OrderManagementServlet", urlPatterns = {"/admin/orders"})
 public class OrderManagementServlet extends HttpServlet {
@@ -216,7 +217,7 @@ public class OrderManagementServlet extends HttpServlet {
                 Seat newSeat = seatFacade.find(newSeatId);
                 
                 if (newSeat == null || !newSeat.getIsActive()) {
-                    session.setAttribute("error", "Ghế mới không hợp lệ!");
+                    session.setAttribute("error", "Ghế mới không hợp lệ hoặc đang bảo trì!");
                     response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
                     return;
                 }
@@ -238,15 +239,51 @@ public class OrderManagementServlet extends HttpServlet {
                     return;
                 }
                 
-                // ✅ CẬP NHẬT GHẾ MỚI
+                int scheduleId = brokenSeatDetail.getScheduleID().getScheduleID();
+                
+                // ✅ BƯỚC 1: KIỂM TRA GHẾ MỚI ĐÃ ĐƯỢC ĐẶT CHƯA (QUAN TRỌNG!)
+                Set<Integer> bookedSeats = orderDetailFacade.findBookedSeatIdsBySchedule(scheduleId);
+                if (bookedSeats.contains(newSeatId)) {
+                    session.setAttribute("error", "⚠️ Ghế " + newSeat.getSeatNumber() + 
+                        " đã có người đặt! Vui lòng chọn ghế khác.");
+                    response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
+                    return;
+                }
+                
+                // ✅ BƯỚC 2: KIỂM TRA GHẾ MỚI CÓ ĐANG BỊ GIỮ CHỖ KHÔNG
+                SeatReservationManager reservationMgr = SeatReservationManager.getInstance();
+                
+                if (reservationMgr.isReserved(newSeatId, scheduleId, "", null)) {
+                    session.setAttribute("error", "⚠️ Ghế " + newSeat.getSeatNumber() + 
+                        " đang được người khác giữ chỗ! Vui lòng đợi hoặc chọn ghế khác.");
+                    response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
+                    return;
+                }
+                
+                // ✅ BƯỚC 3: KHÓA GHẾ MỚI NGAY (RESERVE CHO ADMIN)
+                boolean reserved = reservationMgr.reserveSeat(
+                    newSeatId, 
+                    scheduleId, 
+                    "ADMIN-" + orderId, 
+                    -999  // UserID đặc biệt cho Admin
+                );
+                
+                if (!reserved) {
+                    session.setAttribute("error", "❌ Không thể khóa ghế mới! Có thể đã có người chọn.");
+                    response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + orderId);
+                    return;
+                }
+                
+                // ✅ BƯỚC 4: CẬP NHẬT GHẾ MỚI
                 String oldSeatNumber = brokenSeatDetail.getSeatID().getSeatNumber();
+                
                 brokenSeatDetail.setSeatID(newSeat);
+                brokenSeatDetail.setPrice(BigDecimal.valueOf(newSeat.getPrice()));
                 orderDetailFacade.edit(brokenSeatDetail);
                 
-                // ✅ CẬP NHẬT VÉ (QR CODE MỚI)
+                // ✅ BƯỚC 5: CẬP NHẬT VÉ (QR CODE MỚI)
                 List<Ticket> tickets = ticketFacade.findByOrderDetailId(brokenSeatDetail.getOrderDetailID());
                 for (Ticket ticket : tickets) {
-                    // Tạo QR code mới với ghế mới
                     String newQrCode = "TICKET-" + orderId + "-" + 
                                      brokenSeatDetail.getOrderDetailID() + "-" + 
                                      UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -255,7 +292,10 @@ public class OrderManagementServlet extends HttpServlet {
                     ticketFacade.edit(ticket);
                 }
                 
-                // ✅ CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG
+                // ✅ BƯỚC 6: RELEASE GHẾ MỚI (ADMIN ĐÃ XONG)
+                reservationMgr.releaseReservation(newSeatId, scheduleId);
+                
+                // ✅ BƯỚC 7: CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG
                 order.setSeatChangeStatus("APPROVED");
                 order.setSeatChangeRequested(false);
                 order.setAdminNote(adminNote != null ? adminNote : 
@@ -264,7 +304,7 @@ public class OrderManagementServlet extends HttpServlet {
                 
                 orderFacade.edit(order);
                 
-                session.setAttribute("success", "Đã đổi ghế thành công: " + 
+                session.setAttribute("success", "✅ Đã đổi ghế thành công: " + 
                                     oldSeatNumber + " → " + newSeat.getSeatNumber());
                 
                 System.out.println("✅ Admin đổi ghế Order #" + orderId + ": " + 
@@ -281,7 +321,8 @@ public class OrderManagementServlet extends HttpServlet {
         }
     }
 
-    private void handleUpdateStatus(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void handleUpdateStatus(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
         String idParam = request.getParameter("id");
         String status = request.getParameter("status");
 
@@ -301,7 +342,8 @@ public class OrderManagementServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/admin/orders");
     }
 
-    private void handleUpdatePayment(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void handleUpdatePayment(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
         String idParam = request.getParameter("id");
         String paymentStatus = request.getParameter("paymentStatus");
 
@@ -321,7 +363,8 @@ public class OrderManagementServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/admin/orders");
     }
 
-    private void handleDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void handleDelete(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
         String idParam = request.getParameter("id");
         if (idParam != null) {
             try {
